@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - University of Rizal System Binangonan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 45% 55% 60% 40% / 55% 45% 40% 60%;
+            animation: blob 8s infinite;
+        }
+
+        .gradient-bg::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: rgba(100, 200, 255, 0.1);
+            border-radius: 45% 55% 60% 40% / 55% 45% 40% 60%;
+            animation: blob 8s infinite reverse;
+        }
+
+        @keyframes blob {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+        }
+
+        .login-box {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .login-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .password-toggle input {
+            padding-right: 2.5rem;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 1.5rem;
+        }
+
+        .forgot-password a {
+            font-size: 0.875rem;
+            color: #2563eb;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #1d4ed8;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .back-link a {
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #2563eb;
+        }
+
+        .error-message {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .title {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .title h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .title p {
+            font-size: 1rem;
+            color: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+    <div class="login-container">
+        <div class="title">
+            <h1>University of Rizal System Binangonan</h1>
+            <p>IPCR/OPCR Module</p>
+        </div>
+
+        <div class="login-box">
+            <div class="login-header">
+                <h2>
+                    @switch($role)
+                        @case('faculty')
+                            Faculty & Staff Login
+                            @break
+                        @case('dean')
+                            Dean Login
+                            @break
+                        @case('director')
+                            Director Login
+                            @break
+                        @case('admin')
+                            Administrator Login
+                            @break
+                        @default
+                            Account Login
+                    @endswitch
+                </h2>
+            </div>
+
+            <div class="login-body">
+                @if ($errors->any())
+                    <div class="error-message">
+                        @foreach ($errors->all() as $error)
+                            <div>{{ $error }}</div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+
+                    <input type="hidden" name="role" value="{{ $role }}">
+
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            placeholder="Enter your username"
+                            value="{{ old('username') }}"
+                            required
+                            autofocus
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-toggle">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                required
+                            >
+                            <button type="button" class="toggle-btn" onclick="togglePasswordVisibility()">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="forgot-password">
+                        <a href="#">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+
+                <div class="back-link">
+                    <a href="{{ route('login.selection') }}">← Back to Role Selection</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePasswordVisibility() {
+            const passwordField = document.getElementById('password');
+            const toggleBtn = document.querySelector('.toggle-btn i');
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleBtn.classList.remove('fa-eye');
+                toggleBtn.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleBtn.classList.remove('fa-eye-slash');
+                toggleBtn.classList.add('fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>
