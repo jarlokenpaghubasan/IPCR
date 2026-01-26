@@ -241,11 +241,34 @@ mkdir -p public/images
 
 #### 8️⃣ Start the Development Server
 
+**For Development (with Vite Hot Reload):**
+
+Open **two terminal windows**:
+
 ```bash
+# Terminal 1 - Start Vite development server
+npm run dev
+
+# Terminal 2 - Start Laravel server
+php artisan serve
+```
+
+**For Production:**
+
+```bash
+# Build optimized assets first
+npm run build
+
+# Then start Laravel server
 php artisan serve
 ```
 
 The application will be available at: **http://localhost:8000**
+
+**What each command does:**
+- `npm run dev` - Starts Vite with hot module replacement (auto-refreshes on file changes)
+- `npm run build` - Creates optimized production assets in `public/build/`
+- `php artisan serve` - Runs Laravel development server
 
 ---
 
@@ -350,6 +373,27 @@ chown -R www-data:www-data storage bootstrap/cache
 
 ## 🛠️ Development
 
+### Running the Application
+
+**Development Mode (Recommended):**
+```bash
+# Terminal 1 - Vite dev server with hot reload
+npm run dev
+
+# Terminal 2 - Laravel development server
+php artisan serve
+```
+Access at: http://localhost:8000
+
+**Production Build:**
+```bash
+# Build optimized assets
+npm run build
+
+# Start server
+php artisan serve
+```
+
 ### Running Tests
 
 ```bash
@@ -365,29 +409,34 @@ php artisan route:clear
 php artisan view:clear
 ```
 
-### Building Frontend Assets
+### Asset Management with Vite
 
 ```bash
-# Development
+# Development with hot module replacement
 npm run dev
 
-# Production
+# Production build (optimized, minified, hashed)
 npm run build
-
-# Watch mode
-npm run watch
 ```
+
+**Vite Features:**
+- ⚡ Lightning-fast hot module replacement (HMR)
+- 📦 Optimized production builds with tree-shaking
+- 🔄 Auto-refresh browser on file changes
+- 🎯 Cache-busting with content hashes
+- 📊 Build size analysis
 
 ---
 
 ## 📦 Technologies Used
 
 - **Backend:** Laravel 11.x
-- **Frontend:** Tailwind CSS 3.x, Blade Templates
+- **Frontend:** Tailwind CSS v4.0, Blade Templates
+- **Build Tool:** Vite 7.x with Laravel plugin
 - **Database:** MySQL
 - **Charts:** Chart.js
 - **Authentication:** Laravel Breeze (customized)
-- **Icons:** Heroicons
+- **Icons:** Font Awesome 6.4.0
 
 ---
 
