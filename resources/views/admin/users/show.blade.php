@@ -121,7 +121,7 @@
                             <p class="text-gray-600 text-xs">Admin</p>
                         </div>
                         @if(auth()->user()->hasProfilePhoto())
-                            <img src="{{ auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-500 flex-shrink-0">
+                            <img src="{{ auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0">
                         @else
                             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-500 flex items-center justify-center border-2 border-blue-600 flex-shrink-0">
                                 <i class="fas fa-user text-white text-xs"></i>
@@ -147,7 +147,7 @@
                                 <!-- Photo -->
                                 <div class="flex flex-col items-center md:items-start mb-4 md:mb-0">
                                     @if($user->hasProfilePhoto())
-                                        <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-lg border-4 border-blue-500">
+                                        <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="w-40 h-40 sm:w-48 sm:h-48 object-cover rounded-lg">
                                     @else
                                         <div class="w-40 h-40 sm:w-48 sm:h-48 bg-gray-200 rounded-lg flex items-center justify-center border-4 border-dashed border-gray-400">
                                             <i class="fas fa-user text-gray-400 text-6xl"></i>

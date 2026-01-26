@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Services\PhotoService;
+use App\Services\EmployeeIdService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -59,6 +60,11 @@ class UserManagementController extends Controller
 
         $validated['password'] = bcrypt($validated['password']);
         $validated['is_active'] = $request->has('is_active');
+
+        // Generate unique employee ID if department is provided
+        if (!empty($validated['department_id'])) {
+            $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
+        }
 
         // Store roles separately
         $roles = $validated['roles'];
@@ -121,6 +127,23 @@ class UserManagementController extends Controller
         }
 
         $validated['is_active'] = $request->has('is_active');
+
+        // Handle employee ID update when department changes
+        if (isset($validated['department_id']) && $validated['department_id'] != $user->department_id) {
+            // Department changed - update employee ID with new department code
+            if ($user->employee_id) {
+                $validated['employee_id'] = EmployeeIdService::updateDepartmentCode(
+                    $user->employee_id, 
+                    $validated['department_id']
+                );
+            } else {
+                // User doesn't have employee ID yet, generate new one
+                $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
+            }
+        } elseif (isset($validated['department_id']) && !$user->employee_id) {
+            // Department exists but user has no employee ID, generate one
+            $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
+        }
 
         // Handle roles separately
         $newRoles = $validated['roles'];

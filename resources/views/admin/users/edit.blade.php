@@ -121,7 +121,7 @@
                             <p class="text-gray-600 text-xs">Admin</p>
                         </div>
                         @if(auth()->user()->hasProfilePhoto())
-                            <img src="{{ auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-500">
+                            <img src="{{ auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-10 h-10 rounded-full object-cover">
                         @else
                             <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center border-2 border-blue-600">
                                 <i class="fas fa-user text-white text-xs"></i>
@@ -168,7 +168,7 @@
                             <div class="mb-4 lg:mb-6">
                                 <div class="w-full aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center border-2 border-dashed border-gray-400 overflow-hidden">
                                     @if($user->hasProfilePhoto())
-                                        <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover border-2 border-blue-500">
+                                        <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                                     @else
                                         <i class="fas fa-user text-gray-400 text-3xl lg:text-5xl"></i>
                                     @endif
@@ -466,7 +466,7 @@
 
                     allPhotos.innerHTML = data.photos.map(photo => `
                         <div class="relative group">
-                            <img src="${photo.url}" alt="Photo" class="w-full aspect-square object-cover rounded-lg border-2 ${photo.is_profile ? 'border-blue-500' : 'border-gray-300'}">
+                            <img src="${photo.url}" alt="Photo" class="w-full aspect-square object-cover rounded-lg">
                             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                                 ${!photo.is_profile ? `<a href="/admin/panel/users/${userId}/photos/${photo.id}/set-profile" class="bg-white text-blue-600 p-1.5 rounded text-xs hover:bg-blue-50" title="Set as profile"><i class="fas fa-star"></i></a>` : '<span class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">Profile</span>'}
                                 <form method="POST" action="/admin/panel/users/${userId}/photos/${photo.id}" class="inline" style="margin: 0;">

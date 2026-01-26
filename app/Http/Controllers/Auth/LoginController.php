@@ -67,6 +67,11 @@ class LoginController extends Controller
             ]);
         }
 
+        // Update last login timestamp
+        $user->update([
+            'last_login_at' => now(),
+        ]);
+
         // Log user in
         Auth::login($user);
         $request->session()->regenerate();
