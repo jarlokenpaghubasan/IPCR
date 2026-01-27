@@ -1,0 +1,131 @@
+{
+  "resources/css/admin_users_edit.css": {
+    "file": "assets/admin_users_edit-CSiFSlnB.css",
+    "src": "resources/css/admin_users_edit.css",
+    "isEntry": true,
+    "name": "admin_users_edit",
+    "names": [
+      "admin_users_edit.css"
+    ]
+  },
+  "resources/css/admin_users_index.css": {
+    "file": "assets/admin_users_index-DoEDZy1m.css",
+    "src": "resources/css/admin_users_index.css",
+    "isEntry": true,
+    "name": "admin_users_index",
+    "names": [
+      "admin_users_index.css"
+    ]
+  },
+  "resources/css/admin_users_show.css": {
+    "file": "assets/admin_users_show-ClKhUDjB.css",
+    "src": "resources/css/admin_users_show.css",
+    "isEntry": true,
+    "name": "admin_users_show",
+    "names": [
+      "admin_users_show.css"
+    ]
+  },
+  "resources/css/auth_login-selection.css": {
+    "file": "assets/auth_login-selection-B1PbaqaZ.css",
+    "src": "resources/css/auth_login-selection.css",
+    "isEntry": true,
+    "name": "auth_login-selection",
+    "names": [
+      "auth_login-selection.css"
+    ]
+  },
+  "resources/css/auth_login.css": {
+    "file": "assets/auth_login-CHuyDnkh.css",
+    "src": "resources/css/auth_login.css",
+    "isEntry": true,
+    "name": "auth_login",
+    "names": [
+      "auth_login.css"
+    ]
+  },
+  "resources/css/dashboard_admin_index.css": {
+    "file": "assets/dashboard_admin_index-CoXboxMO.css",
+    "src": "resources/css/dashboard_admin_index.css",
+    "isEntry": true,
+    "name": "dashboard_admin_index",
+    "names": [
+      "dashboard_admin_index.css"
+    ]
+  },
+  "resources/css/dashboard_faculty_index.css": {
+    "file": "assets/dashboard_faculty_index-DpaKM9mm.css",
+    "src": "resources/css/dashboard_faculty_index.css",
+    "isEntry": true,
+    "name": "dashboard_faculty_index",
+    "names": [
+      "dashboard_faculty_index.css"
+    ]
+  },
+  "resources/css/dashboard_faculty_my-ipcrs.css": {
+    "file": "assets/dashboard_faculty_my-ipcrs-BomxqTyW.css",
+    "src": "resources/css/dashboard_faculty_my-ipcrs.css",
+    "isEntry": true,
+    "name": "dashboard_faculty_my-ipcrs",
+    "names": [
+      "dashboard_faculty_my-ipcrs.css"
+    ]
+  },
+  "resources/css/dashboard_faculty_profile.css": {
+    "file": "assets/dashboard_faculty_profile-C8z9uox8.css",
+    "src": "resources/css/dashboard_faculty_profile.css",
+    "isEntry": true,
+    "name": "dashboard_faculty_profile",
+    "names": [
+      "dashboard_faculty_profile.css"
+    ]
+  },
+  "resources/js/admin_users_edit.js": {
+    "file": "assets/admin_users_edit-B0-x8EK0.js",
+    "name": "admin_users_edit",
+    "src": "resources/js/admin_users_edit.js",
+    "isEntry": true
+  },
+  "resources/js/admin_users_index.js": {
+    "file": "assets/admin_users_index-_BsD-v7G.js",
+    "name": "admin_users_index",
+    "src": "resources/js/admin_users_index.js",
+    "isEntry": true
+  },
+  "resources/js/admin_users_show.js": {
+    "file": "assets/admin_users_show-BZQnEAb3.js",
+    "name": "admin_users_show",
+    "src": "resources/js/admin_users_show.js",
+    "isEntry": true
+  },
+  "resources/js/auth_login.js": {
+    "file": "assets/auth_login-l0sNRNKZ.js",
+    "name": "auth_login",
+    "src": "resources/js/auth_login.js",
+    "isEntry": true
+  },
+  "resources/js/dashboard_admin_index.js": {
+    "file": "assets/dashboard_admin_index-BCLylmo4.js",
+    "name": "dashboard_admin_index",
+    "src": "resources/js/dashboard_admin_index.js",
+    "isEntry": true
+  },
+  "resources/js/dashboard_faculty_index.js": {
+    "file": "assets/dashboard_faculty_index-BVFdaRBn.js",
+    "name": "dashboard_faculty_index",
+    "src": "resources/js/dashboard_faculty_index.js",
+    "isEntry": true
+  },
+  "resources/js/dashboard_faculty_my-ipcrs.js": {
+    "file": "assets/dashboard_faculty_my-ipcrs-BmgNs7dl.js",
+    "name": "dashboard_faculty_my-ipcrs",
+    "src": "resources/js/dashboard_faculty_my-ipcrs.js",
+    "isEntry": true
+  },
+  "resources/js/dashboard_faculty_profile.js": {
+    "file": "assets/dashboard_faculty_profile-4EvIeGVg.js",
+    "name": "dashboard_faculty_profile",
+    "src": "resources/js/dashboard_faculty_profile.js",
+    "isEntry": true
+  }
+}
