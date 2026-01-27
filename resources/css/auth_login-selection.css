@@ -1,35 +1,43 @@
 body {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: hidden;
+    padding: 1rem;
+    overflow-x: hidden;
+}
+
+.gradient-bg {
+    overflow-x: hidden;
 }
 
 .gradient-bg::before {
     content: "";
-    position: absolute;
-    top: -50%;
-    right: -10%;
+    position: fixed;
+    top: -200px;
+    right: -100px;
     width: 500px;
     height: 500px;
-    background: rgba(255, 107, 107, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 45% 55% 60% 40% / 55% 45% 40% 60%;
     animation: blob 8s infinite;
+    pointer-events: none;
 }
 
 .gradient-bg::after {
     content: "";
-    position: absolute;
-    bottom: -50%;
-    left: -10%;
+    position: fixed;
+    bottom: -200px;
+    left: -100px;
     width: 500px;
     height: 500px;
-    background: rgba(100, 200, 255, 0.1);
+    background: rgba(100, 200, 255, 0.05);
     border-radius: 45% 55% 60% 40% / 55% 45% 40% 60%;
     animation: blob 8s infinite reverse;
+    pointer-events: none;
 }
 
 @keyframes blob {
@@ -109,5 +117,5 @@ body {
     z-index: 10;
     width: 100%;
     max-width: 1000px;
-    padding: 2rem;
+    padding: 1rem;
 }

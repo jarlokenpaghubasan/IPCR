@@ -12,7 +12,7 @@
     <div class="login-container">
         <div class="title">
             <h1>University of Rizal System Binangonan</h1>
-            <p>IPCR/OPCR Module</p>
+            <p>Performance Commitment and Review Module</p>
         </div>
 
         <div class="login-box">

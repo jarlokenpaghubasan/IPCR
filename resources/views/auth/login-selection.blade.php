@@ -12,7 +12,7 @@
     <div class="container-wrapper">
         <div class="header">
             <h1>University of Rizal System Binangonan</h1>
-            <p>Individual/Office Performance Commitment and Review Module</p>
+            <p>Performance Commitment and Review Module</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
