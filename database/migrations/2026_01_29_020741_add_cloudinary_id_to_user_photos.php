@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('user_photos', function (Blueprint $table) {
-            if (!Schema::hasColumn('user_photos', 'cloudinary_public_id')) {
-                $table->string('cloudinary_public_id')->nullable()->after('path');
-            }
+            $table->string('cloudinary_public_id')->nullable()->after('path');
         });
     }
 
@@ -24,9 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('user_photos', function (Blueprint $table) {
-            if (Schema::hasColumn('user_photos', 'cloudinary_public_id')) {
-                $table->dropColumn('cloudinary_public_id');
-            }
+            $table->dropColumn('cloudinary_public_id');
         });
     }
 };
