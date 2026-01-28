@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Models\UserPhoto;
 use Illuminate\Support\Facades\Log;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
 
 class PhotoService
 {
@@ -16,49 +14,26 @@ class PhotoService
                 throw new \Exception('No file provided');
             }
 
-            $userPhotoDir = "user_photos/{$user->id}";
-            $path = storage_path("app/public/{$userPhotoDir}");
-            
-            if (!file_exists($path)) {
-                if (!mkdir($path, 0755, true)) {
-                    throw new \Exception('Failed to create storage directory');
-                }
+            // Upload to Cloudinary with automatic optimization
+            $uploadApi = new \Cloudinary\Api\Upload\UploadApi();
+            $result = $uploadApi->upload($file->getRealPath(), [
+                'folder' => 'user_photos/' . $user->id,
+                'transformation' => [
+                    'width' => 1200,
+                    'height' => 1200,
+                    'crop' => 'limit',
+                    'quality' => 'auto',
+                    'fetch_format' => 'auto'
+                ]
+            ]);
+
+            if (!$result || !isset($result['secure_url']) || !isset($result['public_id'])) {
+                Log::error('Cloudinary response: ' . json_encode($result));
+                throw new \Exception('Invalid Cloudinary response');
             }
 
-            $extension = strtolower($file->getClientOriginalExtension());
-            $timestamp = now()->format('Y-m-d_H-i-s');
-            $username = strtolower(str_replace(' ', '-', $user->username));
-            $filename = "{$timestamp}-{$username}.{$extension}";
-            
-            $filePath = "{$userPhotoDir}/{$filename}";
-            $fullPath = storage_path("app/public/{$filePath}");
-
-            // Compress and resize image using Intervention Image
-            $manager = new ImageManager(new Driver());
-            $image = $manager->read($file);
-            
-            // Resize if larger than 1200px on either dimension (maintains aspect ratio)
-            if ($image->width() > 1200 || $image->height() > 1200) {
-                $image->scale(width: 1200, height: 1200);
-            }
-            
-            // Save with compression based on file type
-            if (in_array($extension, ['jpg', 'jpeg'])) {
-                $image->toJpeg(quality: 80)->save($fullPath);
-            } elseif ($extension === 'png') {
-                $image->toPng()->save($fullPath);
-            } elseif ($extension === 'webp') {
-                $image->toWebp(quality: 80)->save($fullPath);
-            } else {
-                // Fallback for other formats (e.g., gif)
-                $file->move(dirname($fullPath), basename($fullPath));
-            }
-
-            if (!file_exists($fullPath)) {
-                throw new \Exception('File upload failed');
-            }
-
-            $fileSize = filesize($fullPath);
+            $cloudinaryUrl = $result['secure_url'];
+            $cloudinaryPublicId = $result['public_id'];
 
             UserPhoto::where('user_id', $user->id)
                 ->where('is_profile_photo', true)
@@ -66,17 +41,19 @@ class PhotoService
 
             $userPhoto = UserPhoto::create([
                 'user_id' => $user->id,
-                'filename' => $filename,
-                'path' => $filePath,
+                'filename' => basename($cloudinaryUrl),
+                'path' => $cloudinaryUrl,
+                'cloudinary_public_id' => $cloudinaryPublicId,
                 'original_name' => $file->getClientOriginalName(),
                 'mime_type' => $file->getClientMimeType(),
-                'file_size' => $fileSize,
+                'file_size' => $file->getSize(),
                 'is_profile_photo' => true, 
             ]);
 
             return $userPhoto;
         } catch (\Exception $e) {
             Log::error('Photo upload error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             throw new \Exception('Photo upload failed: ' . $e->getMessage());
         }
     }
@@ -84,10 +61,10 @@ class PhotoService
     public function deletePhoto(UserPhoto $photo)
     {
         try {
-            $fullPath = storage_path("app/public/{$photo->path}");
-            
-            if (file_exists($fullPath)) {
-                unlink($fullPath);
+            // Delete from Cloudinary
+            if ($photo->cloudinary_public_id) {
+                $uploadApi = new \Cloudinary\Api\Upload\UploadApi();
+                $uploadApi->destroy($photo->cloudinary_public_id);
             }
 
             $photo->delete();
@@ -100,16 +77,17 @@ class PhotoService
     public function deleteAllUserPhotos($user)
     {
         try {
-            $userPhotoDir = storage_path("app/public/user_photos/{$user->id}");
+            // Delete all photos from Cloudinary
+            $photos = UserPhoto::where('user_id', $user->id)->get();
             
-            if (file_exists($userPhotoDir)) {
-                $files = glob("{$userPhotoDir}/*");
-                foreach ($files as $file) {
-                    if (is_file($file)) {
-                        @unlink($file);
+            if ($photos->count() > 0) {
+                $uploadApi = new \Cloudinary\Api\Upload\UploadApi();
+                
+                foreach ($photos as $photo) {
+                    if ($photo->cloudinary_public_id) {
+                        $uploadApi->destroy($photo->cloudinary_public_id);
                     }
                 }
-                @rmdir($userPhotoDir);
             }
 
             UserPhoto::where('user_id', $user->id)->delete();

@@ -13,6 +13,7 @@ class UserPhoto extends Model
         'user_id',
         'filename',
         'path',
+        'cloudinary_public_id',
         'original_name',
         'mime_type',
         'file_size',
@@ -37,6 +38,12 @@ class UserPhoto extends Model
      */
     public function getPhotoUrlAttribute()
     {
+        // If using Cloudinary, path is already the full URL
+        if ($this->cloudinary_public_id) {
+            return $this->path;
+        }
+        
+        // Fallback to local storage
         return asset("storage/user_photos/{$this->user_id}/{$this->filename}");
     }
 

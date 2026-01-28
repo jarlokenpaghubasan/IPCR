@@ -167,6 +167,12 @@ class User extends Authenticatable
                 ->first();
             
             if ($profilePhoto && $profilePhoto->path) {
+                // If photo is on Cloudinary, return the URL directly
+                if ($profilePhoto->cloudinary_public_id) {
+                    return $profilePhoto->path;
+                }
+                
+                // For local storage, check if file exists
                 $fullPath = storage_path("app/public/{$profilePhoto->path}");
                 if (file_exists($fullPath)) {
                     return asset("storage/{$profilePhoto->path}");
@@ -191,6 +197,12 @@ class User extends Authenticatable
                 ->first();
             
             if ($profilePhoto && $profilePhoto->path) {
+                // If photo is on Cloudinary, it exists
+                if ($profilePhoto->cloudinary_public_id) {
+                    return true;
+                }
+                
+                // For local storage, check if file exists
                 $fullPath = storage_path("app/public/{$profilePhoto->path}");
                 return file_exists($fullPath);
             }
