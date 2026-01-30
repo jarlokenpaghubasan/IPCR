@@ -177,9 +177,16 @@ class User extends Authenticatable
                 ->first();
             
             if ($profilePhoto && $profilePhoto->path) {
+                // For Cloudinary, path is already the full URL
+                if (str_starts_with($profilePhoto->path, 'http')) {
+                    // Add cache-busting parameter to Cloudinary URL
+                    $timestamp = $profilePhoto->updated_at->timestamp;
+                    return $profilePhoto->path . '?v=' . $timestamp;
+                }
+                
+                // Legacy: For local storage (in case old photos exist)
                 $fullPath = storage_path("app/public/{$profilePhoto->path}");
                 if (file_exists($fullPath)) {
-                    // Add a cache-busting parameter using the updated_at timestamp
                     $timestamp = $profilePhoto->updated_at->timestamp;
                     return asset("storage/{$profilePhoto->path}?v={$timestamp}");
                 }
@@ -205,6 +212,12 @@ class User extends Authenticatable
                 ->first();
             
             if ($profilePhoto && $profilePhoto->path) {
+                // For Cloudinary URLs
+                if (str_starts_with($profilePhoto->path, 'http')) {
+                    return true;
+                }
+                
+                // Legacy: For local storage
                 $fullPath = storage_path("app/public/{$profilePhoto->path}");
                 return file_exists($fullPath);
             }

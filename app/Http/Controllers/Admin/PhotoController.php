@@ -34,12 +34,17 @@ class PhotoController extends Controller
 
             $photo = $this->photoService->uploadPhoto($request->file('photo'), $user);
 
+            // Determine photo URL (Cloudinary or local storage)
+            $photoUrl = str_starts_with($photo->path, 'http') 
+                ? $photo->path 
+                : asset("storage/{$photo->path}");
+
             return response()->json([
                 'success' => true,
                 'message' => 'Photo uploaded successfully',
                 'photo' => [
                     'id' => $photo->id,
-                    'url' => asset("storage/{$photo->path}"),
+                    'url' => $photoUrl,
                     'filename' => $photo->filename,
                 ],
             ]);
@@ -116,9 +121,14 @@ class PhotoController extends Controller
             $photos = $user->photos()->get();
 
             $photosData = $photos->map(function ($photo) {
+                // Determine photo URL (Cloudinary or local storage)
+                $photoUrl = str_starts_with($photo->path, 'http') 
+                    ? $photo->path 
+                    : asset("storage/{$photo->path}");
+                
                 return [
                     'id' => $photo->id,
-                    'url' => asset("storage/{$photo->path}"),
+                    'url' => $photoUrl,
                     'filename' => $photo->filename,
                     'is_profile' => $photo->is_profile_photo,
                 ];
