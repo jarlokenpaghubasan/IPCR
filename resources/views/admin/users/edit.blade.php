@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Edit User - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     @vite(['resources/css/admin_users_edit.css', 'resources/js/admin_users_edit.js'])
 </head>
 <body class="bg-gray-50">
@@ -317,6 +320,64 @@
                 </button>
                 <button type="button" onclick="confirmSetProfile()" class="px-4 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-2 text-sm">
                     <i class="fas fa-check"></i> Set as Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Crop Modal -->
+    <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-[60] p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full animate-scale-in">
+            <div class="bg-blue-50 border-b border-blue-200 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 rounded-full p-3">
+                        <i class="fas fa-crop-alt text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Crop & Resize Photo</h2>
+                        <p class="text-sm text-gray-600">Adjust the user's profile picture</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4">
+                <div class="mb-4">
+                    <div class="max-h-96 overflow-hidden bg-gray-100 rounded-lg flex items-center justify-center">
+                        <img id="cropImage" src="" alt="Crop preview" style="max-width: 100%; display: block;">
+                    </div>
+                </div>
+
+                <!-- Crop Controls -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button type="button" onclick="cropperZoomIn()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-search-plus mr-1"></i> Zoom In
+                    </button>
+                    <button type="button" onclick="cropperZoomOut()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-search-minus mr-1"></i> Zoom Out
+                    </button>
+                    <button type="button" onclick="cropperRotateLeft()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-undo mr-1"></i> Rotate Left
+                    </button>
+                    <button type="button" onclick="cropperRotateRight()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-redo mr-1"></i> Rotate Right
+                    </button>
+                    <button type="button" onclick="cropperReset()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-sync mr-1"></i> Reset
+                    </button>
+                </div>
+
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Drag to move, scroll to zoom. The cropped area will be the profile picture.
+                </p>
+            </div>
+
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+                <button type="button" onclick="closeCropModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                    Cancel
+                </button>
+                <button type="button" onclick="applyCropAndUpload()" class="px-4 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-2 text-sm">
+                    <i class="fas fa-check"></i> Crop & Upload
                 </button>
             </div>
         </div>

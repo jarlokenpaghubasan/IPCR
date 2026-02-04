@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Profile - IPCR Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     @vite(['resources/css/dashboard_faculty_profile.css', 'resources/js/dashboard_faculty_profile.js'])
 </head>
 <body class="bg-gray-50">
@@ -201,7 +205,7 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            <!-- Left Main Content (2/3 width) -->
+            <!-- Main Content (2/3 width) -->
             <div class="lg:col-span-2 space-y-4 sm:space-y-6">
                 <!-- Profile Header -->
                 <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
@@ -319,18 +323,18 @@
                 </div>
             </div>
 
-            <!-- Right Sidebar (1/3 width) -->
-            <div class="space-y-4 sm:space-y-6">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-4 sm:space-y-6">
                 <!-- Quick Actions -->
                 <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
                     <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Quick Actions</h3>
                     
                     <div class="space-y-2 sm:space-y-3">
-                        <button onclick="openChangePasswordModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition">
-                            Change Password
-                        </button>
-                        <button class="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition">
+                        <button onclick="openEditProfileModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition">
                             Edit Profile
+                        </button>
+                        <button onclick="openChangePasswordModal()" class="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition">
+                            Change Password
                         </button>
                     </div>
                 </div>
@@ -378,6 +382,65 @@
                         </div>
                     </div>
                 </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Crop Modal -->
+    <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-[60] p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full animate-scale-in">
+            <div class="bg-blue-50 border-b border-blue-200 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 rounded-full p-3">
+                        <i class="fas fa-crop-alt text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Crop & Resize Photo</h2>
+                        <p class="text-sm text-gray-600">Adjust your profile picture</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4">
+                <div class="mb-4">
+                    <div class="max-h-96 overflow-hidden bg-gray-100 rounded-lg flex items-center justify-center">
+                        <img id="cropImage" src="" alt="Crop preview" style="max-width: 100%; display: block;">
+                    </div>
+                </div>
+
+                <!-- Crop Controls -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button type="button" onclick="cropperZoomIn()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-search-plus mr-1"></i> Zoom In
+                    </button>
+                    <button type="button" onclick="cropperZoomOut()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-search-minus mr-1"></i> Zoom Out
+                    </button>
+                    <button type="button" onclick="cropperRotateLeft()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-undo mr-1"></i> Rotate Left
+                    </button>
+                    <button type="button" onclick="cropperRotateRight()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-redo mr-1"></i> Rotate Right
+                    </button>
+                    <button type="button" onclick="cropperReset()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                        <i class="fas fa-sync mr-1"></i> Reset
+                    </button>
+                </div>
+
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Drag to move, scroll to zoom. The cropped area will be your profile picture.
+                </p>
+            </div>
+
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+                <button type="button" onclick="closeCropModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                    Cancel
+                </button>
+                <button type="button" onclick="applyCropAndUpload()" class="px-4 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-2 text-sm">
+                    <i class="fas fa-check"></i> Crop & Upload
+                </button>
             </div>
         </div>
     </div>
@@ -476,6 +539,155 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                         Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full animate-scale-in my-8">
+            <div class="bg-blue-50 border-b border-blue-200 px-6 py-4 flex items-center gap-3">
+                <div class="bg-blue-100 rounded-full p-3">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">Edit Profile</h2>
+                    <p class="text-sm text-gray-600">Update your profile information</p>
+                </div>
+            </div>
+
+            <form id="editProfileForm" data-action="{{ route('faculty.profile.update') }}" class="space-y-6">
+                @csrf
+                @method('PATCH')
+                
+                <div class="px-6 py-4">
+                    <!-- Profile Picture Section -->
+                    <div class="mb-6 pb-6 border-b">
+                        <h3 class="text-base font-semibold text-gray-900 mb-4">Profile Picture</h3>
+                        
+                        <div class="flex items-center gap-4">
+                            <!-- Current Photo Preview -->
+                            <div class="flex-shrink-0">
+                                <div id="modalPhotoPreview" class="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-300 bg-gray-200 flex items-center justify-center">
+                                    @if(auth()->user()->hasProfilePhoto())
+                                        <img src="{{ auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <i class="fas fa-user text-gray-400 text-2xl"></i>
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            <!-- Upload Controls -->
+                            <div class="flex-1">
+                                <input type="file" id="modalPhotoInput" name="photo" accept="image/*" class="hidden">
+                                <button type="button" onclick="document.getElementById('modalPhotoInput').click()" class="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 transition text-sm font-medium">
+                                    <i class="fas fa-camera mr-2"></i>Choose Photo
+                                </button>
+                                <p class="text-xs text-gray-500 mt-2">Max 5MB • JPEG, PNG, GIF, WebP</p>
+                                <div id="modalUploadProgress" class="hidden mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div id="modalProgressBar" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">Uploading...</p>
+                                </div>
+                                <div id="modalUploadMessage" class="text-xs mt-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="mb-6 pb-6 border-b">
+                        <h3 class="text-base font-semibold text-gray-900 mb-4">Personal Information</h3>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Full Name -->
+                            <div>
+                                <label for="edit_name" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                                <input type="text" name="name" id="edit_name" value="{{ auth()->user()->name }}" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                       placeholder="Enter full name">
+                                <span class="text-red-500 text-xs hidden" id="edit_name_error"></span>
+                            </div>
+
+                            <!-- Email -->
+                            <div>
+                                <label for="edit_email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                <input type="email" name="email" id="edit_email" value="{{ auth()->user()->email }}" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                       placeholder="Enter email address">
+                                <span class="text-red-500 text-xs hidden" id="edit_email_error"></span>
+                            </div>
+
+                            <!-- Username -->
+                            <div>
+                                <label for="edit_username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                                <input type="text" name="username" id="edit_username" value="{{ auth()->user()->username }}" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                       placeholder="Enter username">
+                                <span class="text-red-500 text-xs hidden" id="edit_username_error"></span>
+                            </div>
+
+                            <!-- Phone -->
+                            <div>
+                                <label for="edit_phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <input type="text" name="phone" id="edit_phone" value="{{ auth()->user()->phone ?? '' }}"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                       placeholder="Enter phone number">
+                                <span class="text-red-500 text-xs hidden" id="edit_phone_error"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Information -->
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900 mb-4">Work Information</h3>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Department -->
+                            <div>
+                                <label for="edit_department_id" class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                <select name="department_id" id="edit_department_id"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                    <option value="">Select a department</option>
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}" {{ auth()->user()->department_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                    @endforeach
+                                </select>
+                                <span class="text-red-500 text-xs hidden" id="edit_department_id_error"></span>
+                            </div>
+
+                            <!-- Designation -->
+                            <div>
+                                <label for="edit_designation_id" class="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                                <select name="designation_id" id="edit_designation_id"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                    <option value="">Select a designation</option>
+                                    @foreach($designations as $desig)
+                                        <option value="{{ $desig->id }}" {{ auth()->user()->designation_id == $desig->id ? 'selected' : '' }}>{{ $desig->title }}</option>
+                                    @endforeach
+                                </select>
+                                <span class="text-red-500 text-xs hidden" id="edit_designation_id_error"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Success/Error Messages -->
+                    <div id="editProfileMessage" class="hidden rounded-lg p-3 text-sm mt-6"></div>
+                </div>
+
+                <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+                    <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Save Changes
                     </button>
                 </div>
             </form>

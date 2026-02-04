@@ -60,6 +60,26 @@ Route::patch('/faculty/password/change', [FacultyDashboardController::class, 'ch
     ->name('faculty.password.change')
     ->middleware(['auth', 'role:faculty']);
 
+Route::patch('/faculty/profile/update', [FacultyDashboardController::class, 'updateProfile'])
+    ->name('faculty.profile.update')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/profile/photo/upload', [FacultyDashboardController::class, 'uploadPhoto'])
+    ->name('faculty.profile.photo.upload')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::get('/faculty/profile/photos', [FacultyDashboardController::class, 'getPhotos'])
+    ->name('faculty.profile.photos')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/profile/photo/set-profile', [FacultyDashboardController::class, 'setProfilePhoto'])
+    ->name('faculty.profile.photo.set-profile')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::delete('/faculty/profile/photo/{id}', [FacultyDashboardController::class, 'deletePhoto'])
+    ->name('faculty.profile.photo.delete')
+    ->middleware(['auth', 'role:faculty']);
+
 // IPCR Template Routes
 Route::post('/faculty/ipcr/store', [IpcrTemplateController::class, 'store'])
     ->name('faculty.ipcr.store')

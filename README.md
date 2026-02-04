@@ -16,7 +16,18 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 - ⚡ **Vite Asset Bundling** with optimized CSS/JS
 - 🎨 **Tailwind CSS v4.0** for modern styling
 
-## 📦 Latest Updates (January 27, 2026)
+## 📦 Latest Updates (February 4, 2026)
+
+### ✨ Image Crop & Resize Feature (NEW!)
+- 🎬 **Interactive Crop Modal** - Draggable crop area with 1:1 aspect ratio constraint
+- 🔍 **Zoom Controls** - Zoom in/out with 0.1 increments for precise image positioning
+- 🔄 **Rotation Controls** - Rotate images left/right by 90° increments
+- ↩️ **Reset Functionality** - Reset image to default position with one click
+- 📸 **Live Preview** - Real-time preview of crop selection as you adjust
+- ✅ **Crop & Upload Workflow** - Seamless from selection → crop → upload to Cloudinary
+- 🎨 **Consistent UI** - Available in both Faculty Profile and Admin User Management
+- 🌟 **400x400px Output** - All cropped images automatically resized to 400x400 pixels
+- 📊 **Progress Tracking** - Visual progress bar during upload with success/error messaging
 
 ### Photo Management Enhancements
 - 📸 **Automatic Image Compression** - All uploaded photos are automatically compressed to reduce file size

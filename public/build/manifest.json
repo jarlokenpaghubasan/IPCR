@@ -81,7 +81,7 @@
     ]
   },
   "resources/js/admin_users_edit.js": {
-    "file": "assets/admin_users_edit-B0-x8EK0.js",
+    "file": "assets/admin_users_edit-COYbQegN.js",
     "name": "admin_users_edit",
     "src": "resources/js/admin_users_edit.js",
     "isEntry": true
@@ -123,7 +123,7 @@
     "isEntry": true
   },
   "resources/js/dashboard_faculty_profile.js": {
-    "file": "assets/dashboard_faculty_profile-4EvIeGVg.js",
+    "file": "assets/dashboard_faculty_profile-CxcUscjE.js",
     "name": "dashboard_faculty_profile",
     "src": "resources/js/dashboard_faculty_profile.js",
     "isEntry": true

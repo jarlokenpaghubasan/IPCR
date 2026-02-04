@@ -6,6 +6,10 @@ const uploadMessage = document.getElementById('uploadMessage');
 const uploadText = document.getElementById('uploadText');
 // userId is set in the blade template before this script loads
 
+// Crop functionality variables
+let cropper = null;
+let currentFile = null;
+
 let pendingDeleteForm = null;
 
 // Toggle sidebar visibility
@@ -49,15 +53,141 @@ window.addEventListener('load', () => {
     }
 });
 
-// Photo input change event
+// Photo input change event - open crop modal instead of uploading directly
 photoInput.addEventListener('change', function() {
     if (this.files.length > 0) {
         uploadText.textContent = this.files[0].name;
-        uploadPhoto(this.files[0]);
+        openCropModal(this.files[0]);
     }
 });
 
-// Upload photo via AJAX
+// Open crop modal
+window.openCropModal = function(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentFile = file;
+        const cropImage = document.getElementById('cropImage');
+        cropImage.src = e.target.result;
+        
+        // Show crop modal
+        document.getElementById('cropModal').classList.remove('hidden');
+        
+        // Initialize Cropper
+        if (cropper) {
+            cropper.destroy();
+        }
+        
+        cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            guides: true,
+            center: true,
+            responsive: true,
+            restore: true,
+            autoCropArea: 1,
+            background: true,
+        });
+    };
+    reader.readAsDataURL(file);
+};
+
+// Close crop modal
+window.closeCropModal = function() {
+    document.getElementById('cropModal').classList.add('hidden');
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    photoInput.value = '';
+    uploadText.textContent = 'Choose Photo';
+    currentFile = null;
+};
+
+// Cropper controls
+window.cropperZoomIn = function() {
+    if (cropper) cropper.zoom(0.1);
+};
+
+window.cropperZoomOut = function() {
+    if (cropper) cropper.zoom(-0.1);
+};
+
+window.cropperRotateLeft = function() {
+    if (cropper) cropper.rotate(-90);
+};
+
+window.cropperRotateRight = function() {
+    if (cropper) cropper.rotate(90);
+};
+
+window.cropperReset = function() {
+    if (cropper) cropper.reset();
+};
+
+// Apply crop and upload
+window.applyCropAndUpload = function() {
+    if (!cropper || !currentFile) return;
+    
+    const canvas = cropper.getCroppedCanvas({
+        maxWidth: 400,
+        maxHeight: 400,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+    });
+    
+    canvas.toBlob(function(blob) {
+        uploadCroppedPhoto(blob);
+    }, currentFile.type, 0.9);
+};
+
+// Upload cropped photo
+function uploadCroppedPhoto(blob) {
+    const formData = new FormData();
+    formData.append('photo', blob, 'cropped.jpg');
+    formData.append('_token', document.querySelector('input[name="_token"]').value);
+    
+    uploadProgress.classList.remove('hidden');
+    uploadMessage.innerHTML = '';
+    closeCropModal();
+    
+    // Simulate progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + '%';
+    }, 100);
+    
+    fetch(`/admin/panel/users/${userId}/photo/upload`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+            uploadProgress.classList.add('hidden');
+            progressBar.style.width = '0%';
+            
+            if (data.success) {
+                uploadMessage.innerHTML = '<span class="text-green-600 text-xs"><i class="fas fa-check-circle mr-1"></i>' + data.message + '</span>';
+                loadPhotos();
+            } else {
+                uploadMessage.innerHTML = '<span class="text-red-600 text-xs"><i class="fas fa-times-circle mr-1"></i>' + data.message + '</span>';
+            }
+        }, 500);
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        uploadProgress.classList.add('hidden');
+        progressBar.style.width = '0%';
+        uploadMessage.innerHTML = '<span class="text-red-600 text-xs"><i class="fas fa-times-circle mr-1"></i>Upload failed</span>';
+        console.error('Error:', error);
+    });
+}
+
+// Old uploadPhoto function - kept for backward compatibility but not used
 function uploadPhoto(file) {
     const formData = new FormData();
     formData.append('photo', file);
