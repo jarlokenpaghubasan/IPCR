@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Dashboard\FacultyDashboardController;
 use App\Http\Controllers\Dashboard\DeanDashboardController;
 use App\Http\Controllers\Dashboard\DirectorDashboardController;
@@ -36,6 +37,23 @@ Route::post('/login', [LoginController::class, 'login'])
 Route::post('/logout', [LoginController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
+
+// Password Reset Routes
+Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm'])
+    ->name('password.request')
+    ->middleware('guest');
+
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetCode'])
+    ->name('password.email')
+    ->middleware('guest');
+
+Route::get('/reset-password', [PasswordResetController::class, 'showResetPasswordForm'])
+    ->name('password.reset.form')
+    ->middleware('guest');
+
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
+    ->name('password.update')
+    ->middleware('guest');
 
 
 /*

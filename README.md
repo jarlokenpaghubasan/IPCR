@@ -5,7 +5,8 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 ## ✨ Features
 
 - 🔐 **Multi-Role Authentication** (Admin, Director, Dean, Faculty)
-- 📊 **Performance Dashboard** with charts and metrics
+- � **Password Reset via Email** with 6-digit verification codes
+- �📊 **Performance Dashboard** with charts and metrics
 - 📱 **Fully Responsive Design** (Mobile, Tablet, Desktop)
 - 🔔 **Notification System** with real-time updates
 - 👤 **User Profile Management** with photo uploads
@@ -18,7 +19,19 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 
 ## 📦 Latest Updates (February 4, 2026)
 
-### ✨ Image Crop & Resize Feature (NEW!)
+### 🔐 Password Reset Feature (NEW!)
+- 📧 **Email-based Password Reset** - Users can reset forgotten passwords via email verification
+- 🔢 **6-Digit Verification Code** - Secure random codes sent to user's email address
+- ⏱️ **15-Minute Expiration** - Reset codes automatically expire after 15 minutes for security
+- 📨 **Brevo SMTP Integration** - Production-ready email delivery through Brevo (formerly Sendinblue)
+- 🎨 **Custom Email Templates** - Branded emails with URS name and customized messaging
+- 🔒 **Secure Token Storage** - Hashed tokens stored in dedicated password_reset_tokens table
+- ✅ **Password Validation** - Minimum 8 characters with confirmation required
+- 🌐 **Accessible from Login** - "Forgot password?" link available on all login pages
+- 📱 **Responsive Forms** - Mobile-friendly forgot password and reset password pages
+- 🚀 **Free Tier Support** - 300 emails/day with Brevo's free plan
+
+### ✨ Image Crop & Resize Feature
 - 🎬 **Interactive Crop Modal** - Draggable crop area with 1:1 aspect ratio constraint
 - 🔍 **Zoom Controls** - Zoom in/out with 0.1 increments for precise image positioning
 - 🔄 **Rotation Controls** - Rotate images left/right by 90° increments

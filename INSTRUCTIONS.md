@@ -149,6 +149,11 @@ mysql -u root -e "CREATE DATABASE ipcr_system CHARACTER SET utf8mb4 COLLATE utf8
 php artisan migrate
 ```
 
+**Note:** This will create all necessary tables including:
+- users, departments, designations, user_roles
+- sessions, cache, password_reset_tokens
+- user_photos, ipcr_templates, ipcr_submissions
+
 ---
 
 ### Step 6️⃣ Seed Database

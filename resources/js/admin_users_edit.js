@@ -335,3 +335,19 @@ window.confirmDeletePhoto = function() {
 
 // Load photos on page load
 loadPhotos();
+// Toggle password visibility
+window.togglePasswordVisibility = function(fieldId) {
+    const input = document.getElementById(fieldId);
+    const eyeOpen = document.getElementById(fieldId + '_eye_open');
+    const eyeClosed = document.getElementById(fieldId + '_eye_closed');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        eyeOpen.classList.add('hidden');
+        eyeClosed.classList.remove('hidden');
+    } else {
+        input.type = 'password';
+        eyeOpen.classList.remove('hidden');
+        eyeClosed.classList.add('hidden');
+    }
+};

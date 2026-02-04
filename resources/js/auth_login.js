@@ -1,4 +1,4 @@
-        function togglePasswordVisibility() {
+        window.togglePasswordVisibility = function() {
             const passwordField = document.getElementById('password');
             const toggleBtn = document.querySelector('.toggle-btn i');
 

@@ -140,6 +140,8 @@ body {
     font-size: 1rem;
     padding: 0.25rem;
     transition: color 0.3s ease;
+    z-index: 10;
+    pointer-events: auto;
 }
 
 .password-toggle .toggle-btn:hover {

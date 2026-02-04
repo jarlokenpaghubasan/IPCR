@@ -40,23 +40,46 @@ DB_PASSWORD=
 
 ---
 
-## 📧 Mail Service (Optional)
+## 📧 Brevo Email Service (Password Reset Feature)
 
-If you plan to send emails (password resets, notifications):
+**Currently Configured for Production:**
 
 ```env
 MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=your_username
-MAIL_PASSWORD=your_password
-MAIL_FROM_ADDRESS="noreply@ipcr.system"
-MAIL_FROM_NAME="IPCR System"
+MAIL_HOST=smtp-relay.brevo.com
+MAIL_PORT=587
+MAIL_USERNAME=your_brevo_login@smtp-brevo.com
+MAIL_PASSWORD=your_brevo_smtp_key_here
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="your_verified_email@gmail.com"
+MAIL_FROM_NAME="University of Rizal System Binangonan"
 ```
 
-**Recommended Services:**
-- [Mailtrap](https://mailtrap.io) - For testing emails
-- [SendGrid](https://sendgrid.com) - For production
+**Brevo Account Details:**
+- Dashboard: https://www.brevo.com
+- Login: (Your Brevo login email)
+- Verified Sender: (Your verified email for URSIPCR)
+- Free Tier: 300 emails/day
+- SMTP Server: smtp-relay.brevo.com
+
+**How to Get Your SMTP Key:**
+1. Log in to Brevo dashboard
+2. Go to SMTP & API section
+3. Generate a new SMTP key
+4. Add verified sender email in Senders section
+5. Update .env file with your credentials
+
+**Password Reset Flow:**
+1. User clicks "Forgot password?" on login page
+2. System generates 6-digit code (valid 15 minutes)
+3. Code sent via email through Brevo
+4. User enters code + new password
+5. Password successfully reset
+
+**Alternative Services:**
+- [Mailtrap](https://mailtrap.io) - For testing emails (500/month free)
+- [Gmail SMTP](https://mail.google.com) - 500 emails/day (requires App Password)
+- [SendGrid](https://sendgrid.com) - 100 emails/day free
 - [Mailgun](https://mailgun.com) - Alternative option
 
 ---
