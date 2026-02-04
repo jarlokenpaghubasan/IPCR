@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_roles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('role', ['admin', 'director', 'dean', 'faculty'])->index();
+            $table->enum('role', ['admin', 'directorUser', 'deanUser', 'facultyUser'])->index();
             $table->timestamps();
             
             // Prevent duplicate role assignments

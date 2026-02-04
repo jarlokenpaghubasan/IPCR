@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\UserRole;
 
 class User extends Authenticatable
 {
@@ -67,7 +68,17 @@ class User extends Authenticatable
      */
     public function roles()
     {
-        return $this->userRoles()->pluck('role')->toArray();
+        // Map database enum values back to simple role names
+        $reverseMap = [
+            'admin' => 'admin',
+            'directorUser' => 'director',
+            'deanUser' => 'dean',
+            'facultyUser' => 'faculty',
+        ];
+        
+        return array_map(function($role) use ($reverseMap) {
+            return $reverseMap[$role] ?? $role;
+        }, $this->userRoles()->pluck('role')->toArray());
     }
 
     /**
@@ -97,10 +108,20 @@ class User extends Authenticatable
      */
     public function assignRole($role)
     {
+        // Map simple role names to database enum values
+        $roleMap = [
+            'admin' => 'admin',
+            'director' => 'directorUser',
+            'dean' => 'deanUser',
+            'faculty' => 'facultyUser',
+        ];
+        
+        $dbRole = $roleMap[$role] ?? $role;
+        
         if (!$this->hasRole($role)) {
             UserRole::create([
                 'user_id' => $this->id,
-                'role' => $role,
+                'role' => $dbRole,
             ]);
         }
     }
@@ -110,8 +131,18 @@ class User extends Authenticatable
      */
     public function removeRole($role)
     {
+        // Map simple role names to database enum values
+        $roleMap = [
+            'admin' => 'admin',
+            'director' => 'directorUser',
+            'dean' => 'deanUser',
+            'faculty' => 'facultyUser',
+        ];
+        
+        $dbRole = $roleMap[$role] ?? $role;
+        
         UserRole::where('user_id', $this->id)
-            ->where('role', $role)
+            ->where('role', $dbRole)
             ->delete();
     }
 

@@ -295,10 +295,14 @@
                                     $deanUser = $deptId
                                         ? \App\Models\User::where('department_id', $deptId)
                                             ->whereHas('userRoles', function ($query) {
-                                                $query->where('role', 'dean');
+                                                $query->where('role', 'deanUser');
                                             })
                                             ->first()
                                         : null;
+                                    
+                                    $directorUser = \App\Models\User::whereHas('userRoles', function ($query) {
+                                        $query->where('role', 'directorUser');
+                                    })->first();
                                 @endphp
                                 <div class="pt-2 border-t border-gray-200">
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -308,7 +312,7 @@
                                         </div>
                                         <div>
                                             <label class="block text-xs font-semibold text-gray-500">Approved By:</label>
-                                            <p class="text-sm font-semibold text-gray-900">TBD</p>
+                                            <p class="text-sm font-semibold text-gray-900">{{ $directorUser ? $directorUser->name : 'N/A' }}</p>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-semibold text-gray-500">Noted By:</label>
@@ -349,7 +353,7 @@
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Approved By:</span>
-                                        <span class="font-semibold text-gray-900">TBD</span>
+                                        <span class="font-semibold text-gray-900">{{ $directorUser ? $directorUser->name : 'N/A' }}</span>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Noted By:</span>
