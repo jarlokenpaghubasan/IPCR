@@ -148,6 +148,79 @@
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        @php
+            // Metrics data - can be modified or fetched from database
+            // Use null or 0 to show N/A in the template
+            $strategicObjectives = ['completed' => 0, 'total' => 0, 'percentage' => 0];
+            $coreFunctions = ['completed' => 0, 'total' => 0, 'percentage' => 0];
+            $supportFunctions = ['completed' => 0, 'total' => 0, 'percentage' => 0];
+
+            // IPCR Progress
+            $ipcrProgress = ['accomplished' => 100, 'percentage' => 0];
+
+            // Expected Targets
+            $expectedTargets = [
+                ['percentage' => 0, 'title' => 'SO I. PROMOTING ACCESS TO QUALITY EDUCATION'],
+                ['percentage' => 0, 'title' => 'SO II. PRODUCING COMPETENT AND COMPETITIVE GRADUATES'],
+                ['percentage' => 0, 'title' => 'SO III. ENHANCING STUDENT DEVELOPMENT SERVICES'],
+                ['percentage' => 0, 'title' => 'SO IV. ENHANCING COMPETENCIES AND PROFESSIONALISM OF FACULTY AND STAFF'],
+                ['percentage' => 0, 'title' => 'SO VI. IMPROVING THE QUALITY, RELEVANCE AND RESPONSIVENESS'],
+            ];
+
+            // Default to 0 when values are null/empty
+            if (empty($strategicObjectives)) {
+                $strategicObjectives = ['completed' => 0, 'total' => 0, 'percentage' => 0];
+            }
+            if (empty($coreFunctions)) {
+                $coreFunctions = ['completed' => 0, 'total' => 0, 'percentage' => 0];
+            }
+            if (empty($supportFunctions)) {
+                $supportFunctions = ['completed' => 0, 'total' => 0, 'percentage' => 0];
+            }
+            if (empty($ipcrProgress)) {
+                $ipcrProgress = ['accomplished' => 0, 'percentage' => 0];
+            }
+            if (empty($expectedTargets)) {
+                $expectedTargets = [
+                    ['percentage' => 0, 'title' => 'N/A'],
+                ];
+            }
+
+            $hasMetricsData = function ($data) {
+                return !empty($data) && isset($data['completed'], $data['total'], $data['percentage']);
+            };
+
+            $strategicObjectivesText = $hasMetricsData($strategicObjectives)
+                ? ($strategicObjectives['completed'] . '/' . $strategicObjectives['total'])
+                : 'N/A';
+            $strategicObjectivesPercent = $hasMetricsData($strategicObjectives)
+                ? ($strategicObjectives['percentage'] . '%')
+                : 'N/A';
+
+            $coreFunctionsText = $hasMetricsData($coreFunctions)
+                ? ($coreFunctions['completed'] . '/' . $coreFunctions['total'])
+                : 'N/A';
+            $coreFunctionsPercent = $hasMetricsData($coreFunctions)
+                ? ($coreFunctions['percentage'] . '%')
+                : 'N/A';
+
+            $supportFunctionsText = $hasMetricsData($supportFunctions)
+                ? ($supportFunctions['completed'] . '/' . $supportFunctions['total'])
+                : 'N/A';
+            $supportFunctionsPercent = $hasMetricsData($supportFunctions)
+                ? ($supportFunctions['percentage'] . '%')
+                : 'N/A';
+
+            $ipcrAccomplishedText = (!empty($ipcrProgress) && isset($ipcrProgress['accomplished']))
+                ? ($ipcrProgress['accomplished'] . '%')
+                : 'N/A';
+            $ipcrPercentageText = (!empty($ipcrProgress) && isset($ipcrProgress['percentage']))
+                ? ($ipcrProgress['percentage'] . '%')
+                : 'N/A';
+            $ipcrPercentageValue = (!empty($ipcrProgress) && isset($ipcrProgress['percentage']))
+                ? $ipcrProgress['percentage']
+                : 0;
+        @endphp
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Left Main Content (2/3 width) -->
             <div class="lg:col-span-2 space-y-4 sm:space-y-6">
@@ -165,8 +238,8 @@
                             <div class="sm:block">
                                 <p class="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-3 whitespace-nowrap">Strategic Objectives</p>
                                 <div class="flex items-center sm:items-end justify-between gap-2">
-                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">2/13</span>
-                                    <div class="text-xl sm:text-2xl font-bold text-red-500">15%</div>
+                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $strategicObjectivesText }}</span>
+                                    <div class="text-xl sm:text-2xl font-bold text-red-500">{{ $strategicObjectivesPercent }}</div>
                                 </div>
                             </div>
                         </div>
@@ -176,8 +249,8 @@
                             <div class="sm:block">
                                 <p class="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-3 whitespace-nowrap">Core Functions</p>
                                 <div class="flex items-center sm:items-end justify-between gap-2">
-                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">1/12</span>
-                                    <div class="text-xl sm:text-2xl font-bold text-red-500">8%</div>
+                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $coreFunctionsText }}</span>
+                                    <div class="text-xl sm:text-2xl font-bold text-red-500">{{ $coreFunctionsPercent }}</div>
                                 </div>
                             </div>
                         </div>
@@ -187,8 +260,8 @@
                             <div class="sm:block">
                                 <p class="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-3 whitespace-nowrap">Support Functions</p>
                                 <div class="flex items-center sm:items-end justify-between gap-2">
-                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">1/4</span>
-                                    <div class="text-xl sm:text-2xl font-bold text-orange-500">25%</div>
+                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $supportFunctionsText }}</span>
+                                    <div class="text-xl sm:text-2xl font-bold text-orange-500">{{ $supportFunctionsPercent }}</div>
                                 </div>
                             </div>
                         </div>
@@ -203,13 +276,13 @@
                     <div class="space-y-2">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xs sm:text-sm text-gray-600">Accomplished Goal</span>
-                            <span class="text-xs sm:text-sm font-semibold text-gray-900">100%</span>
+                            <span class="text-xs sm:text-sm font-semibold text-gray-900">{{ $ipcrAccomplishedText }}</span>
                         </div>
                         <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: 13%;"></div>
+                            <div class="progress-bar-fill" style="width: {{ $ipcrPercentageValue }}%;"></div>
                         </div>
                         <div class="mt-2">
-                            <span class="text-xs sm:text-sm font-bold text-indigo-600">13%</span>
+                            <span class="text-xs sm:text-sm font-bold text-indigo-600">{{ $ipcrPercentageText }}</span>
                         </div>
                     </div>
                 </div>
@@ -229,36 +302,14 @@
                         <div class="order-1 md:order-2">
                             <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Expected Target</h3>
                             <div class="space-y-2 sm:space-y-3">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                    <div class="flex-1">
-                                        <p class="text-xs sm:text-sm"><span class="font-bold text-purple-600">90%</span> - SO I. PROMOTING ACCESS TO QUALITY EDUCATION</p>
+                                @foreach($expectedTargets as $target)
+                                    <div class="flex items-start space-x-2">
+                                        <div class="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                        <div class="flex-1">
+                                            <p class="text-xs sm:text-sm"><span class="font-bold text-purple-600">{{ $target['percentage'] }}%</span> - {{ $target['title'] }}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                    <div class="flex-1">
-                                        <p class="text-xs sm:text-sm"><span class="font-bold text-purple-600">85%</span> - SO II. PRODUCING COMPETENT AND COMPETITIVE GRADUATES</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                    <div class="flex-1">
-                                        <p class="text-xs sm:text-sm"><span class="font-bold text-purple-600">90%</span> - SO III. ENHANCING STUDENT DEVELOPMENT SERVICES</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                    <div class="flex-1">
-                                        <p class="text-xs sm:text-sm"><span class="font-bold text-purple-600">93%</span> - SO IV. ENHANCING COMPETENCIES AND PROFESSIONALISM OF FACULTY AND STAFF</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                    <div class="flex-1">
-                                        <p class="text-xs sm:text-sm"><span class="font-bold text-purple-600">85%</span> - SO VI. IMPROVING THE QUALITY, RELEVANCE AND RESPONSIVENESS</p>
-                                    </div>
-                                </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>

@@ -15,11 +15,11 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        if (!auth()->check()) {
+        if (!auth()->guard('web')->check()) {
             return redirect()->route('login.selection');
         }
 
-        if (auth()->user()->role !== $role) {
+        if (auth()->guard('web')->user()->role !== $role) {
             return redirect()->route('login.selection')->withErrors(['message' => 'Unauthorized access']);
         }
 
