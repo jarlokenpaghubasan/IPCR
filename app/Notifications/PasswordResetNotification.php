@@ -46,7 +46,7 @@ class PasswordResetNotification extends Notification
             ->line('If you did not request a password reset, please ignore this email. Your password will remain unchanged.')
             ->salutation('Best regards,')
             ->salutation('University of Rizal System - Binangonan Campus')
-            ->salutation('IPCR System Team');
+            ->salutation('The John James');
     }
 
     /**
