@@ -14,4 +14,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'rm -f public/storage; php artisan storage:link; ls -la public/ | grep storage; ls -la storage/app/ | grep public; php artisan serve --host=0.0.0.0 --port=$PORT'
+cmd = 'rm -f public/storage; php artisan storage:link; ls -la public/ | grep storage; ls -la storage/app/ | grep public; php artisan db:seed --force; php artisan serve --host=0.0.0.0 --port=$PORT'
