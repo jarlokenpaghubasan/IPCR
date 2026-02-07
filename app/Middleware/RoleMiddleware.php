@@ -19,8 +19,12 @@ class RoleMiddleware
             return redirect()->route('login.selection');
         }
 
-        if (auth()->guard('web')->user()->role !== $role) {
-            return redirect()->route('login.selection')->withErrors(['message' => 'Unauthorized access']);
+        // Allow multiple roles separated by comma (e.g., 'role:faculty,admin')
+        $allowedRoles = explode(',', str_replace(' ', '', $role));
+        $userRole = auth()->guard('web')->user()->role;
+
+        if (!in_array($userRole, $allowedRoles)) {
+            abort(403, 'You do not have permission to access this resource');
         }
 
         return $next($request);

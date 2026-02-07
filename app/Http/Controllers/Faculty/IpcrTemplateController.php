@@ -10,6 +10,30 @@ use Illuminate\Support\Facades\Auth;
 class IpcrTemplateController extends Controller
 {
     /**
+     * Get all templates for the current user.
+     */
+    public function index(Request $request)
+    {
+        try {
+            $templates = IpcrTemplate::where('user_id', Auth::id())
+                ->select(['id', 'title', 'school_year', 'semester', 'created_at'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'templates' => $templates,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching templates: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch templates',
+            ], 500);
+        }
+    }
+
+    /**
      * Store a newly created IPCR template.
      */
     public function store(Request $request)

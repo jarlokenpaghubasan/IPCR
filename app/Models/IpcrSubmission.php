@@ -13,12 +13,16 @@ class IpcrSubmission extends Model
         'school_year',
         'semester',
         'table_body_html',
+        'so_count_json',
         'status',
+        'is_active',
         'submitted_at',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
+        'so_count_json' => 'array',
+        'is_active' => 'boolean',
     ];
 
     public function user(): BelongsTo

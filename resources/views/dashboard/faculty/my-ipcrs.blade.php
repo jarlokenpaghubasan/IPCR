@@ -510,10 +510,12 @@
                             <!-- Action Buttons -->
                             <div class="px-2 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-300 sticky bottom-0 z-10">
                                 <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-2 sm:gap-3">
-                                    <button type="button" onclick="saveCopyFromPreview()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700">Save Copy</button>
+                                    <button type="button" id="updateSubmissionBtn" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-green-600 hover:bg-green-700 hidden">Update Submission</button>
+                                    <button type="button" id="saveCopyBtn" onclick="saveCopyFromPreview()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700">Edit IPCR</button>
                                     <button type="button" onclick="closeTemplatePreview()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Close</button>
                                 </div>
                                 <input type="hidden" id="currentPreviewTemplateId" value="">
+                                <input type="hidden" id="currentSubmissionIdToUpdate" value="">
                             </div>
                         </div>
                     </div>
@@ -598,7 +600,7 @@
                     <!-- Previous Submissions and Saved Copy Section -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8">
                         <!-- Previous IPCR Submissions -->
-                        <div>
+                        <div id="previousSubmissionsSection">
                             <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Previous IPCR Submissions</h3>
                             <div class="space-y-2 sm:space-y-3">
                                 <p class="text-sm text-gray-500 text-center py-6">No submissions yet. Create and submit an IPCR to see them here.</p>
@@ -628,27 +630,14 @@
                                 <button onclick="deleteTemplate({{ $template->id }})" class="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition" title="Delete template">
                                     <i class="fas fa-trash text-sm"></i>
                                 </button>
-                                <div class="mb-3 pr-8 flex items-start gap-3">
-                                    <div class="pt-1">
-                                        <input type="radio" 
-                                               name="activeTemplate" 
-                                               id="template_{{ $template->id }}" 
-                                               value="{{ $template->id }}"
-                                               {{ $template->is_active ? 'checked' : '' }}
-                                               onchange="setActiveTemplate({{ $template->id }})"
-                                               class="w-4 h-4 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                                    </div>
-                                    <div class="flex-1">
-                                        <label for="template_{{ $template->id }}" class="cursor-pointer">
-                                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ $template->title }}</p>
-                                            @if($template->school_year && $template->semester)
-                                                <p class="text-xs sm:text-sm text-gray-600">{{ $template->school_year }} • {{ $template->semester }}</p>
-                                            @else
-                                                <p class="text-xs sm:text-sm text-gray-600">{{ $template->period }}</p>
-                                            @endif
-                                            <p class="text-xs text-gray-500">Saved on {{ $template->created_at->format('M d, Y') }}</p>
-                                        </label>
-                                    </div>
+                                <div class="mb-3 pr-8">
+                                    <p class="text-sm sm:text-base font-semibold text-gray-900">{{ $template->title }}</p>
+                                    @if($template->school_year && $template->semester)
+                                        <p class="text-xs sm:text-sm text-gray-600">{{ $template->school_year }} • {{ $template->semester }}</p>
+                                    @else
+                                        <p class="text-xs sm:text-sm text-gray-600">{{ $template->period }}</p>
+                                    @endif
+                                    <p class="text-xs text-gray-500">Saved on {{ $template->created_at->format('M d, Y') }}</p>
                                 </div>
                                 <div class="flex gap-2 ml-7">
                                     @if($template->table_body_html)
@@ -678,6 +667,7 @@
                         $currentYear = now()->year;
                         $currentSchoolYear = $currentYear . '-' . ($currentYear + 1);
                         $currentSemester = now()->month <= 6 ? 'First Semester' : 'Second Semester';
+                        $hasSubmission = isset($submissions) && count($submissions) > 0;
                     @endphp
                     <div class="space-y-2 text-sm text-gray-700">
                         <div class="flex items-center justify-between">
@@ -689,9 +679,40 @@
                             <span class="font-semibold text-gray-900">{{ $currentSchoolYear }}</span>
                         </div>
                     </div>
-                    <button type="button" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded" onclick="openSubmitIpcrModal()">
-                        Submit
-                    </button>
+                    @if($hasSubmission)
+                        <button type="button" disabled class="mt-4 w-full bg-gray-400 text-white text-sm font-semibold py-2 rounded cursor-not-allowed opacity-75">
+                            ✓ Submitted
+                        </button>
+                    @else
+                        <button type="button" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded" onclick="openSubmitIpcrModal()">
+                            Submit
+                        </button>
+                    @endif
+                    
+                    <!-- Submitted IPCRs List -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <h4 class="text-sm font-bold text-gray-900 mb-3">Submitted IPCRs</h4>
+                        @forelse($submissions ?? [] as $submission)
+                            <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-900 mb-1">{{ $submission->title }}</p>
+                                <p class="text-xs text-gray-600">{{ $submission->school_year }} • {{ $submission->semester }}</p>
+                                <p class="text-xs text-gray-500 mb-2">Submitted: {{ $submission->submitted_at->format('M d, Y') }}</p>
+                                <div class="flex gap-2">
+                                    <button onclick="viewSubmission({{ $submission->id }})" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
+                                        View & Edit
+                                    </button>
+                                    <button onclick="deleteSubmission({{ $submission->id }})" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
+                                        Delete
+                                    </button>
+                                    <span class="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                                        {{ ucfirst($submission->status) }}
+                                    </span>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-500 text-center py-4">No submissions yet</p>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>
@@ -710,9 +731,9 @@
             </div>
             <div class="px-6 py-4 space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Select Saved Copy</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Select Template</label>
                     <select id="submitSavedCopySelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">No saved copies found</option>
+                        <option value="">No templates found</option>
                     </select>
                 </div>
             </div>
@@ -943,7 +964,7 @@
         }
 
         function openSubmitIpcrModal() {
-            populateSubmitSavedCopies();
+            populateSubmitTemplates();
             const modal = document.getElementById('submitIpcrModal');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -957,41 +978,60 @@
             }
         }
 
-        async function populateSubmitSavedCopies() {
+        async function populateSubmitTemplates() {
             const select = document.getElementById('submitSavedCopySelect');
             if (!select) return;
 
-            const savedCopies = await getSavedCopies();
+            const templates = await getTemplates();
             select.innerHTML = '';
 
-            if (savedCopies.length === 0) {
+            if (templates.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'No saved copies found';
+                option.textContent = 'No templates found';
                 select.appendChild(option);
                 select.disabled = true;
                 return;
             }
 
             select.disabled = false;
-            savedCopies.forEach(copy => {
+            templates.forEach(template => {
                 const option = document.createElement('option');
-                option.value = copy.id;
-                option.textContent = `${copy.title} • ${copy.school_year} • ${copy.semester}`;
+                option.value = template.id;
+                option.textContent = `${template.title} • ${template.school_year} • ${template.semester}`;
                 select.appendChild(option);
             });
+        }
+
+        async function getTemplates() {
+            try {
+                const response = await fetch('/faculty/ipcr/templates', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                return data.success ? data.templates : [];
+            } catch (error) {
+                console.error('Error fetching templates:', error);
+                return [];
+            }
         }
 
         async function submitSelectedCopy() {
             const select = document.getElementById('submitSavedCopySelect');
             const selectedId = select ? select.value : '';
             if (!selectedId) {
-                showAlertModal('warning', 'Select a Copy', 'Please select a saved copy to submit.');
+                showAlertModal('warning', 'Select a Template', 'Please select a template to submit.');
                 return;
             }
             
             try {
-                const response = await fetch(`{{ url('faculty/ipcr/saved-copies') }}/${selectedId}`, {
+                console.log('Fetching template:', selectedId);
+                const response = await fetch(`/faculty/ipcr/templates/${selectedId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1000,37 +1040,61 @@
                     }
                 });
                 
+                console.log('Template response status:', response.status);
                 const data = await response.json();
+                console.log('Template data:', data);
+                
                 if (!data.success) {
-                    showAlertModal('error', 'Not Found', 'Selected saved copy could not be found.');
+                    showAlertModal('error', 'Not Found', 'Selected template could not be found.');
                     return;
                 }
                 
-                const item = data.savedCopy;
+                const item = data.template;
+                const soCounts = item.so_count_json || { strategic_objectives: 0, core_functions: 0, support_functions: 0 };
+                
+                console.log('Item from template:', item);
+                console.log('Table body HTML:', item.table_body_html);
+                console.log('SO Counts:', soCounts);
+                
+                // Use FormData instead of JSON to avoid HTML encoding issues
+                const formData = new FormData();
+                formData.append('title', item.title);
+                formData.append('school_year', item.school_year);
+                formData.append('semester', item.semester);
+                formData.append('table_body_html', item.table_body_html || '');
+                formData.append('so_count_json', JSON.stringify(soCounts));
+                
+                console.log('FormData entries:');
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ':', pair[1].substring(0, 100));
+                }
 
                 const submitResponse = await fetch('/faculty/ipcr/submissions', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        title: item.title,
-                        school_year: item.school_year,
-                        semester: item.semester,
-                        table_body_html: item.table_body_html || ''
-                    })
+                    body: formData
                 });
 
+                console.log('Submit response status:', submitResponse.status);
                 if (!submitResponse.ok) {
                     const submitData = await submitResponse.json().catch(() => ({}));
+                    console.error('Submit failed:', submitData);
                     throw new Error(submitData.message || 'Failed to submit IPCR');
                 }
+                
+                const submitResult = await submitResponse.json();
+                console.log('Submit success:', submitResult);
 
                 closeSubmitIpcrModal();
-                showAlertModal('success', 'Submitted', 'Your IPCR has been submitted successfully.');
+                showAlertModal('success', 'Submitted', 'Your IPCR has been submitted successfully.', function() {
+                    // Reload page to show the new submission
+                    window.location.reload();
+                });
             } catch (error) {
+                console.error('Submit error:', error);
                 showAlertModal('error', 'Submit Failed', error.message || 'Failed to submit IPCR.');
             }
         }
@@ -1114,6 +1178,44 @@
                 }
             });
             
+            return counts;
+        }
+
+        function extractSoCountsFromHtml(tableBodyHtml) {
+            if (!tableBodyHtml || typeof tableBodyHtml !== 'string') {
+                return { strategic_objectives: 0, core_functions: 0, support_functions: 0 };
+            }
+
+            const container = document.createElement('tbody');
+            container.innerHTML = tableBodyHtml;
+
+            let counts = {
+                strategic_objectives: 0,
+                core_functions: 0,
+                support_functions: 0
+            };
+
+            let currentSection = null;
+            const rows = container.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const className = row.className || '';
+
+                if (className.includes('bg-green-100')) {
+                    currentSection = 'strategic_objectives';
+                } else if (className.includes('bg-purple-100')) {
+                    currentSection = 'core_functions';
+                } else if (className.includes('bg-orange-100')) {
+                    currentSection = 'support_functions';
+                } else if (className.includes('bg-gray-100') && row.querySelector('td[colspan]')) {
+                    currentSection = null;
+                }
+
+                if (className.includes('bg-blue-100') && currentSection) {
+                    counts[currentSection]++;
+                }
+            });
+
             return counts;
         }
 
@@ -1367,6 +1469,21 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             renderSavedCopies();
+            
+            // Setup update button event listener
+            const updateBtn = document.getElementById('updateSubmissionBtn');
+            if (updateBtn) {
+                updateBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const submissionId = document.getElementById('currentSubmissionIdToUpdate').value;
+                    if (submissionId) {
+                        console.log('Update button clicked, submission ID:', submissionId);
+                        updateSubmissionData(submissionId);
+                    } else {
+                        console.error('No submission ID found');
+                    }
+                });
+            }
         });
 
         function addSectionHeader(headerText = '', isEditable = true) {
@@ -2049,6 +2166,28 @@
         }
         
         function closeTemplatePreview() {
+            // Check if we're in edit mode with unsaved changes
+            const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+            if (submissionIdField && submissionIdField.value) {
+                // Check if table has been modified
+                const tableBody = document.getElementById('templatePreviewTableBody');
+                if (tableBody && tableBody.innerHTML.trim() !== '') {
+                    if (!confirm('You have unsaved changes. Are you sure you want to close without saving?')) {
+                        return;
+                    }
+                }
+                submissionIdField.value = '';
+            }
+            
+            // Make table cells non-editable when closing
+            const cells = document.getElementById('templatePreviewTableBody')?.querySelectorAll('td');
+            if (cells) {
+                cells.forEach(cell => {
+                    cell.removeAttribute('contenteditable');
+                    cell.style.cursor = 'auto';
+                });
+            }
+            
             document.getElementById('templatePreviewModal').classList.add('hidden');
         }
         
@@ -2327,6 +2466,34 @@
             });
         }
 
+        function setActiveSubmission(submissionId) {
+            fetch(`{{ url('faculty/ipcr/submissions') }}/${submissionId}/set-active`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Submission set as active');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                } else {
+                    showAlertModal('error', 'Error', data.message || 'Failed to set submission as active');
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlertModal('error', 'Error', 'An error occurred while setting the active submission.');
+                location.reload();
+            });
+        }
+
         function saveCopyFromTemplate(templateId) {
             fetch(`{{ url('faculty/ipcr/templates') }}/${templateId}/save-copy`, {
                 method: 'POST',
@@ -2355,12 +2522,249 @@
         }
 
         function saveCopyFromPreview() {
+            console.log('saveCopyFromPreview called');
+            
+            // Check if we're updating a submission
+            const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+            console.log('Submission ID field:', submissionIdField);
+            console.log('Submission ID value:', submissionIdField ? submissionIdField.value : 'NOT FOUND');
+            
+            if (submissionIdField && submissionIdField.value) {
+                console.log('Calling updateSubmissionData with ID:', submissionIdField.value);
+                updateSubmissionData(submissionIdField.value);
+                return;
+            }
+
             const templateIdField = document.getElementById('currentPreviewTemplateId');
             if (!templateIdField || !templateIdField.value) {
                 showAlertModal('error', 'Error', 'No template selected');
                 return;
             }
             saveCopyFromTemplate(templateIdField.value);
+        }
+
+        function updateSubmissionData(submissionId) {
+            console.log('=== updateSubmissionData called ===');
+            console.log('Submission ID:', submissionId);
+            
+            const tableBody = document.getElementById('templatePreviewTableBody');
+            
+            if (!tableBody) {
+                showAlertModal('error', 'Error', 'Table body not found');
+                return;
+            }
+            
+            // IMPORTANT: Sync all input/textarea values before capturing HTML
+            console.log('Syncing all field values...');
+            const allCells = tableBody.querySelectorAll('td');
+            let syncCount = 0;
+            allCells.forEach(cell => {
+                // Sync all textareas - set their textContent to their current value
+                const textareas = cell.querySelectorAll('textarea');
+                textareas.forEach((textarea) => {
+                    const currentValue = textarea.value;
+                    textarea.textContent = currentValue;
+                    textarea.innerHTML = currentValue;
+                    syncCount++;
+                    console.log(`Synced textarea (${currentValue.length} chars): "${currentValue.substring(0, 50)}"`);
+                });
+                
+                // Sync all regular inputs (not hidden) - ensure their value attribute is current
+                const visibleInputs = cell.querySelectorAll('input:not([type="hidden"])');
+                visibleInputs.forEach((input) => {
+                    const currentValue = input.value;
+                    input.setAttribute('value', currentValue);
+                    syncCount++;
+                    console.log(`Synced input: "${currentValue}"`);
+                });
+                
+                // Sync hidden inputs with their associated div content
+                const hiddenInputs = cell.querySelectorAll('input[type="hidden"]');
+                const divs = cell.querySelectorAll('div');
+                
+                hiddenInputs.forEach((input, idx) => {
+                    const div = divs[idx];
+                    if (div && !div.querySelector('textarea') && !div.querySelector('input')) {
+                        const oldValue = input.value;
+                        const newValue = div.textContent.trim();
+                        if (oldValue !== newValue) {
+                            input.value = newValue;
+                            input.setAttribute('value', newValue);
+                            div.textContent = newValue;
+                            syncCount++;
+                            console.log(`Synced hidden input: "${oldValue}" -> "${newValue}"`);
+                        }
+                    }
+                });
+            });
+            console.log(`Total fields synced: ${syncCount}`);
+            
+            // Clone the table body to work with a copy
+            const clonedTableBody = tableBody.cloneNode(true);
+            
+            // Remove contenteditable attributes and inline styles that were added for editing
+            const allClonedCells = clonedTableBody.querySelectorAll('td');
+            allClonedCells.forEach(cell => {
+                cell.removeAttribute('contenteditable');
+                // Remove the blue background we added
+                if (cell.style.backgroundColor === 'rgb(240, 249, 255)') {
+                    cell.style.backgroundColor = '';
+                }
+                if (cell.style.cursor === 'default') {
+                    cell.style.cursor = '';
+                }
+                if (cell.style.userSelect === 'none') {
+                    cell.style.userSelect = '';
+                }
+                // Clean up empty style attribute
+                if (cell.getAttribute('style') === '') {
+                    cell.removeAttribute('style');
+                }
+            });
+            
+            // Also remove editing styles from textareas and inputs in cloned table
+            const clonedTextareas = clonedTableBody.querySelectorAll('textarea');
+            const clonedInputs = clonedTableBody.querySelectorAll('input');
+            
+            clonedTextareas.forEach(textarea => {
+                textarea.removeAttribute('contenteditable');
+                if (textarea.style.pointerEvents === 'auto') textarea.style.pointerEvents = '';
+                if (textarea.style.backgroundColor === 'white') textarea.style.backgroundColor = '';
+                if (textarea.style.cursor === 'text') textarea.style.cursor = '';
+                if (textarea.style.userSelect === 'text') textarea.style.userSelect = '';
+                if (textarea.getAttribute('style') === '') textarea.removeAttribute('style');
+            });
+            
+            clonedInputs.forEach(input => {
+                input.removeAttribute('contenteditable');
+                if (input.style.pointerEvents === 'auto') input.style.pointerEvents = '';
+                if (input.style.backgroundColor === 'white') input.style.backgroundColor = '';
+                if (input.style.cursor === 'text') input.style.cursor = '';
+                if (input.style.userSelect === 'text') input.style.userSelect = '';
+                if (input.getAttribute('style') === '') input.removeAttribute('style');
+            });
+            
+            let tableBodyHtml = clonedTableBody.innerHTML;
+
+            console.log('Table HTML length:', tableBodyHtml.length);
+            console.log('First 500 chars:', tableBodyHtml.substring(0, 500));
+
+            if (!tableBodyHtml || tableBodyHtml.trim() === '') {
+                showAlertModal('error', 'Empty Table', 'Cannot update with empty table content.');
+                return;
+            }
+
+            // Use FormData instead of JSON to avoid JSON encoding issues with HTML
+            const formData = new FormData();
+            formData.append('table_body_html', tableBodyHtml);
+            formData.append('_method', 'PUT');
+
+            console.log('FormData created, attempting fetch...');
+            console.log('Fetch URL:', `{{ url('faculty/ipcr/submissions') }}/${submissionId}`);
+
+            // Show loading state
+            const updateBtn = document.getElementById('updateSubmissionBtn');
+            const originalText = updateBtn.textContent;
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Updating...';
+
+            fetch(`{{ url('faculty/ipcr/submissions') }}/${submissionId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => {
+                console.log('Response received, status:', response.status);
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Response error text:', text);
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response JSON:', data);
+                if (data.success) {
+                    // Clear the submission ID field
+                    const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+                    if (submissionIdField) submissionIdField.value = '';
+
+                    // Close the modal
+                    closeTemplatePreview();
+                    
+                    showAlertModal('success', 'Updated Successfully', 'The submitted IPCR has been updated successfully.', function() {
+                        // Reload page to reflect changes
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500);
+                    });
+                } else {
+                    showAlertModal('error', 'Update Failed', data.message || 'Failed to update submission');
+                    updateBtn.disabled = false;
+                    updateBtn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showAlertModal('error', 'Error', error.message || 'An error occurred while updating the submission.');
+                updateBtn.disabled = false;
+                updateBtn.textContent = originalText;
+            });
+        }
+        
+        function deleteSubmission(submissionId) {
+            console.log('Delete submission:', submissionId);
+            
+            if (confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+                try {
+                    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
+                    if (!csrfTokenElement) {
+                        showAlertModal('error', 'Error', 'CSRF token not found. Please refresh the page.');
+                        return;
+                    }
+                    
+                    const csrfToken = csrfTokenElement.getAttribute('content');
+                    const url = `/faculty/ipcr/submissions/${submissionId}`;
+                    
+                    console.log('Deleting submission:', submissionId);
+                    
+                    fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        return response.json().catch(() => ({ success: false, message: 'Invalid response' }));
+                    })
+                    .then(data => {
+                        console.log('Delete response:', data);
+                        if (data.success) {
+                            showAlertModal('success', 'Deleted Successfully', 'The submission has been deleted successfully.', function() {
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 500);
+                            });
+                        } else {
+                            showAlertModal('error', 'Delete Failed', data.message || 'Failed to delete submission');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete error:', error);
+                        showAlertModal('error', 'Error', error.message || 'An error occurred while deleting the submission.');
+                    });
+                } catch (error) {
+                    console.error('Exception:', error);
+                    showAlertModal('error', 'Error', 'An error occurred: ' + error.message);
+                }
+            }
         }
         
         function openConfirmationModal(title, message, subMessage, type, confirmText, callback) {
@@ -2505,6 +2909,211 @@
                 .catch(error => {
                     console.error('Error:', error);
                     showAlertModal('error', 'Error', 'An error occurred while loading the template.');
+                });
+        }
+        
+        function viewSubmission(submissionId) {
+            console.log('Viewing/Editing submission:', submissionId);
+            // Add cache-busting parameter
+            fetch(`{{ url('faculty/ipcr/submissions') }}/${submissionId}?t=${Date.now()}`, {
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('View submission response:', data);
+                    if (data.success) {
+                        const submission = data.submission;
+                        
+                        // Store submission ID for update functionality
+                        const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+                        if (submissionIdField) {
+                            submissionIdField.value = submissionId;
+                            console.log('Submission ID stored in field:', submissionIdField.value);
+                        }
+                        
+                        // Load table body
+                        const tableBody = document.getElementById('templatePreviewTableBody');
+                        if (tableBody && submission.table_body_html) {
+                            tableBody.innerHTML = submission.table_body_html;
+                            
+                            // Make all table cells NON-editable, but enable inputs/textareas inside
+                            const cells = tableBody.querySelectorAll('td');
+                            console.log('Total cells found:', cells.length);
+                            
+                            cells.forEach((cell) => {
+                                // Make cells non-editable
+                                cell.setAttribute('contenteditable', 'false');
+                                cell.style.cursor = 'default';
+                                cell.style.userSelect = 'none';
+                                cell.style.backgroundColor = '#f0f9ff';
+                                cell.classList.add('hover:bg-blue-50');
+                                
+                                // Make inputs and textareas inside cells fully editable
+                                const inputs = cell.querySelectorAll('input');
+                                const textareas = cell.querySelectorAll('textarea');
+                                
+                                inputs.forEach(input => {
+                                    input.setAttribute('contenteditable', 'true');
+                                    input.removeAttribute('readonly');
+                                    input.removeAttribute('disabled');
+                                    input.style.pointerEvents = 'auto';
+                                    input.style.backgroundColor = 'white';
+                                    input.style.cursor = 'text';
+                                    input.style.userSelect = 'text';
+                                });
+                                
+                                textareas.forEach(textarea => {
+                                    textarea.setAttribute('contenteditable', 'true');
+                                    textarea.removeAttribute('readonly');
+                                    textarea.removeAttribute('disabled');
+                                    textarea.style.pointerEvents = 'auto';
+                                    textarea.style.backgroundColor = 'white';
+                                    textarea.style.cursor = 'text';
+                                    textarea.style.userSelect = 'text';
+                                });
+                            });
+                        }
+
+                        // Load title
+                        const titleElement = document.getElementById('templatePreviewTitle');
+                        if (titleElement && submission.title) {
+                            titleElement.textContent = submission.title;
+                        }
+
+                        // Load school year and semester
+                        if (submission.school_year) {
+                            const displaySchoolYear = document.getElementById('templatePreviewSchoolYear');
+                            if (displaySchoolYear) displaySchoolYear.textContent = submission.school_year;
+                        }
+                        if (submission.semester) {
+                            const displaySemester = document.getElementById('templatePreviewSemester');
+                            if (displaySemester) displaySemester.textContent = submission.semester;
+                        }
+
+                        // Unhide QETA, Remarks, and Ratings columns
+                        const previewModal = document.getElementById('templatePreviewModal');
+                        if (previewModal) {
+                            const headers = previewModal.querySelectorAll('thead th.hidden');
+                            headers.forEach(header => header.classList.remove('hidden'));
+                            
+                            const cells = previewModal.querySelectorAll('td.hidden');
+                            cells.forEach(cell => cell.classList.remove('hidden'));
+                        }
+
+                        // Hide Edit IPCR button and show Update Submission button
+                        const saveCopyBtn = document.getElementById('saveCopyBtn');
+                        if (saveCopyBtn) {
+                            saveCopyBtn.style.display = 'none';
+                            saveCopyBtn.classList.add('hidden');
+                        }
+                        
+                        const updateBtn = document.getElementById('updateSubmissionBtn');
+                        if (updateBtn) {
+                            updateBtn.classList.remove('hidden');
+                            updateBtn.style.display = 'flex';
+                            console.log('Update button shown');
+                        }
+
+                        document.getElementById('templatePreviewModal').classList.remove('hidden');
+                    } else {
+                        showAlertModal('error', 'Not Found', 'Submission could not be found.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlertModal('error', 'Error', 'An error occurred while loading the submission.');
+                });
+        }
+
+        function updateSubmission(submissionId) {
+            console.log('=== updateSubmission (Edit) called with ID:', submissionId, '===');
+            
+            fetch(`{{ url('faculty/ipcr/submissions') }}/${submissionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Submission data loaded:', data.submission);
+                        const submission = data.submission;
+                        
+                        // Store submission ID for update functionality
+                        const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+                        if (submissionIdField) {
+                            submissionIdField.value = submissionId;
+                            console.log('Submission ID stored in field:', submissionIdField.value);
+                        }
+
+                        // Load table body
+                        const tableBody = document.getElementById('templatePreviewTableBody');
+                        if (tableBody && submission.table_body_html) {
+                            tableBody.innerHTML = submission.table_body_html;
+                            console.log('Table loaded, HTML length:', tableBody.innerHTML.length);
+                            
+                            // Make all table cells editable
+                            const cells = tableBody.querySelectorAll('td');
+                            console.log('Total cells found:', cells.length);
+                            
+                            cells.forEach((cell, index) => {
+                                cell.setAttribute('contenteditable', 'true');
+                                cell.style.cursor = 'text';
+                                cell.style.backgroundColor = '#f0f9ff';
+                                cell.classList.add('hover:bg-blue-50');
+                                
+                                if (index < 3) {
+                                    console.log(`Cell ${index} set to editable:`, cell.innerHTML.substring(0, 50));
+                                }
+                            });
+                        }
+
+                        // Load title with (Edit) suffix
+                        const titleElement = document.getElementById('templatePreviewTitle');
+                        if (titleElement && submission.title) {
+                            titleElement.textContent = submission.title + ' (Edit)';
+                        }
+
+                        // Load school year and semester
+                        if (submission.school_year) {
+                            const displaySchoolYear = document.getElementById('templatePreviewSchoolYear');
+                            if (displaySchoolYear) displaySchoolYear.textContent = submission.school_year;
+                        }
+                        if (submission.semester) {
+                            const displaySemester = document.getElementById('templatePreviewSemester');
+                            if (displaySemester) displaySemester.textContent = submission.semester;
+                        }
+
+                        // Unhide QETA, Remarks, and Ratings columns
+                        const previewModal = document.getElementById('templatePreviewModal');
+                        if (previewModal) {
+                            const headers = previewModal.querySelectorAll('thead th.hidden');
+                            headers.forEach(header => header.classList.remove('hidden'));
+                            
+                            const cells = previewModal.querySelectorAll('td.hidden');
+                            cells.forEach(cell => cell.classList.remove('hidden'));
+                        }
+
+                        // Hide save copy button and show update button
+                        const saveCopyBtn = document.getElementById('saveCopyBtn');
+                        if (saveCopyBtn) {
+                            saveCopyBtn.style.display = 'none';
+                            saveCopyBtn.classList.add('hidden');
+                        }
+                        
+                        const updateBtn = document.getElementById('updateSubmissionBtn');
+                        if (updateBtn) {
+                            updateBtn.classList.remove('hidden');
+                            updateBtn.style.display = 'flex';
+                            console.log('Update button shown, display:', window.getComputedStyle(updateBtn).display);
+                        }
+
+                        document.getElementById('templatePreviewModal').classList.remove('hidden');
+                    } else {
+                        showAlertModal('error', 'Not Found', 'Submission could not be found.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlertModal('error', 'Error', 'An error occurred while loading the submission.');
                 });
         }
         

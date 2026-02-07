@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\IpcrTemplate;
+use App\Models\IpcrSubmission;
 use App\Models\UserPhoto;
 use App\Services\PhotoService;
 use Illuminate\Http\Request;
@@ -15,32 +16,80 @@ class FacultyDashboardController extends Controller
 {
     public function index(): View
     {
-        // Get the active template for the user
-        $activeTemplate = IpcrTemplate::where('user_id', auth()->id())
+        // Get the active submission for the user (fallback to latest submission)
+        $activeSubmission = IpcrSubmission::where('user_id', auth()->id())
             ->where('is_active', true)
+            ->orderBy('submitted_at', 'desc')
             ->first();
+
+        if (!$activeSubmission) {
+            $activeSubmission = IpcrSubmission::where('user_id', auth()->id())
+                ->orderBy('submitted_at', 'desc')
+                ->first();
+        }
 
         // Initialize counters
         $strategicObjectivesCount = 0;
         $coreFunctionsCount = 0;
         $supportFunctionsCount = 0;
 
-        // Use JSON data if available
-        if ($activeTemplate && $activeTemplate->so_count_json) {
-            \Log::info('Active template found with SO counts', [
-                'template_id' => $activeTemplate->id,
-                'so_count_json' => $activeTemplate->so_count_json,
+        // Use JSON data from active submission if available
+        if ($activeSubmission && $activeSubmission->so_count_json) {
+            \Log::info('Active submission found with SO counts', [
+                'submission_id' => $activeSubmission->id,
+                'so_count_json' => $activeSubmission->so_count_json,
             ]);
-            
-            $counts = $activeTemplate->so_count_json;
+
+            $counts = $activeSubmission->so_count_json;
             $strategicObjectivesCount = $counts['strategic_objectives'] ?? 0;
             $coreFunctionsCount = $counts['core_functions'] ?? 0;
             $supportFunctionsCount = $counts['support_functions'] ?? 0;
+        } elseif ($activeSubmission && $activeSubmission->table_body_html) {
+            try {
+                $html = $activeSubmission->table_body_html;
+                $dom = new \DOMDocument();
+                libxml_use_internal_errors(true);
+                $dom->loadHTML('<table><tbody>' . $html . '</tbody></table>');
+                libxml_clear_errors();
+
+                $rows = $dom->getElementsByTagName('tr');
+                $currentSection = null;
+
+                foreach ($rows as $row) {
+                    $classAttr = $row->attributes->getNamedItem('class');
+                    $className = $classAttr ? $classAttr->nodeValue : '';
+
+                    if (str_contains($className, 'bg-green-100')) {
+                        $currentSection = 'strategic_objectives';
+                    } elseif (str_contains($className, 'bg-purple-100')) {
+                        $currentSection = 'core_functions';
+                    } elseif (str_contains($className, 'bg-orange-100')) {
+                        $currentSection = 'support_functions';
+                    } elseif (str_contains($className, 'bg-gray-100')) {
+                        $currentSection = null;
+                    }
+
+                    if ($currentSection && str_contains($className, 'bg-blue-100')) {
+                        if ($currentSection === 'strategic_objectives') {
+                            $strategicObjectivesCount++;
+                        } elseif ($currentSection === 'core_functions') {
+                            $coreFunctionsCount++;
+                        } elseif ($currentSection === 'support_functions') {
+                            $supportFunctionsCount++;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Log::error('Failed to parse SO counts from submission table_body_html', [
+                    'submission_id' => $activeSubmission->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         } else {
-            \Log::info('No active template or no so_count_json', [
-                'has_template' => $activeTemplate ? true : false,
-                'template_id' => $activeTemplate->id ?? null,
-                'so_count_json' => $activeTemplate->so_count_json ?? null,
+            \Log::info('No active submission or no so_count_json', [
+                'has_submission' => $activeSubmission ? true : false,
+                'submission_id' => $activeSubmission->id ?? null,
+                'so_count_json' => $activeSubmission->so_count_json ?? null,
             ]);
         }
 
@@ -95,8 +144,12 @@ class FacultyDashboardController extends Controller
         $templates = IpcrTemplate::where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
             ->get();
+        
+        $submissions = IpcrSubmission::where('user_id', auth()->id())
+            ->orderBy('submitted_at', 'desc')
+            ->get();
             
-        return view('dashboard.faculty.my-ipcrs', compact('templates'));
+        return view('dashboard.faculty.my-ipcrs', compact('templates', 'submissions'));
     }
 
     public function profile(): View

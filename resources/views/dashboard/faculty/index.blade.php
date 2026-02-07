@@ -182,7 +182,7 @@
                             <div class="sm:block">
                                 <p class="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-3 whitespace-nowrap">Strategic Objectives</p>
                                 <div class="flex items-center sm:items-end justify-between gap-2">
-                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $strategicObjectivesText }}</span>
+                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $strategicObjectivesText ?? 'N/A' }}</span>
                                     <div class="text-xl sm:text-2xl font-bold text-red-500">{{ $strategicObjectivesPercent }}</div>
                                 </div>
                             </div>
@@ -193,7 +193,7 @@
                             <div class="sm:block">
                                 <p class="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-3 whitespace-nowrap">Core Functions</p>
                                 <div class="flex items-center sm:items-end justify-between gap-2">
-                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $coreFunctionsText }}</span>
+                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $coreFunctionsText ?? 'N/A' }}</span>
                                     <div class="text-xl sm:text-2xl font-bold text-red-500">{{ $coreFunctionsPercent }}</div>
                                 </div>
                             </div>
@@ -204,7 +204,7 @@
                             <div class="sm:block">
                                 <p class="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-3 whitespace-nowrap">Support Functions</p>
                                 <div class="flex items-center sm:items-end justify-between gap-2">
-                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $supportFunctionsText }}</span>
+                                    <span class="text-2xl sm:text-4xl font-bold text-gray-900">{{ $supportFunctionsText ?? 'N/A' }}</span>
                                     <div class="text-xl sm:text-2xl font-bold text-orange-500">{{ $supportFunctionsPercent }}</div>
                                 </div>
                             </div>

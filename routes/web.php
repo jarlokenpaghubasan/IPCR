@@ -108,6 +108,10 @@ Route::delete('/faculty/profile/photo/{id}', [FacultyDashboardController::class,
     ->middleware(['auth', 'role:faculty']);
 
 // IPCR Template Routes
+Route::get('/faculty/ipcr/templates', [IpcrTemplateController::class, 'index'])
+    ->name('faculty.ipcr.templates.index')
+    ->middleware(['auth', 'role:faculty']);
+
 Route::post('/faculty/ipcr/store', [IpcrTemplateController::class, 'store'])
     ->name('faculty.ipcr.store')
     ->middleware(['auth', 'role:faculty']);
@@ -136,6 +140,21 @@ Route::post('/faculty/ipcr/templates/{id}/set-active', [IpcrTemplateController::
 Route::post('/faculty/ipcr/submissions', [IpcrSubmissionController::class, 'store'])
     ->name('faculty.ipcr.submissions.store')
     ->middleware(['auth', 'role:faculty']);
+
+Route::get('/faculty/ipcr/submissions/{id}', [IpcrSubmissionController::class, 'show'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::put('/faculty/ipcr/submissions/{id}', [IpcrSubmissionController::class, 'update'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/ipcr/submissions/{id}/set-active', [IpcrSubmissionController::class, 'setActive'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/ipcr/submissions/{id}/deactivate', [IpcrSubmissionController::class, 'deactivate'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::delete('/faculty/ipcr/submissions/{id}', [IpcrSubmissionController::class, 'destroy'])
+    ->middleware(['auth', 'role:faculty,admin']);
 
 // IPCR Saved Copy Routes
 Route::get('/faculty/ipcr/saved-copies', [IpcrSavedCopyController::class, 'index'])

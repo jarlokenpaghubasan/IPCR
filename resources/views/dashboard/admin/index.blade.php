@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin Dashboard - IPCR/OPCR Module</title>
     <link rel="icon" type="image/jpeg" href="{{ asset('images/urs_logo.jpg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -206,6 +207,7 @@
                                     <th class="py-3 px-6">Semester</th>
                                     <th class="py-3 px-6">Submitted</th>
                                     <th class="py-3 px-6">Status</th>
+                                    <th class="py-3 px-6">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -221,10 +223,17 @@
                                                 {{ ucfirst($submission->status ?? 'submitted') }}
                                             </span>
                                         </td>
+                                        <td class="py-3 px-6">
+                                            @if(auth()->user() && auth()->user()->role === 'admin')
+                                                <button onclick="adminDeleteSubmission({{ $submission->id }})" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 px-3 rounded">
+                                                    Delete
+                                                </button>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="py-6 text-center text-gray-500">No IPCR submissions found.</td>
+                                        <td colspan="7" class="py-6 text-center text-gray-500">No IPCR submissions found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -234,5 +243,59 @@
             </main>
         </div>
     </div>
+
+    <script>
+        function adminDeleteSubmission(submissionId) {
+            console.log('Admin delete submission:', submissionId);
+            
+            if (confirm('Are you sure you want to delete this IPCR submission? This action cannot be undone.')) {
+                try {
+                    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
+                    if (!csrfTokenElement) {
+                        alert('Error: CSRF token not found');
+                        console.error('CSRF token meta tag not found');
+                        return;
+                    }
+                    
+                    const csrfToken = csrfTokenElement.getAttribute('content');
+                    console.log('CSRF token:', csrfToken ? 'found' : 'not found');
+                    
+                    const url = `/faculty/ipcr/submissions/${submissionId}`;
+                    console.log('Sending DELETE request to:', url);
+                    
+                    fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        return response.json().catch(() => ({ success: false, message: 'Invalid response' }));
+                    })
+                    .then(data => {
+                        console.log('Delete response:', data);
+                        if (data.success) {
+                            alert('Submission deleted successfully.');
+                            setTimeout(() => {
+                                location.reload();
+                            }, 500);
+                        } else {
+                            alert('Failed to delete submission: ' + (data.message || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete error:', error);
+                        alert('An error occurred while deleting the submission: ' + error.message);
+                    });
+                } catch (error) {
+                    console.error('Exception:', error);
+                    alert('An error occurred: ' + error.message);
+                }
+            }
+        }
+    </script>
 </body>
 </html>
