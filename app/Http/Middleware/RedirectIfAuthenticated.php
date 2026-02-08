@@ -27,9 +27,9 @@ class RedirectIfAuthenticated
                     return redirect()->route('admin.dashboard');
                 } elseif ($user->guard('web')->hasRole('director')) {
                     return redirect()->route('director.dashboard');
-                } elseif ($user->guard('web')->hasRole('dean')) {
-                    return redirect()->route('dean.dashboard');
                 } elseif ($user->guard('web')->hasRole('faculty')) {
+                    return redirect()->route('faculty.dashboard');
+                } elseif ($user->guard('web')->hasRole('dean')) {
                     return redirect()->route('faculty.dashboard');
                 }
             }

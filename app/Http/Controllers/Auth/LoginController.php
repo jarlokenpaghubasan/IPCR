@@ -23,7 +23,7 @@ class LoginController extends Controller
      */
     public function showLoginForm($role)
     {
-        $validRoles = ['admin', 'director', 'dean', 'faculty'];
+        $validRoles = ['admin', 'director', 'faculty'];
         
         if (!in_array($role, $validRoles)) {
             return redirect()->route('login.selection')->with('error', 'Invalid role selected');
@@ -40,7 +40,7 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
-            'role' => 'required|in:admin,director,dean,faculty',
+            'role' => 'required|in:admin,director,faculty',
         ]);
 
         // Find user by username
@@ -61,7 +61,7 @@ class LoginController extends Controller
         }
 
         // Check if user has the selected role
-        if (!$user->hasRole($credentials['role'])) {
+        if (!$this->userHasSelectedRole($user, $credentials['role'])) {
             return back()->withErrors([
                 'username' => 'You do not have the ' . ucfirst($credentials['role']) . ' role',
             ]);
@@ -90,13 +90,23 @@ class LoginController extends Controller
                 return redirect()->route('admin.dashboard');
             case 'director':
                 return redirect()->route('director.dashboard');
-            case 'dean':
-                return redirect()->route('dean.dashboard');
             case 'faculty':
                 return redirect()->route('faculty.dashboard');
             default:
                 return redirect()->route('login.selection');
         }
+    }
+
+    /**
+     * Allow dean accounts to authenticate via faculty login.
+     */
+    private function userHasSelectedRole(User $user, string $role): bool
+    {
+        if ($role === 'faculty') {
+            return $user->hasAnyRole(['faculty', 'dean']);
+        }
+
+        return $user->hasRole($role);
     }
 
     /**

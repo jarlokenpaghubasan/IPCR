@@ -17,7 +17,30 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 - ⚡ **Vite Asset Bundling** with optimized CSS/JS
 - 🎨 **Tailwind CSS v4.0** for modern styling
 
-## 📦 Latest Updates (February 5, 2026)
+## 📦 Latest Updates (February 9, 2026)
+
+### 👨‍🏫 Dean Review & Calibration System (February 9, 2026)
+- ✨ **Faculty IPCR Review** - Deans can view all IPCR submissions from faculty in their department
+- 🏛️ **Department-Based Filtering** - Automatic filtering shows only relevant department submissions
+- 🔄 **Cross-Dean Calibration** - Deans can view and calibrate other deans' IPCR submissions
+- 📊 **Dedicated Sidebar Sections** - "Faculty IPCRs" (indigo) and "Dean Calibration" (amber) sections
+- 🔒 **Read-Only Access** - Dean review mode displays submissions with no edit capabilities
+- 🎨 **Color-Coded UI** - Indigo theme for faculty reviews, amber theme for dean calibration
+- 👤 **User Information Display** - Shows submitter name, employee ID, title, year/semester, status
+- 🏢 **Department Badges** - Dean calibration cards show department codes (CSS, COA, COB, etc.)
+- 📅 **Submission Tracking** - Displays submission dates for each IPCR
+- 🔐 **Role-Based Access** - Only users with dean role can access review features
+- ⚡ **Auto-Load on Page Load** - Both sections populate automatically when page loads
+- 🎯 **Template Preview Modal** - Reuses existing modal for consistent viewing experience
+
+### 🔧 Backend Architecture for Dean Review (February 9, 2026)
+- 📁 **DeanReviewController** - New controller with 4 API endpoints for dean review functionality
+- 🛣️ **Protected Routes** - All dean review routes under `auth, role:dean` middleware
+- 🔗 **Eloquent Relationships** - Utilizes User->department and IpcrSubmission->user relationships
+- 📊 **Efficient Queries** - Eager loading with `with()` for optimal performance
+- 🔒 **Security Filters** - Department-based and role-based query filtering
+- 📅 **Formatted Dates** - Submission dates formatted as "M d, Y" (e.g., "Feb 09, 2026")
+- 🆔 **Employee ID Integration** - Displays employee IDs alongside user names
 
 ### 📊 Dashboard Analytics & SO Tracking (February 5, 2026)
 - ✨ **Strategic Objectives Counter** - Automatically counts SOs from active template per section

@@ -467,7 +467,58 @@ When you save a template, the system automatically:
 4. Calculates percentages based on accomplished vs total
 
 ---
+## 👨‍🏫 Dean Review & Calibration (NEW!)
 
+### For Dean Users Only
+
+Deans have two additional sidebar sections for reviewing submissions:
+
+#### 📋 Faculty IPCRs (Indigo Section)
+- **Purpose:** Review IPCR submissions from faculty members in your department
+- **Filtering:** Only shows faculty from your assigned department (e.g., CSS dean sees CSS faculty only)
+- **Information Displayed:**
+  - Faculty name and employee ID
+  - IPCR title
+  - School year and semester
+  - Submission date
+  - Current status
+- **Actions:** Click "View" to open submission in read-only preview modal
+- **Access:** Automatically appears for users with dean role
+
+#### 🎓 Dean Calibration (Amber Section)
+- **Purpose:** Cross-calibration by viewing other deans' IPCR submissions
+- **Scope:** Shows IPCR submissions from all other deans across all departments
+- **Information Displayed:**
+  - Dean name and employee ID
+  - Department badge (CSS, COA, COB, etc.)
+  - IPCR title
+  - School year and semester
+  - Submission date
+  - Current status
+- **Actions:** Click "View" to open submission in read-only preview modal
+- **Use Case:** Enables deans to review and calibrate their performance against peers
+
+### How It Works
+
+1. **Automatic Loading:** Both sections load automatically when you open "My IPCRs" page
+2. **Read-Only View:** Clicking "View" opens the template preview modal
+   - All cells are non-editable
+   - No update or save buttons
+   - Color-tinted background (indigo for faculty, amber for deans)
+3. **Real-Time Data:** Lists update automatically based on new submissions
+4. **Role Protection:** Only accessible if you have the dean role assigned
+
+### Technical Details
+
+- **API Endpoints:**
+  - `GET /dean/review/faculty-submissions` - List faculty submissions
+  - `GET /dean/review/faculty-submissions/{id}` - View specific faculty submission
+  - `GET /dean/review/dean-submissions` - List other deans' submissions
+  - `GET /dean/review/dean-submissions/{id}` - View specific dean submission
+- **Security:** All endpoints protected by `auth` and `role:dean` middleware
+- **Database Queries:** Filtered by department_id and user roles for security
+
+---
 ## �🔧 Troubleshooting
 
 ### Common Issues and Solutions

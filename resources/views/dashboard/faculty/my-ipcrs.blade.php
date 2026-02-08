@@ -243,14 +243,19 @@
                     <!-- Tab Header -->
                     <div class="border-b border-gray-200 mb-4 sm:mb-6">
                         <div class="flex space-x-4 sm:space-x-8 overflow-x-auto">
-                            <button class="pb-3 sm:pb-4 px-1 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm sm:text-base whitespace-nowrap">
+                            <button id="ipcrTab" class="pb-3 sm:pb-4 px-1 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm sm:text-base whitespace-nowrap" onclick="switchTab('ipcr')">
                                 Create IPCR
                             </button>
+                            @if(auth()->user()->hasRole('dean'))
+                            <button id="opcrTab" class="pb-3 sm:pb-4 px-1 border-b-2 border-transparent font-semibold text-gray-500 text-sm sm:text-base whitespace-nowrap hover:text-gray-700" onclick="switchTab('opcr')">
+                                Create OPCR
+                            </button>
+                            @endif
                         </div>
                     </div>
 
-                    <!-- Create Button Area -->
-                    <div id="createButtonArea" class="py-8 sm:py-12 flex justify-center">
+                    <!-- Create IPCR Button Area -->
+                    <div id="createIpcrButtonArea" class="py-8 sm:py-12 flex justify-center">
                         <button class="create-ipcr-button" onclick="openCreateIpcrModal()">
                             Create IPCR
                             <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,6 +263,18 @@
                             </svg>
                         </button>
                     </div>
+
+                    @if(auth()->user()->hasRole('dean'))
+                    <!-- Create OPCR Button Area -->
+                    <div id="createOpcrButtonArea" class="py-8 sm:py-12 flex justify-center hidden">
+                        <button class="create-ipcr-button" onclick="openCreateOpcrModal()">
+                            Create OPCR
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    @endif
 
                     <!-- Create IPCR Modal -->
                     <div id="createIpcrModal" class="fixed inset-0 z-50 hidden">
@@ -273,22 +290,22 @@
                             </div>
                             <div class="px-6 py-5 space-y-4">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">School Year</label>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Year</label>
                                     <select id="ipcrSchoolYear" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                         @php
                                             $currentYear = now()->year;
                                             $startYear = $currentYear - 5;
                                         @endphp
                                         @for ($year = $currentYear; $year >= $startYear; $year--)
-                                            <option value="{{ $year }}-{{ $year + 1 }}">{{ $year }}-{{ $year + 1 }}</option>
+                                            <option value="{{ $year }}">{{ $year }}</option>
                                         @endfor
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Semester</label>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Period</label>
                                     <select id="ipcrSemester" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="first">First Semester</option>
-                                        <option value="second">Second Semester</option>
+                                        <option value="jan-jun">January - June</option>
+                                        <option value="jul-dec">July - December</option>
                                     </select>
                                 </div>
                                 @php
@@ -329,6 +346,195 @@
                         </div>
                     </div>
 
+                    @if(auth()->user()->hasRole('dean'))
+                    <!-- Create OPCR Modal -->
+                    <div id="createOpcrModal" class="fixed inset-0 z-50 hidden">
+                        <div class="absolute inset-0 bg-black/50" onclick="closeCreateOpcrModal()"></div>
+                        <div class="relative mx-auto mt-24 w-full max-w-lg bg-white rounded-xl shadow-lg">
+                            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                                <h2 class="text-lg sm:text-xl font-bold text-gray-900">Office Performance Commitment and Review for {{ auth()->user()->designation->title ?? 'Faculty' }}</h2>
+                                <button type="button" onclick="closeCreateOpcrModal()" class="text-gray-500 hover:text-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="px-6 py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Year</label>
+                                    <select id="opcrSchoolYear" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        @php
+                                            $currentYear = now()->year;
+                                            $startYear = $currentYear - 5;
+                                        @endphp
+                                        @for ($year = $currentYear; $year >= $startYear; $year--)
+                                            <option value="{{ $year }}">{{ $year }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Period</label>
+                                    <select id="opcrSemester" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="jan-jun">January - June</option>
+                                        <option value="jul-dec">July - December</option>
+                                    </select>
+                                </div>
+                                @php
+                                    $deptId = auth()->user()->department_id;
+                                    $deanUser = $deptId
+                                        ? \App\Models\User::where('department_id', $deptId)
+                                            ->whereHas('userRoles', function ($query) {
+                                                $query->where('role', 'deanUser');
+                                            })
+                                            ->first()
+                                        : null;
+                                    
+                                    $directorUser = \App\Models\User::whereHas('userRoles', function ($query) {
+                                        $query->where('role', 'directorUser');
+                                    })->first();
+                                @endphp
+                                <div class="pt-2 border-t border-gray-200">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500">Name of the Ratee:</label>
+                                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500">Approved By:</label>
+                                            <p class="text-sm font-semibold text-gray-900">{{ $directorUser ? $directorUser->name : 'N/A' }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500">Noted By:</label>
+                                            <p class="text-sm font-semibold text-gray-900">{{ $deanUser ? $deanUser->name : 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+                                <button type="button" onclick="closeCreateOpcrModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200">Cancel</button>
+                                <button type="button" onclick="proceedCreateOpcr()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Proceed</button>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(auth()->user()->hasRole('dean'))
+                    <!-- OPCR Document Modal -->
+                    <div id="opcrDocumentContainer" class="fixed inset-0 z-50 hidden">
+                        <div class="absolute inset-0 bg-black/50" onclick="closeOpcrDocument()"></div>
+                        <div class="relative mx-auto mt-2 sm:mt-8 mb-2 sm:mb-8 w-full max-w-6xl bg-white rounded-lg sm:rounded-xl shadow-lg max-h-[98vh] sm:max-h-[90vh] overflow-y-auto px-2 sm:px-0">
+                            <!-- Document Header -->
+                            <div class="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-300 sticky top-0 bg-white z-10">
+                                <div class="flex justify-between items-start mb-3 sm:mb-4">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-1 sm:gap-2 mb-2">
+                                            <input type="text" id="opcrDocumentTitle" class="text-sm sm:text-lg font-bold text-gray-900 border-0 border-b-2 border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-0 bg-transparent px-1 sm:px-2 py-1 -ml-1 sm:-ml-2 w-full" value="OPCR for {{ auth()->user()->designation->title ?? 'Faculty' }}" />
+                                            <button onclick="saveOpcrDocumentTitle()" class="text-blue-600 hover:text-blue-700 flex-shrink-0" title="Save title">
+                                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="text-xs sm:text-sm text-gray-600">Year: <span id="opcrDisplaySchoolYear" class="font-semibold"></span></p>
+                                        <p class="text-xs sm:text-sm text-gray-600">Period: <span id="opcrDisplaySemester" class="font-semibold"></span></p>
+                                    </div>
+                                    <button onclick="closeOpcrDocument()" class="text-gray-500 hover:text-gray-700 ml-2 flex-shrink-0">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
+                                    <div class="flex flex-col sm:block">
+                                        <span class="text-gray-600">Ratee:</span>
+                                        <span class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:block">
+                                        <span class="text-gray-600">Approved By:</span>
+                                        <span class="font-semibold text-gray-900 truncate">{{ $directorUser ? $directorUser->name : 'N/A' }}</span>
+                                    </div>
+                                    <div class="flex flex-col sm:block">
+                                        <span class="text-gray-600">Noted By:</span>
+                                        <span class="font-semibold text-gray-900 truncate">{{ $deanUser ? $deanUser->name : 'N/A' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Excel-like Table -->
+                            <div class="overflow-x-auto px-2 sm:px-6 py-3 sm:py-4">
+                                <table class="w-full border-collapse min-w-[800px]">
+                                    <thead>
+                                        <tr class="bg-gray-100">
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 15%;">MFO</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 25%;">Success Indicators<br><span class="font-semibold text-gray-500">(Target + Measures)</span></th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hidden" rowspan="2" style="width: 20%;">Actual Accomplishments</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hidden" colspan="4">Rating</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hidden" rowspan="2" style="width: 15%;">Remarks</th>
+                                        </tr>
+                                        <tr class="bg-gray-100">
+                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hidden" style="width: 8%;">Q</th>
+                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hidden" style="width: 8%;">E</th>
+                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hidden" style="width: 8%;">T</th>
+                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hidden" style="width: 8%;">A</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="opcrTableBody">
+                                        <!-- Table rows will be added dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="px-2 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-300 sticky bottom-0 z-10">
+                                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2 sm:gap-3">
+                                    <div class="flex flex-wrap gap-2">
+                                        <div class="relative" id="opcrSectionHeaderDropdown">
+                                            <button type="button" onclick="toggleOpcrSectionHeaderDropdown()" class="px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+                                                <span class="hidden sm:inline">+</span> Add Section
+                                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </button>
+                                            <div id="opcrSectionHeaderDropdownMenu" class="hidden absolute left-0 bottom-full mb-2 w-48 sm:w-56 rounded-lg shadow-xl bg-white border border-gray-200 z-[9999]">
+                                                <div class="py-1">
+                                                    <button type="button" onclick="addOpcrSectionHeader('Strategic Objectives', false)" class="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                                                        Strategic Objectives
+                                                    </button>
+                                                    <button type="button" onclick="addOpcrSectionHeader('Core Functions', false)" class="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                                                        Core Functions
+                                                    </button>
+                                                    <button type="button" onclick="addOpcrSectionHeader('Support Function', false)" class="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                                                        Support Function
+                                                    </button>
+                                                    <button type="button" onclick="addOpcrSectionHeader('', true)" class="w-full text-left px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-t border-gray-200">
+                                                        Others (Custom)
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="addOpcrSOHeader()" class="px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 whitespace-nowrap">
+                                            <span class="hidden sm:inline">+</span> Add SO
+                                        </button>
+                                        <button type="button" onclick="addOpcrDataRow()" class="px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-green-600 bg-green-50 border border-green-200 hover:bg-green-100 whitespace-nowrap">
+                                            <span class="hidden sm:inline">+</span> Add Row
+                                        </button>
+                                        <button type="button" onclick="removeOpcrLastRow()" class="px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 whitespace-nowrap">
+                                            <span class="hidden sm:inline">-</span> Remove
+                                        </button>
+                                    </div>
+                                    <div class="flex gap-2 sm:gap-3">
+                                        <button type="button" onclick="saveOpcrAsTemplate()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-300 hover:bg-orange-100 whitespace-nowrap">
+                                            <span class="hidden sm:inline">📋</span> Save as Template
+                                        </button>
+                                        <button type="button" onclick="closeOpcrDocument()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Close</button>
+                                        <button type="button" onclick="saveOpcrDocument()" class="flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- IPCR Document Modal -->
                     <div id="ipcrDocumentContainer" class="fixed inset-0 z-50 hidden">
                         <div class="absolute inset-0 bg-black/50" onclick="closeIpcrDocument()"></div>
@@ -345,8 +551,8 @@
                                                 </svg>
                                             </button>
                                         </div>
-                                        <p class="text-xs sm:text-sm text-gray-600">School Year: <span id="displaySchoolYear" class="font-semibold"></span></p>
-                                        <p class="text-xs sm:text-sm text-gray-600">Semester: <span id="displaySemester" class="font-semibold"></span></p>
+                                        <p class="text-xs sm:text-sm text-gray-600">Year: <span id="displaySchoolYear" class="font-semibold"></span></p>
+                                        <p class="text-xs sm:text-sm text-gray-600">Period: <span id="displaySemester" class="font-semibold"></span></p>
                                     </div>
                                     <button onclick="closeIpcrDocument()" class="text-gray-500 hover:text-gray-700 ml-2 flex-shrink-0">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -376,14 +582,12 @@
                                     <thead>
                                         <tr class="bg-gray-100">
                                             <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 15%;">MFO</th>
-                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" colspan="2" style="width: 25%;">Success Indicator</th>
-                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hidden" rowspan="2" style="width: 20%;">Actual Accomplishment</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 25%;">Success Indicators<br><span class="font-semibold text-gray-500">(Target + Measures)</span></th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hidden" rowspan="2" style="width: 20%;">Actual Accomplishments</th>
                                             <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hidden" colspan="4">Rating</th>
                                             <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hidden" rowspan="2" style="width: 15%;">Remarks</th>
                                         </tr>
                                         <tr class="bg-gray-100">
-                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600">Target</th>
-                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600">Measures</th>
                                             <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hidden" style="width: 8%;">Q</th>
                                             <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hidden" style="width: 8%;">E</th>
                                             <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600 hidden" style="width: 8%;">T</th>
@@ -456,8 +660,8 @@
                                 <div class="flex justify-between items-start mb-3 sm:mb-4">
                                     <div class="flex-1 min-w-0">
                                         <h2 id="templatePreviewTitle" class="text-sm sm:text-lg font-bold text-gray-900 mb-2"></h2>
-                                        <p class="text-xs sm:text-sm text-gray-600">School Year: <span id="templatePreviewSchoolYear" class="font-semibold"></span></p>
-                                        <p class="text-xs sm:text-sm text-gray-600">Semester: <span id="templatePreviewSemester" class="font-semibold"></span></p>
+                                        <p class="text-xs sm:text-sm text-gray-600">Year: <span id="templatePreviewSchoolYear" class="font-semibold"></span></p>
+                                        <p class="text-xs sm:text-sm text-gray-600">Period: <span id="templatePreviewSemester" class="font-semibold"></span></p>
                                     </div>
                                     <button onclick="closeTemplatePreview()" class="text-gray-500 hover:text-gray-700 ml-2 flex-shrink-0">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,14 +691,12 @@
                                     <thead>
                                         <tr class="bg-gray-100">
                                             <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 15%;">MFO</th>
-                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" colspan="2" style="width: 25%;">Success Indicator</th>
-                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 20%;">Actual Accomplishment</th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 25%;">Success Indicators<br><span class="font-semibold text-gray-500">(Target + Measures)</span></th>
+                                            <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 20%;">Actual Accomplishments</th>
                                             <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" colspan="4">Rating</th>
                                             <th class="border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700" rowspan="2" style="width: 15%;">Remarks</th>
                                         </tr>
                                         <tr class="bg-gray-100">
-                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600">Target</th>
-                                            <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600">Measures</th>
                                             <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600" style="width: 8%;">Q</th>
                                             <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600" style="width: 8%;">E</th>
                                             <th class="border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-600" style="width: 8%;">T</th>
@@ -516,6 +718,7 @@
                                 </div>
                                 <input type="hidden" id="currentPreviewTemplateId" value="">
                                 <input type="hidden" id="currentSubmissionIdToUpdate" value="">
+                                <input type="hidden" id="currentSubmissionType" value="ipcr">
                             </div>
                         </div>
                     </div>
@@ -610,8 +813,18 @@
                         <!-- Saved Copy -->
                         <div>
                             <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Saved Copy</h3>
-                            <div id="savedCopiesList" class="space-y-2 sm:space-y-3"></div>
-                            <p id="savedCopiesEmpty" class="text-sm text-gray-500 text-center py-6">No saved copies yet. Save your IPCR draft to see them here.</p>
+                            <!-- IPCR Saved Copies -->
+                            <div id="ipcrSavedCopiesSection">
+                                <div id="savedCopiesList" class="space-y-2 sm:space-y-3"></div>
+                                <p id="savedCopiesEmpty" class="text-sm text-gray-500 text-center py-6">No saved copies yet. Save your IPCR draft to see them here.</p>
+                            </div>
+                            @if(auth()->user()->hasRole('dean'))
+                            <!-- OPCR Saved Copies -->
+                            <div id="opcrSavedCopiesSection" class="hidden">
+                                <div id="opcrSavedCopiesList" class="space-y-2 sm:space-y-3"></div>
+                                <p id="opcrSavedCopiesEmpty" class="text-sm text-gray-500 text-center py-6">No saved copies yet. Save your OPCR draft to see them here.</p>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -660,18 +873,29 @@
                     </div>
                 </div>
 
+                @if(auth()->user()->hasRole('dean'))
+                <!-- OPCR Templates -->
+                <div id="opcrTemplatesSection" class="bg-white rounded-lg shadow-sm p-4 sm:p-6 hidden">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">OPCR Templates</h3>
+                    
+                    <div id="opcrTemplatesContainer">
+                        <p class="text-sm text-gray-500 text-center py-4">No OPCR templates yet</p>
+                    </div>
+                </div>
+                @endif
+
                 <!-- Submit IPCR -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                <div id="submitIpcrSection" class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
                     <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Submit IPCR</h3>
                     @php
                         $currentYear = now()->year;
-                        $currentSchoolYear = $currentYear . '-' . ($currentYear + 1);
-                        $currentSemester = now()->month <= 6 ? 'First Semester' : 'Second Semester';
+                        $currentSchoolYear = (string)$currentYear;
+                        $currentSemester = now()->month <= 6 ? 'January - June' : 'July - December';
                         $hasSubmission = isset($submissions) && count($submissions) > 0;
                     @endphp
                     <div class="space-y-2 text-sm text-gray-700">
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Current Sem:</span>
+                            <span class="text-gray-500">Current Period:</span>
                             <span class="font-semibold text-gray-900">{{ $currentSemester }}</span>
                         </div>
                         <div class="flex items-center justify-between">
@@ -714,11 +938,111 @@
                         @endforelse
                     </div>
                 </div>
+
+                @if(auth()->user()->hasRole('dean'))
+                <!-- Submit OPCR -->
+                <div id="submitOpcrSection" class="bg-white rounded-lg shadow-sm p-4 sm:p-6 hidden">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Submit OPCR</h3>
+                    @php
+                        $hasOpcrSubmission = isset($opcrSubmissions) && count($opcrSubmissions) > 0;
+                    @endphp
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500">Current Period:</span>
+                            <span class="font-semibold text-gray-900">{{ $currentSemester }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-500">Current Year:</span>
+                            <span class="font-semibold text-gray-900">{{ $currentSchoolYear }}</span>
+                        </div>
+                    </div>
+                    @if($hasOpcrSubmission)
+                        <button type="button" disabled class="mt-4 w-full bg-gray-400 text-white text-sm font-semibold py-2 rounded cursor-not-allowed opacity-75">
+                            ✓ Submitted
+                        </button>
+                    @else
+                        <button type="button" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded" onclick="openSubmitOpcrModal()">
+                            Submit
+                        </button>
+                    @endif
+                    
+                    <!-- Submitted OPCRs List -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <h4 class="text-sm font-bold text-gray-900 mb-3">Submitted OPCRs</h4>
+                        @forelse($opcrSubmissions ?? [] as $opcrSub)
+                            <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <p class="text-sm font-semibold text-gray-900 mb-1">{{ $opcrSub->title }}</p>
+                                <p class="text-xs text-gray-600">{{ $opcrSub->school_year }} • {{ $opcrSub->semester }}</p>
+                                <p class="text-xs text-gray-500 mb-2">Submitted: {{ $opcrSub->submitted_at->format('M d, Y') }}</p>
+                                <div class="flex gap-2">
+                                    <button onclick="viewOpcrSubmission({{ $opcrSub->id }})" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
+                                        View & Edit
+                                    </button>
+                                    <button onclick="deleteOpcrSubmission({{ $opcrSub->id }})" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
+                                        Delete
+                                    </button>
+                                    <span class="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                                        {{ ucfirst($opcrSub->status) }}
+                                    </span>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-500 text-center py-4">No submissions yet</p>
+                        @endforelse
+                    </div>
+                </div>
+                @endif
+
+                @if(auth()->user()->hasRole('dean'))
+                <!-- Dean: Faculty IPCR Submissions Review -->
+                <div id="deanFacultyReviewSection" class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-bold text-gray-900">Faculty IPCRs</h3>
+                            <p class="text-xs text-gray-500">{{ $departmentCode ?: $departmentName }}</p>
+                        </div>
+                    </div>
+                    <div id="deanFacultySubmissionsList">
+                        <div class="flex justify-center py-4">
+                            <svg class="animate-spin h-5 w-5 text-indigo-500" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dean: Cross-Calibration with Other Deans -->
+                <div id="deanCalibrationSection" class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <div class="flex items-center gap-2 mb-3 sm:mb-4">
+                        <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-bold text-gray-900">Dean Calibration</h3>
+                            <p class="text-xs text-gray-500">Other deans' IPCRs</p>
+                        </div>
+                    </div>
+                    <div id="deanCalibrationList">
+                        <div class="flex justify-center py-4">
+                            <svg class="animate-spin h-5 w-5 text-amber-500" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
-
-    <!-- Submit IPCR Modal -->
     <div id="submitIpcrModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full animate-scale-in">
             <div class="bg-blue-50 border-b border-blue-200 px-6 py-4 flex items-center justify-between">
@@ -747,6 +1071,38 @@
             </div>
         </div>
     </div>
+
+    @if(auth()->user()->hasRole('dean'))
+    <!-- Submit OPCR Modal -->
+    <div id="submitOpcrModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full animate-scale-in">
+            <div class="bg-blue-50 border-b border-blue-200 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-900">Submit OPCR</h2>
+                <button type="button" onclick="closeSubmitOpcrModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="px-6 py-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Select OPCR Template</label>
+                    <select id="submitOpcrTemplateSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">No templates found</option>
+                    </select>
+                </div>
+            </div>
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+                <button type="button" onclick="closeSubmitOpcrModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                    Cancel
+                </button>
+                <button type="button" onclick="submitSelectedOpcrTemplate()" class="px-4 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition text-sm">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Confirmation Modal -->
     <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
@@ -890,27 +1246,54 @@
         const ipcrRoleLabel = @json(auth()->user()->designation->title ?? 'Faculty');
         const csrfToken = @json(csrf_token());
 
-        function openCreateIpcrModal() {
+        window.openCreateIpcrModal = function() {
             const modal = document.getElementById('createIpcrModal');
             if (modal) {
                 modal.classList.remove('hidden');
             }
         }
 
-        function closeCreateIpcrModal() {
+        window.closeCreateIpcrModal = function() {
             const modal = document.getElementById('createIpcrModal');
             if (modal) {
                 modal.classList.add('hidden');
             }
         }
 
-        function proceedCreateIpcr() {
+        function hideIpcrTableColumns() {
+            const container = document.getElementById('ipcrDocumentContainer');
+            if (!container) return;
+            const headerRows = container.querySelectorAll('thead tr');
+            if (headerRows.length >= 2) {
+                const firstRowTh = headerRows[0].querySelectorAll('th');
+                for (let i = 2; i < firstRowTh.length; i++) {
+                    firstRowTh[i].classList.add('hidden');
+                    firstRowTh[i].style.display = 'none';
+                }
+                const secondRowTh = headerRows[1].querySelectorAll('th');
+                secondRowTh.forEach(th => {
+                    th.classList.add('hidden');
+                    th.style.display = 'none';
+                });
+            }
+            const rows = document.querySelectorAll('#ipcrTableBody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length <= 1) return;
+                for (let i = 2; i < cells.length; i++) {
+                    cells[i].classList.add('hidden');
+                    cells[i].style.display = 'none';
+                }
+            });
+        }
+
+        window.proceedCreateIpcr = function() {
             const schoolYear = document.getElementById('ipcrSchoolYear').value;
             const semester = document.getElementById('ipcrSemester').value;
             
             // Update display values
             document.getElementById('displaySchoolYear').textContent = schoolYear;
-            document.getElementById('displaySemester').textContent = semester === 'first' ? 'First Semester' : 'Second Semester';
+            document.getElementById('displaySemester').textContent = semester === 'jan-jun' ? 'January - June' : 'July - December';
             
             // Clear table body and reset title
             const tableBody = document.getElementById('ipcrTableBody');
@@ -928,21 +1311,25 @@
             currentSavedCopyId = null;
             soHeaderCount = 0;
             
+            // Re-hide the rating/accomplishment/remarks columns for fresh creation
+            hideIpcrTableColumns();
+            
             // Hide modal and create button
             closeCreateIpcrModal();
-            document.getElementById('createButtonArea').style.display = 'none';
+            document.getElementById('createIpcrButtonArea').style.display = 'none';
             
             // Show IPCR document modal
             document.getElementById('ipcrDocumentContainer').classList.remove('hidden');
-        }
+        };
 
-        function closeIpcrDocument() {
+        window.closeIpcrDocument = function() {
             document.getElementById('ipcrDocumentContainer').classList.add('hidden');
-            document.getElementById('createButtonArea').style.display = 'flex';
+            document.getElementById('createIpcrButtonArea').style.display = 'flex';
+            hideIpcrTableColumns();
             currentSavedCopyId = null;
-        }
+        };
 
-        function saveDocumentTitle() {
+        window.saveDocumentTitle = function() {
             const titleInput = document.getElementById('ipcrDocumentTitle');
             if (titleInput) {
                 showAlertModal('success', 'Title Updated', 'Document title has been updated. Remember to save your document to persist changes.');
@@ -956,14 +1343,14 @@
             }
         }
 
-        function closeIpcrFormModal() {
+        window.closeIpcrFormModal = function() {
             const modal = document.getElementById('ipcrFormModal');
             if (modal) {
                 modal.classList.add('hidden');
             }
         }
 
-        function openSubmitIpcrModal() {
+        window.openSubmitIpcrModal = function() {
             populateSubmitTemplates();
             const modal = document.getElementById('submitIpcrModal');
             if (modal) {
@@ -971,7 +1358,7 @@
             }
         }
 
-        function closeSubmitIpcrModal() {
+        window.closeSubmitIpcrModal = function() {
             const modal = document.getElementById('submitIpcrModal');
             if (modal) {
                 modal.classList.add('hidden');
@@ -1021,7 +1408,7 @@
             }
         }
 
-        async function submitSelectedCopy() {
+        window.submitSelectedCopy = async function() {
             const select = document.getElementById('submitSavedCopySelect');
             const selectedId = select ? select.value : '';
             if (!selectedId) {
@@ -1099,7 +1486,7 @@
             }
         }
 
-        function saveIpcrDocument() {
+        window.saveIpcrDocument = function() {
             const schoolYear = document.getElementById('displaySchoolYear')?.textContent?.trim();
             const semester = document.getElementById('displaySemester')?.textContent?.trim();
             const titleInput = document.getElementById('ipcrDocumentTitle');
@@ -1142,7 +1529,7 @@
                 console.error('Error:', error);
                 showAlertModal('error', 'Error', 'An error occurred while saving the IPCR draft.');
             });
-        }
+        };
 
         function extractSoCounts() {
             const tableBody = document.getElementById('ipcrTableBody');
@@ -1219,7 +1606,7 @@
             return counts;
         }
 
-        function saveAsTemplate() {
+        window.saveAsTemplate = function() {
             const schoolYear = document.getElementById('displaySchoolYear')?.textContent?.trim();
             const semester = document.getElementById('displaySemester')?.textContent?.trim();
             const titleInput = document.getElementById('ipcrDocumentTitle');
@@ -1355,7 +1742,7 @@
             });
         }
 
-        function deleteSavedCopy(id) {
+        window.deleteSavedCopy = function(id) {
             openConfirmationModal(
                 'Delete Saved Copy',
                 'Are you sure you want to delete this saved copy?',
@@ -1410,14 +1797,20 @@
         function unhideTableColumns() {
             // Unhide table headers
             const headers = document.querySelectorAll('#ipcrDocumentContainer thead th.hidden');
-            headers.forEach(header => header.classList.remove('hidden'));
+            headers.forEach(header => {
+                header.classList.remove('hidden');
+                header.style.display = '';
+            });
             
             // Unhide table body cells
             const cells = document.querySelectorAll('#ipcrTableBody td.hidden');
-            cells.forEach(cell => cell.classList.remove('hidden'));
+            cells.forEach(cell => {
+                cell.classList.remove('hidden');
+                cell.style.display = '';
+            });
         }
         
-        function editSavedCopy(id) {
+        window.editSavedCopy = function(id) {
             fetch(`{{ url('faculty/ipcr/saved-copies') }}/${id}`, {
                 method: 'GET',
                 headers: {
@@ -1455,7 +1848,7 @@
 
                     updateSoHeaderCountFromTable();
                     currentSavedCopyId = item.id;
-                    document.getElementById('createButtonArea').style.display = 'none';
+                    document.getElementById('createIpcrButtonArea').style.display = 'none';
                     document.getElementById('ipcrDocumentContainer').classList.remove('hidden');
                 } else {
                     showAlertModal('error', 'Not Found', 'Saved copy could not be found.');
@@ -1469,6 +1862,11 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             renderSavedCopies();
+            @if(auth()->user()->hasRole('dean'))
+            renderOpcrSavedCopies();
+            loadDeanFacultySubmissions();
+            loadDeanCalibrationSubmissions();
+            @endif
             
             // Setup update button event listener
             const updateBtn = document.getElementById('updateSubmissionBtn');
@@ -1486,7 +1884,7 @@
             }
         });
 
-        function addSectionHeader(headerText = '', isEditable = true) {
+        window.addSectionHeader = function(headerText = '', isEditable = true) {
             const tableBody = document.getElementById('ipcrTableBody');
             if (!tableBody) return;
             
@@ -1517,14 +1915,14 @@
             if (isEditable) {
                 // Editable section header (Others/Custom)
                 newRow.innerHTML = `
-                    <td colspan="9" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
+                    <td colspan="8" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
                         <input type="text" class="w-full bg-transparent border-0 focus:ring-0 font-semibold text-gray-800" placeholder="Enter custom section header..." value="${headerText}" />
                     </td>
                 `;
             } else {
                 // Non-editable section header (predefined sections)
                 newRow.innerHTML = `
-                    <td colspan="9" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
+                    <td colspan="8" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
                         <div class="font-semibold text-gray-800">${headerText}</div>
                         <input type="hidden" value="${headerText}" />
                     </td>
@@ -1537,7 +1935,7 @@
             tableBody.appendChild(newRow);
         }
         
-        function toggleSectionHeaderDropdown() {
+        window.toggleSectionHeaderDropdown = function() {
             const dropdown = document.getElementById('sectionHeaderDropdownMenu');
             if (!dropdown) return;
             
@@ -1554,7 +1952,7 @@
             }
         });
 
-        function addSOHeader() {
+        window.addSOHeader = function() {
             const tableBody = document.getElementById('ipcrTableBody');
             if (!tableBody) return;
             
@@ -1592,7 +1990,7 @@
             const newRow = document.createElement('tr');
             newRow.className = 'bg-blue-100';
             newRow.innerHTML = `
-                <td colspan="9" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
+                <td colspan="8" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
                     <div class="flex items-center gap-2">
                         <span class="font-semibold text-gray-800">SO ${soLabel}:</span>
                         <input type="text" class="flex-1 bg-transparent border-0 focus:ring-0 font-semibold text-gray-800" placeholder="Enter SO description..." value="" />
@@ -1632,9 +2030,15 @@
             return result;
         }
 
-        function addDataRow() {
+        window.addDataRow = function() {
             const tableBody = document.getElementById('ipcrTableBody');
             if (!tableBody) return;
+
+            // Check if columns are currently visible
+            const container = document.getElementById('ipcrDocumentContainer');
+            const remarksHeader = container?.querySelector('thead th:last-child');
+            const isExpanded = remarksHeader && !remarksHeader.classList.contains('hidden');
+            const hiddenClass = isExpanded ? '' : ' hidden';
             
             // Create new data row
             const newRow = document.createElement('tr');
@@ -1643,28 +2047,25 @@
                     <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter MFO"></textarea>
                 </td>
                 <td class="border border-gray-300 px-2 py-2">
-                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0"></textarea>
+                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter Success Indicators"></textarea>
                 </td>
-                <td class="border border-gray-300 px-2 py-2">
-                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0"></textarea>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter Actual Accomplishments"></textarea>
                 </td>
-                <td class="border border-gray-300 px-2 py-2 hidden">
-                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0"></textarea>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
                 </td>
-                <td class="border border-gray-300 px-2 py-2 hidden">
-                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="0" max="5" value="">
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
                 </td>
-                <td class="border border-gray-300 px-2 py-2 hidden">
-                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="0" max="5" value="">
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
                 </td>
-                <td class="border border-gray-300 px-2 py-2 hidden">
-                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="0" max="5" value="">
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
                 </td>
-                <td class="border border-gray-300 px-2 py-2 hidden">
-                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="0" max="5" value="">
-                </td>
-                <td class="border border-gray-300 px-2 py-2 hidden">
-                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0"></textarea>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter Remarks"></textarea>
                 </td>
             `;
             
@@ -1729,7 +2130,7 @@
             }
         }
 
-        function removeLastRow() {
+        window.removeLastRow = function() {
             const tableBody = document.getElementById('ipcrTableBody');
             if (!tableBody) return;
             
@@ -1836,7 +2237,7 @@
             if (strategicField) setupFormatField(strategicField);
         }
 
-        function addHeader() {
+        window.addHeader = function() {
             headerCount++;
             const headersContainer = document.getElementById('headersContainer');
             
@@ -1874,7 +2275,7 @@
             currentHeaderForRows = headerCount;
         }
 
-        function addRow() {
+        window.addRow = function() {
             if (currentHeaderForRows === null) {
                 showAlertModal('warning', 'Add Header First', 'Please add a header first before adding rows.');
                 return;
@@ -1925,7 +2326,7 @@
             if (successField) setupFormatField(successField);
         }
 
-        function removeHeader(headerId) {
+        window.removeHeader = function(headerId) {
             const headerElement = document.getElementById(`header-${headerId}`);
             if (headerElement) {
                 headerElement.remove();
@@ -1941,14 +2342,14 @@
             }
         }
 
-        function removeRow(rowId) {
+        window.removeRow = function(rowId) {
             const rowElement = document.getElementById(rowId);
             if (rowElement) {
                 rowElement.remove();
             }
         }
 
-        function clearForm() {
+        window.clearForm = function() {
             openConfirmationModal(
                 'Clear Form',
                 'Are you sure you want to clear the form?',
@@ -1977,7 +2378,7 @@
             );
         }
 
-        function generateIPCR() {
+        window.generateIPCR = function() {
             // Validate form has content
             const stratObjectives = document.querySelectorAll('#strategicObjectivesContainer .editable-field');
             const headers = document.querySelectorAll('[data-header-id]');
@@ -2108,7 +2509,7 @@
             });
         }
 
-        function loadTemplateToDocument(templateId) {
+        window.loadTemplateToDocument = function(templateId) {
             fetch(`{{ url('faculty/ipcr/templates') }}/${templateId}`, {
                 method: 'GET',
                 headers: {
@@ -2151,6 +2552,21 @@
                             templateIdField.value = templateId;
                         }
 
+                        // Unhide all columns in the preview modal
+                        const previewModal = document.getElementById('templatePreviewModal');
+                        if (previewModal) {
+                            const headers = previewModal.querySelectorAll('thead th.hidden');
+                            headers.forEach(header => header.classList.remove('hidden'));
+                            const cells = previewModal.querySelectorAll('td.hidden');
+                            cells.forEach(cell => { cell.classList.remove('hidden'); cell.style.display = ''; });
+                        }
+
+                        // Show Edit IPCR button, hide Update Submission button
+                        const saveCopyBtn = document.getElementById('saveCopyBtn');
+                        if (saveCopyBtn) saveCopyBtn.style.display = '';
+                        const updateBtn = document.getElementById('updateSubmissionBtn');
+                        if (updateBtn) updateBtn.classList.add('hidden');
+
                         document.getElementById('templatePreviewModal').classList.remove('hidden');
                     } else {
                         showAlertModal('info', 'Legacy Template', 'This template was created with the old format. Please use the Edit button to modify it.');
@@ -2165,33 +2581,50 @@
             });
         }
         
-        function closeTemplatePreview() {
-            // Check if we're in edit mode with unsaved changes
+        function doCloseTemplatePreview() {
+            // Clear submission tracking fields
             const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
-            if (submissionIdField && submissionIdField.value) {
-                // Check if table has been modified
-                const tableBody = document.getElementById('templatePreviewTableBody');
-                if (tableBody && tableBody.innerHTML.trim() !== '') {
-                    if (!confirm('You have unsaved changes. Are you sure you want to close without saving?')) {
-                        return;
-                    }
-                }
-                submissionIdField.value = '';
-            }
-            
+            if (submissionIdField) submissionIdField.value = '';
+            const submissionTypeField = document.getElementById('currentSubmissionType');
+            if (submissionTypeField) submissionTypeField.value = 'ipcr';
+
             // Make table cells non-editable when closing
             const cells = document.getElementById('templatePreviewTableBody')?.querySelectorAll('td');
             if (cells) {
                 cells.forEach(cell => {
                     cell.removeAttribute('contenteditable');
                     cell.style.cursor = 'auto';
+                    cell.style.backgroundColor = '';
+                    cell.style.userSelect = '';
                 });
             }
-            
+
             document.getElementById('templatePreviewModal').classList.add('hidden');
         }
+
+        window.closeTemplatePreview = function() {
+            // Check if we're in edit mode with unsaved changes
+            const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+            if (submissionIdField && submissionIdField.value) {
+                const tableBody = document.getElementById('templatePreviewTableBody');
+                if (tableBody && tableBody.innerHTML.trim() !== '') {
+                    openConfirmationModal(
+                        'Unsaved Changes',
+                        'You have unsaved changes. Are you sure you want to close without saving?',
+                        'Any edits you made will be lost.',
+                        'danger',
+                        'Close Without Saving',
+                        function() {
+                            doCloseTemplatePreview();
+                        }
+                    );
+                    return;
+                }
+            }
+            doCloseTemplatePreview();
+        }
         
-        function loadTemplate(templateId) {
+        window.loadTemplate = function(templateId) {
             fetch(`{{ url('faculty/ipcr/templates') }}/${templateId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -2252,7 +2685,7 @@
                         document.getElementById('currentTemplateName').value = template.title;
                         
                         // Show the form
-                        document.getElementById('createButtonArea').style.display = 'none';
+                        document.getElementById('createIpcrButtonArea').style.display = 'none';
                         document.getElementById('ipcrFormContainer').style.display = 'block';
                         
                         // Clear existing form
@@ -2404,7 +2837,7 @@
                 });
         }
         
-        function deleteTemplate(templateId) {
+        window.deleteTemplate = function(templateId) {
             openConfirmationModal(
                 'Delete Template',
                 'Are you sure you want to delete this template?',
@@ -2521,7 +2954,7 @@
             });
         }
 
-        function saveCopyFromPreview() {
+        window.saveCopyFromPreview = function() {
             console.log('saveCopyFromPreview called');
             
             // Check if we're updating a submission
@@ -2659,8 +3092,14 @@
             formData.append('table_body_html', tableBodyHtml);
             formData.append('_method', 'PUT');
 
+            // Determine which endpoint to use based on submission type
+            const submissionType = document.getElementById('currentSubmissionType')?.value || 'ipcr';
+            const baseUrl = submissionType === 'opcr' ? '/faculty/opcr/submissions' : '{{ url('faculty/ipcr/submissions') }}';
+            const typeLabel = submissionType === 'opcr' ? 'OPCR' : 'IPCR';
+
             console.log('FormData created, attempting fetch...');
-            console.log('Fetch URL:', `{{ url('faculty/ipcr/submissions') }}/${submissionId}`);
+            console.log('Submission type:', submissionType);
+            console.log('Fetch URL:', baseUrl + '/' + submissionId);
 
             // Show loading state
             const updateBtn = document.getElementById('updateSubmissionBtn');
@@ -2668,7 +3107,7 @@
             updateBtn.disabled = true;
             updateBtn.textContent = 'Updating...';
 
-            fetch(`{{ url('faculty/ipcr/submissions') }}/${submissionId}`, {
+            fetch(baseUrl + '/' + submissionId, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
@@ -2696,7 +3135,7 @@
                     // Close the modal
                     closeTemplatePreview();
                     
-                    showAlertModal('success', 'Updated Successfully', 'The submitted IPCR has been updated successfully.', function() {
+                    showAlertModal('success', 'Updated Successfully', 'The submitted ' + typeLabel + ' has been updated successfully.', function() {
                         // Reload page to reflect changes
                         setTimeout(() => {
                             location.reload();
@@ -2716,21 +3155,15 @@
             });
         }
         
-        function deleteSubmission(submissionId) {
-            console.log('Delete submission:', submissionId);
-            
-            if (confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
-                try {
-                    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
-                    if (!csrfTokenElement) {
-                        showAlertModal('error', 'Error', 'CSRF token not found. Please refresh the page.');
-                        return;
-                    }
-                    
-                    const csrfToken = csrfTokenElement.getAttribute('content');
+        window.deleteSubmission = function(submissionId) {
+            openConfirmationModal(
+                'Delete Submission',
+                'Are you sure you want to delete this submission?',
+                'This action cannot be undone.',
+                'danger',
+                'Delete',
+                function() {
                     const url = `/faculty/ipcr/submissions/${submissionId}`;
-                    
-                    console.log('Deleting submission:', submissionId);
                     
                     fetch(url, {
                         method: 'DELETE',
@@ -2741,16 +3174,12 @@
                         }
                     })
                     .then(response => {
-                        console.log('Response status:', response.status);
                         return response.json().catch(() => ({ success: false, message: 'Invalid response' }));
                     })
                     .then(data => {
-                        console.log('Delete response:', data);
                         if (data.success) {
                             showAlertModal('success', 'Deleted Successfully', 'The submission has been deleted successfully.', function() {
-                                setTimeout(() => {
-                                    location.reload();
-                                }, 500);
+                                setTimeout(() => { location.reload(); }, 500);
                             });
                         } else {
                             showAlertModal('error', 'Delete Failed', data.message || 'Failed to delete submission');
@@ -2760,11 +3189,8 @@
                         console.error('Delete error:', error);
                         showAlertModal('error', 'Error', error.message || 'An error occurred while deleting the submission.');
                     });
-                } catch (error) {
-                    console.error('Exception:', error);
-                    showAlertModal('error', 'Error', 'An error occurred: ' + error.message);
                 }
-            }
+            );
         }
         
         function openConfirmationModal(title, message, subMessage, type, confirmText, callback) {
@@ -2802,12 +3228,12 @@
             modal.classList.remove('hidden');
         }
         
-        function closeConfirmationModal() {
+        window.closeConfirmationModal = function() {
             document.getElementById('confirmationModal').classList.add('hidden');
             pendingAction = null;
         }
         
-        function confirmAction() {
+        window.confirmAction = function() {
             if (pendingAction) {
                 pendingAction();
             }
@@ -2830,7 +3256,7 @@
         });
         
         // Move header up
-        function moveHeaderUp(headerId) {
+        window.moveHeaderUp = function(headerId) {
             const header = document.getElementById(`header-${headerId}`);
             if (header && header.previousElementSibling) {
                 header.parentNode.insertBefore(header, header.previousElementSibling);
@@ -2838,7 +3264,7 @@
         }
         
         // Move header down
-        function moveHeaderDown(headerId) {
+        window.moveHeaderDown = function(headerId) {
             const header = document.getElementById(`header-${headerId}`);
             if (header && header.nextElementSibling) {
                 header.parentNode.insertBefore(header.nextElementSibling, header);
@@ -2846,7 +3272,7 @@
         }
         
         // Move row up
-        function moveRowUp(rowId) {
+        window.moveRowUp = function(rowId) {
             const row = document.getElementById(rowId);
             if (row && row.previousElementSibling) {
                 row.parentNode.insertBefore(row, row.previousElementSibling);
@@ -2854,7 +3280,7 @@
         }
         
         // Move row down
-        function moveRowDown(rowId) {
+        window.moveRowDown = function(rowId) {
             const row = document.getElementById(rowId);
             if (row && row.nextElementSibling) {
                 row.parentNode.insertBefore(row.nextElementSibling, row);
@@ -2862,7 +3288,7 @@
         }
         
         // View template (placeholder for future implementation)
-        function viewTemplate(templateId) {
+        window.viewTemplate = function(templateId) {
             fetch(`{{ url('faculty/ipcr/templates') }}/${templateId}`)
                 .then(response => response.json())
                 .then(data => {
@@ -2898,6 +3324,21 @@
                                 templateIdField.value = templateId;
                             }
 
+                            // Unhide all columns in the preview modal
+                            const previewModal = document.getElementById('templatePreviewModal');
+                            if (previewModal) {
+                                const headers = previewModal.querySelectorAll('thead th.hidden');
+                                headers.forEach(header => header.classList.remove('hidden'));
+                                const cells = previewModal.querySelectorAll('td.hidden');
+                                cells.forEach(cell => { cell.classList.remove('hidden'); cell.style.display = ''; });
+                            }
+
+                            // Show Edit IPCR button, hide Update Submission button
+                            const saveCopyBtn = document.getElementById('saveCopyBtn');
+                            if (saveCopyBtn) saveCopyBtn.style.display = '';
+                            const updateBtn = document.getElementById('updateSubmissionBtn');
+                            if (updateBtn) updateBtn.classList.add('hidden');
+
                             document.getElementById('templatePreviewModal').classList.remove('hidden');
                         } else {
                             showAlertModal('info', 'Legacy Template', 'This template was created with the old format. Please use the Edit button to modify it.');
@@ -2912,7 +3353,7 @@
                 });
         }
         
-        function viewSubmission(submissionId) {
+        window.viewSubmission = function(submissionId) {
             console.log('Viewing/Editing submission:', submissionId);
             // Add cache-busting parameter
             fetch(`{{ url('faculty/ipcr/submissions') }}/${submissionId}?t=${Date.now()}`, {
@@ -2926,12 +3367,14 @@
                     if (data.success) {
                         const submission = data.submission;
                         
-                        // Store submission ID for update functionality
+                        // Store submission ID and type for update functionality
                         const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
                         if (submissionIdField) {
                             submissionIdField.value = submissionId;
                             console.log('Submission ID stored in field:', submissionIdField.value);
                         }
+                        const submissionTypeField = document.getElementById('currentSubmissionType');
+                        if (submissionTypeField) submissionTypeField.value = 'ipcr';
                         
                         // Load table body
                         const tableBody = document.getElementById('templatePreviewTableBody');
@@ -3166,7 +3609,7 @@
             }, 5000);
         }
         
-        function closeAlertModal() {
+        window.closeAlertModal = function() {
             if (alertModalTimer) {
                 clearTimeout(alertModalTimer);
                 alertModalTimer = null;
@@ -3184,7 +3627,1145 @@
                 closeAlertModal();
             }
         });
-    </script>
 
+        // =====================================================
+        // OPCR FUNCTIONS (completely independent from IPCR)
+        // =====================================================
+        let opcrSoHeaderCount = 0;
+        let currentOpcrSavedCopyId = null;
+
+        function hideOpcrTableColumns() {
+            const container = document.getElementById('opcrDocumentContainer');
+            if (!container) return;
+            const headerRows = container.querySelectorAll('thead tr');
+            if (headerRows.length >= 2) {
+                const firstRowTh = headerRows[0].querySelectorAll('th');
+                for (let i = 2; i < firstRowTh.length; i++) {
+                    firstRowTh[i].classList.add('hidden');
+                }
+                const secondRowTh = headerRows[1].querySelectorAll('th');
+                secondRowTh.forEach(th => th.classList.add('hidden'));
+            }
+            const rows = document.querySelectorAll('#opcrTableBody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length <= 1) return;
+                for (let i = 2; i < cells.length; i++) {
+                    cells[i].classList.add('hidden');
+                }
+            });
+        }
+
+        window.proceedCreateOpcr = function() {
+            const schoolYear = document.getElementById('opcrSchoolYear').value;
+            const semester = document.getElementById('opcrSemester').value;
+
+            document.getElementById('opcrDisplaySchoolYear').textContent = schoolYear;
+            document.getElementById('opcrDisplaySemester').textContent = semester === 'jan-jun' ? 'January - June' : 'July - December';
+
+            const tableBody = document.getElementById('opcrTableBody');
+            if (tableBody) tableBody.innerHTML = '';
+
+            const titleInput = document.getElementById('opcrDocumentTitle');
+            if (titleInput) titleInput.value = `OPCR for ${ipcrRoleLabel}`;
+
+            currentOpcrSavedCopyId = null;
+            opcrSoHeaderCount = 0;
+
+            // Re-hide rating/accomplishment/remarks columns for fresh creation
+            hideOpcrTableColumns();
+
+            closeCreateOpcrModal();
+            document.getElementById('createOpcrButtonArea').style.display = 'none';
+
+            document.getElementById('opcrDocumentContainer').classList.remove('hidden');
+        };
+
+        window.closeOpcrDocument = function() {
+            document.getElementById('opcrDocumentContainer').classList.add('hidden');
+            const btn = document.getElementById('createOpcrButtonArea');
+            if (btn) btn.style.display = 'flex';
+            hideOpcrTableColumns();
+            currentOpcrSavedCopyId = null;
+        }
+
+        window.saveOpcrDocumentTitle = function() {
+            const titleInput = document.getElementById('opcrDocumentTitle');
+            if (titleInput) {
+                showAlertModal('success', 'Title Updated', 'OPCR title has been updated. Remember to save your document to persist changes.');
+            }
+        }
+
+        window.toggleOpcrSectionHeaderDropdown = function() {
+            const dropdown = document.getElementById('opcrSectionHeaderDropdownMenu');
+            if (!dropdown) return;
+            dropdown.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('opcrSectionHeaderDropdown');
+            const dropdownMenu = document.getElementById('opcrSectionHeaderDropdownMenu');
+            if (dropdown && dropdownMenu && !dropdown.contains(event.target)) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
+
+        window.addOpcrSectionHeader = function(headerText = '', isEditable = true) {
+            const tableBody = document.getElementById('opcrTableBody');
+            if (!tableBody) return;
+
+            toggleOpcrSectionHeaderDropdown();
+
+            if (!isEditable) opcrSoHeaderCount = 0;
+
+            let bgColor = 'bg-gray-100';
+            if (!isEditable) {
+                if (headerText === 'Strategic Objectives') bgColor = 'bg-green-100';
+                else if (headerText === 'Core Functions') bgColor = 'bg-purple-100';
+                else if (headerText === 'Support Function') bgColor = 'bg-orange-100';
+            }
+
+            const newRow = document.createElement('tr');
+            newRow.className = bgColor;
+
+            if (isEditable) {
+                newRow.innerHTML = `
+                    <td colspan="8" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
+                        <input type="text" class="w-full bg-transparent border-0 focus:ring-0 font-semibold text-gray-800" placeholder="Enter custom section header..." value="${headerText}" />
+                    </td>
+                `;
+            } else {
+                newRow.innerHTML = `
+                    <td colspan="8" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
+                        <div class="font-semibold text-gray-800">${headerText}</div>
+                        <input type="hidden" value="${headerText}" />
+                    </td>
+                `;
+                newRow.setAttribute('data-section-type', headerText.toLowerCase().replace(/\s+/g, '-'));
+            }
+
+            tableBody.appendChild(newRow);
+        }
+
+        window.addOpcrSOHeader = function() {
+            const tableBody = document.getElementById('opcrTableBody');
+            if (!tableBody) return;
+
+            const allRows = tableBody.querySelectorAll('tr');
+            let lastSectionIndex = -1;
+
+            for (let i = allRows.length - 1; i >= 0; i--) {
+                const row = allRows[i];
+                if (row.classList.contains('bg-green-100') ||
+                    row.classList.contains('bg-purple-100') ||
+                    row.classList.contains('bg-orange-100')) {
+                    lastSectionIndex = i;
+                    break;
+                }
+            }
+
+            let currentSOCount = 0;
+            for (let i = lastSectionIndex + 1; i < allRows.length; i++) {
+                const row = allRows[i];
+                if (row.classList.contains('bg-blue-100')) {
+                    const span = row.querySelector('span.font-semibold.text-gray-800');
+                    if (span && span.textContent.includes('SO')) currentSOCount++;
+                }
+            }
+
+            const nextSONumber = currentSOCount + 1;
+            const soLabel = convertToRoman(nextSONumber);
+
+            const newRow = document.createElement('tr');
+            newRow.className = 'bg-blue-100';
+            newRow.innerHTML = `
+                <td colspan="8" class="border border-gray-300 px-3 py-2 font-semibold text-gray-800">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-gray-800">SO ${soLabel}:</span>
+                        <input type="text" class="flex-1 bg-transparent border-0 focus:ring-0 font-semibold text-gray-800" placeholder="Enter SO description..." value="" />
+                    </div>
+                </td>
+            `;
+
+            tableBody.appendChild(newRow);
+        }
+
+        window.addOpcrDataRow = function() {
+            const tableBody = document.getElementById('opcrTableBody');
+            if (!tableBody) return;
+
+            // Check if columns are currently visible
+            const container = document.getElementById('opcrDocumentContainer');
+            const remarksHeader = container?.querySelector('thead th:last-child');
+            const isExpanded = remarksHeader && !remarksHeader.classList.contains('hidden');
+            const hiddenClass = isExpanded ? '' : ' hidden';
+
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td class="border border-gray-300 px-2 py-2">
+                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter MFO"></textarea>
+                </td>
+                <td class="border border-gray-300 px-2 py-2">
+                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter Success Indicators"></textarea>
+                </td>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter Actual Accomplishments"></textarea>
+                </td>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
+                </td>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
+                </td>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
+                </td>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <input type="number" class="w-full h-20 px-2 py-1 text-xs text-center border-0 focus:ring-0" min="1" max="5" step="1" placeholder="-">
+                </td>
+                <td class="border border-gray-300 px-2 py-2${hiddenClass}">
+                    <textarea class="w-full h-20 px-2 py-1 text-xs resize-none border-0 focus:ring-0" placeholder="Enter Remarks"></textarea>
+                </td>
+            `;
+
+            tableBody.appendChild(newRow);
+        }
+
+        window.removeOpcrLastRow = function() {
+            const tableBody = document.getElementById('opcrTableBody');
+            if (!tableBody) return;
+
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows.length > 0) rows[rows.length - 1].remove();
+        }
+
+        function extractOpcrSoCounts() {
+            const tableBody = document.getElementById('opcrTableBody');
+            if (!tableBody) return { strategic_objectives: 0, core_functions: 0, support_functions: 0 };
+
+            let counts = { strategic_objectives: 0, core_functions: 0, support_functions: 0 };
+            let currentSection = null;
+            const rows = tableBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const className = row.className;
+                if (className.includes('bg-green-100')) currentSection = 'strategic_objectives';
+                else if (className.includes('bg-purple-100')) currentSection = 'core_functions';
+                else if (className.includes('bg-orange-100')) currentSection = 'support_functions';
+                else if (className.includes('bg-gray-100') && row.querySelector('td[colspan]')) currentSection = null;
+
+                if (className.includes('bg-blue-100') && currentSection) counts[currentSection]++;
+            });
+
+            return counts;
+        }
+
+        window.saveOpcrDocument = function() {
+            const schoolYear = document.getElementById('opcrDisplaySchoolYear')?.textContent?.trim();
+            const semester = document.getElementById('opcrDisplaySemester')?.textContent?.trim();
+            const titleInput = document.getElementById('opcrDocumentTitle');
+            const title = titleInput ? titleInput.value.trim() : `OPCR for ${ipcrRoleLabel}`;
+            const tableBody = document.getElementById('opcrTableBody');
+            const tableBodyHtml = tableBody ? buildTableBodySnapshot(tableBody) : '';
+
+            const payload = {
+                title: title,
+                school_year: schoolYear || 'N/A',
+                semester: semester || 'N/A',
+                table_body_html: tableBodyHtml
+            };
+
+            const url = currentOpcrSavedCopyId
+                ? `/faculty/opcr/saved-copies/${currentOpcrSavedCopyId}`
+                : '/faculty/opcr/saved-copies';
+            const method = currentOpcrSavedCopyId ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentOpcrSavedCopyId = data.savedCopy.id;
+                    renderOpcrSavedCopies();
+                    showAlertModal('success', 'Saved', data.message);
+                } else {
+                    showAlertModal('error', 'Error', data.message || 'Failed to save OPCR draft');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlertModal('error', 'Error', 'An error occurred while saving the OPCR draft.');
+            });
+        }
+
+        window.saveOpcrAsTemplate = function() {
+            const schoolYear = document.getElementById('opcrDisplaySchoolYear')?.textContent?.trim();
+            const semester = document.getElementById('opcrDisplaySemester')?.textContent?.trim();
+            const titleInput = document.getElementById('opcrDocumentTitle');
+            const title = titleInput ? titleInput.value.trim() : `OPCR Template`;
+            const tableBody = document.getElementById('opcrTableBody');
+            const tableBodyHtml = tableBody ? buildTableBodySnapshot(tableBody) : '';
+
+            if (!tableBodyHtml || tableBodyHtml.trim() === '') {
+                showAlertModal('warning', 'Empty Template', 'Please add some content before saving as a template.');
+                return;
+            }
+
+            const soCounts = extractOpcrSoCounts();
+
+            const payload = {
+                title: title,
+                school_year: schoolYear || 'N/A',
+                semester: semester || 'N/A',
+                table_body_html: tableBodyHtml,
+                so_count_json: soCounts
+            };
+
+            fetch('/faculty/opcr/templates/from-saved-copy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(`HTTP ${response.status}: ${text}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const message = data.updated
+                        ? 'Your existing OPCR template has been updated with the new content.'
+                        : 'Your OPCR has been saved as a template.';
+                    const heading = data.updated ? 'Template Updated' : 'Template Saved';
+                    showAlertModal('success', heading, message);
+                } else {
+                    showAlertModal('error', 'Error', data.message || 'Failed to save OPCR as template');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlertModal('error', 'Error', error.message || 'An error occurred while saving the OPCR template.');
+            });
+        };
+
+        // OPCR Saved Copies Functions
+        async function getOpcrSavedCopies() {
+            try {
+                const response = await fetch('/faculty/opcr/saved-copies', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                const data = await response.json();
+                return data.savedCopies || [];
+            } catch (error) {
+                console.error('Error fetching OPCR saved copies:', error);
+                return [];
+            }
+        }
+
+        async function renderOpcrSavedCopies() {
+            const list = document.getElementById('opcrSavedCopiesList');
+            const empty = document.getElementById('opcrSavedCopiesEmpty');
+            if (!list || !empty) return;
+
+            const savedCopies = await getOpcrSavedCopies();
+            list.innerHTML = '';
+
+            if (savedCopies.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            savedCopies.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'submission-card';
+                const savedDate = item.saved_at || item.created_at;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs sm:text-sm font-semibold text-gray-900">${item.title}</p>
+                            <p class="text-xs text-gray-500 mt-1">${item.school_year} • ${item.semester}</p>
+                            <p class="text-xs text-gray-500 mt-1">Saved on ${formatSavedDate(savedDate)}</p>
+                        </div>
+                        <div class="flex gap-2 flex-shrink-0">
+                            <button class="text-blue-600 hover:text-blue-700 font-semibold text-xs sm:text-sm" onclick="editOpcrSavedCopy(${item.id})">View</button>
+                            <button class="text-red-600 hover:text-red-700 font-semibold text-xs sm:text-sm" onclick="deleteOpcrSavedCopy(${item.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        window.deleteOpcrSavedCopy = function(id) {
+            openConfirmationModal(
+                'Delete OPCR Saved Copy',
+                'Are you sure you want to delete this saved copy?',
+                'This action cannot be undone.',
+                'danger',
+                'Delete',
+                function() {
+                    fetch(`/faculty/opcr/saved-copies/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (currentOpcrSavedCopyId === id) {
+                                currentOpcrSavedCopyId = null;
+                            }
+                            showAlertModal('success', 'Deleted', 'OPCR saved copy deleted successfully!', function() {
+                                renderOpcrSavedCopies();
+                            });
+                        } else {
+                            showAlertModal('error', 'Error', data.message || 'Failed to delete OPCR saved copy');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlertModal('error', 'Error', 'An error occurred while deleting the OPCR saved copy.');
+                    });
+                }
+            );
+        };
+
+        function unhideOpcrTableColumns() {
+            // Unhide table headers
+            const headers = document.querySelectorAll('#opcrDocumentContainer thead th.hidden');
+            headers.forEach(header => {
+                header.classList.remove('hidden');
+                header.style.display = '';
+            });
+            
+            // Unhide table body cells
+            const cells = document.querySelectorAll('#opcrTableBody td.hidden');
+            cells.forEach(cell => {
+                cell.classList.remove('hidden');
+                cell.style.display = '';
+            });
+        }
+
+        window.editOpcrSavedCopy = async function(id) {
+            try {
+                const response = await fetch(`/faculty/opcr/saved-copies/${id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.savedCopy) {
+                    const copy = data.savedCopy;
+                    currentOpcrSavedCopyId = copy.id;
+                    
+                    document.getElementById('opcrDisplaySchoolYear').textContent = copy.school_year;
+                    document.getElementById('opcrDisplaySemester').textContent = copy.semester;
+                    document.getElementById('opcrDocumentTitle').value = copy.title;
+                    
+                    const tableBody = document.getElementById('opcrTableBody');
+                    if (tableBody && copy.table_body_html) {
+                        tableBody.innerHTML = copy.table_body_html;
+                        
+                        // Unhide columns for saved copy
+                        unhideOpcrTableColumns();
+                    }
+                    
+                    document.getElementById('createOpcrButtonArea').style.display = 'none';
+                    document.getElementById('opcrDocumentContainer').classList.remove('hidden');
+                } else {
+                    showAlertModal('error', 'Not Found', 'OPCR saved copy could not be found.');
+                }
+            } catch (error) {
+                console.error('Error loading OPCR saved copy:', error);
+                showAlertModal('error', 'Error', 'An error occurred while loading the OPCR saved copy.');
+            }
+        };
+
+        // OPCR Templates Functions
+        window.renderOpcrTemplates = async function() {
+            const container = document.getElementById('opcrTemplatesContainer');
+            if (!container) return;
+
+            try {
+                const templates = await getOpcrTemplates();
+                
+                if (templates.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No OPCR templates yet</p>';
+                    return;
+                }
+
+                container.innerHTML = templates.map(template => {
+                    const titleHtml = template.title || 'Untitled Template';
+                    let periodHtml = '';
+                    if (template.school_year && template.semester) {
+                        periodHtml = '<p class="text-xs sm:text-sm text-gray-600">' + template.school_year + ' • ' + template.semester + '</p>';
+                    } else if (template.period) {
+                        periodHtml = '<p class="text-xs sm:text-sm text-gray-600">' + template.period + '</p>';
+                    }
+                    const dateStr = new Date(template.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+                    
+                    return '<div class="template-card mb-3 relative border border-gray-200 rounded-lg p-3">' +
+                        '<button onclick="deleteOpcrTemplate(' + template.id + ')" class="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full p-2 transition" title="Delete template">' +
+                        '<i class="fas fa-trash text-sm"></i>' +
+                        '</button>' +
+                        '<div class="mb-3 pr-8">' +
+                        '<p class="text-sm sm:text-base font-semibold text-gray-900">' + titleHtml + '</p>' +
+                        periodHtml +
+                        '<p class="text-xs text-gray-500">Saved on ' + dateStr + '</p>' +
+                        '</div>' +
+                        '<div class="flex gap-2 ml-7">' +
+                        '<button onclick="loadOpcrTemplateToDocument(' + template.id + ')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded">' +
+                        'Use' +
+                        '</button>' +
+                        '<button onclick="viewOpcrTemplate(' + template.id + ')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded">' +
+                        'View' +
+                        '</button>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+            } catch (error) {
+                console.error('Error rendering OPCR templates:', error);
+                container.innerHTML = '<p class="text-sm text-red-500 text-center py-4">Failed to load templates</p>';
+            }
+        };
+
+        async function getOpcrTemplates() {
+            try {
+                const response = await fetch('/faculty/opcr/templates', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                const data = await response.json();
+                return data.success ? data.templates : [];
+            } catch (error) {
+                console.error('Error fetching OPCR templates:', error);
+                return [];
+            }
+        }
+
+        window.deleteOpcrTemplate = function(id) {
+            showConfirmModal(
+                'Delete OPCR Template',
+                'Are you sure you want to delete this OPCR template? This action cannot be undone.',
+                () => {
+                    fetch(`/faculty/opcr/templates/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlertModal('success', 'Deleted', 'OPCR template deleted successfully');
+                            renderOpcrTemplates();
+                        } else {
+                            showAlertModal('error', 'Error', data.message || 'Failed to delete OPCR template');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlertModal('error', 'Error', 'An error occurred while deleting the OPCR template.');
+                    });
+                }
+            );
+        };
+
+        window.loadOpcrTemplateToDocument = async function(id) {
+            try {
+                const response = await fetch(`/faculty/opcr/templates/${id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.template) {
+                    const template = data.template;
+                    currentOpcrSavedCopyId = null;
+                    
+                    document.getElementById('opcrDisplaySchoolYear').textContent = template.school_year || 'N/A';
+                    document.getElementById('opcrDisplaySemester').textContent = template.semester || 'N/A';
+                    document.getElementById('opcrDocumentTitle').value = template.title;
+                    
+                    const tableBody = document.getElementById('opcrTableBody');
+                    if (tableBody && template.table_body_html) {
+                        tableBody.innerHTML = template.table_body_html;
+                        unhideOpcrTableColumns();
+                    }
+                    
+                    document.getElementById('createOpcrButtonArea').style.display = 'none';
+                    document.getElementById('opcrDocumentContainer').classList.remove('hidden');
+                } else {
+                    showAlertModal('error', 'Not Found', 'OPCR template could not be found.');
+                }
+            } catch (error) {
+                console.error('Error loading OPCR template:', error);
+                showAlertModal('error', 'Error', 'An error occurred while loading the OPCR template.');
+            }
+        };
+
+        window.viewOpcrTemplate = async function(id) {
+            try {
+                const response = await fetch('/faculty/opcr/templates/' + id, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+                const data = await response.json();
+
+                if (data.template) {
+                    const template = data.template;
+
+                    if (template.table_body_html) {
+                        const tableBody = document.getElementById('templatePreviewTableBody');
+                        if (tableBody) {
+                            tableBody.innerHTML = template.table_body_html;
+                        }
+
+                        const titleElement = document.getElementById('templatePreviewTitle');
+                        if (titleElement && template.title) {
+                            titleElement.textContent = template.title;
+                        }
+
+                        if (template.school_year) {
+                            const displaySchoolYear = document.getElementById('templatePreviewSchoolYear');
+                            if (displaySchoolYear) displaySchoolYear.textContent = template.school_year;
+                        }
+                        if (template.semester) {
+                            const displaySemester = document.getElementById('templatePreviewSemester');
+                            if (displaySemester) displaySemester.textContent = template.semester;
+                        }
+
+                        // Unhide all columns in the preview modal
+                        const previewModal = document.getElementById('templatePreviewModal');
+                        if (previewModal) {
+                            const headers = previewModal.querySelectorAll('thead th.hidden');
+                            headers.forEach(function(header) { header.classList.remove('hidden'); });
+                            const cells = previewModal.querySelectorAll('td.hidden');
+                            cells.forEach(function(cell) { cell.classList.remove('hidden'); });
+                        }
+
+                        // Hide the Edit IPCR / save copy button for OPCR template view
+                        const saveCopyBtn = document.getElementById('saveCopyBtn');
+                        if (saveCopyBtn) saveCopyBtn.style.display = 'none';
+                        const updateBtn = document.getElementById('updateSubmissionBtn');
+                        if (updateBtn) updateBtn.classList.add('hidden');
+
+                        document.getElementById('templatePreviewModal').classList.remove('hidden');
+                    } else {
+                        showAlertModal('info', 'Legacy Template', 'This template was created with the old format.');
+                    }
+                } else {
+                    showAlertModal('error', 'Not Found', 'OPCR template could not be found.');
+                }
+            } catch (error) {
+                console.error('Error viewing OPCR template:', error);
+                showAlertModal('error', 'Error', 'An error occurred while loading the OPCR template.');
+            }
+        };
+
+        // ========== OPCR Submit Functions ==========
+        window.openSubmitOpcrModal = function() {
+            populateSubmitOpcrTemplates();
+            var modal = document.getElementById('submitOpcrModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        };
+
+        window.closeSubmitOpcrModal = function() {
+            var modal = document.getElementById('submitOpcrModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        };
+
+        async function populateSubmitOpcrTemplates() {
+            var select = document.getElementById('submitOpcrTemplateSelect');
+            if (!select) return;
+
+            var templates = await getOpcrTemplates();
+            select.innerHTML = '';
+
+            if (templates.length === 0) {
+                var option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No OPCR templates found';
+                select.appendChild(option);
+                select.disabled = true;
+                return;
+            }
+
+            select.disabled = false;
+            templates.forEach(function(template) {
+                var option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.title + ' \u2022 ' + (template.school_year || '') + ' \u2022 ' + (template.semester || '');
+                select.appendChild(option);
+            });
+        }
+
+        window.submitSelectedOpcrTemplate = async function() {
+            var select = document.getElementById('submitOpcrTemplateSelect');
+            var selectedId = select ? select.value : '';
+            if (!selectedId) {
+                showAlertModal('warning', 'Select a Template', 'Please select an OPCR template to submit.');
+                return;
+            }
+
+            try {
+                var response = await fetch('/faculty/opcr/templates/' + selectedId, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                var data = await response.json();
+
+                if (!data.success && !data.template) {
+                    showAlertModal('error', 'Not Found', 'Selected OPCR template could not be found.');
+                    return;
+                }
+
+                var item = data.template;
+                var soCounts = item.so_count_json || { strategic_objectives: 0, core_functions: 0, support_functions: 0 };
+
+                var formData = new FormData();
+                formData.append('title', item.title);
+                formData.append('school_year', item.school_year || 'N/A');
+                formData.append('semester', item.semester || 'N/A');
+                formData.append('table_body_html', item.table_body_html || '');
+                formData.append('so_count_json', JSON.stringify(soCounts));
+
+                var submitResponse = await fetch('/faculty/opcr/submissions', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                if (!submitResponse.ok) {
+                    var submitData = await submitResponse.json().catch(function() { return {}; });
+                    throw new Error(submitData.message || 'Failed to submit OPCR');
+                }
+
+                closeSubmitOpcrModal();
+                showAlertModal('success', 'Submitted', 'Your OPCR has been submitted successfully.', function() {
+                    window.location.reload();
+                });
+            } catch (error) {
+                console.error('Submit OPCR error:', error);
+                showAlertModal('error', 'Submit Failed', error.message || 'Failed to submit OPCR.');
+            }
+        };
+
+        window.viewOpcrSubmission = function(submissionId) {
+            fetch('/faculty/opcr/submissions/' + submissionId + '?t=' + Date.now(), {
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success && data.submission) {
+                    var submission = data.submission;
+
+                    // Store submission ID and type for update functionality
+                    var submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+                    if (submissionIdField) submissionIdField.value = submissionId;
+                    var submissionTypeField = document.getElementById('currentSubmissionType');
+                    if (submissionTypeField) submissionTypeField.value = 'opcr';
+
+                    // Load table body
+                    var tableBody = document.getElementById('templatePreviewTableBody');
+                    if (tableBody && submission.table_body_html) {
+                        tableBody.innerHTML = submission.table_body_html;
+
+                        // Make all table cells NON-editable, but enable inputs/textareas inside
+                        var cells = tableBody.querySelectorAll('td');
+                        cells.forEach(function(cell) {
+                            cell.setAttribute('contenteditable', 'false');
+                            cell.style.cursor = 'default';
+                            cell.style.userSelect = 'none';
+                            cell.style.backgroundColor = '#f0fdf4';
+                            cell.classList.add('hover:bg-green-50');
+
+                            var inputs = cell.querySelectorAll('input');
+                            var textareas = cell.querySelectorAll('textarea');
+
+                            inputs.forEach(function(input) {
+                                input.setAttribute('contenteditable', 'true');
+                                input.removeAttribute('readonly');
+                                input.removeAttribute('disabled');
+                                input.style.pointerEvents = 'auto';
+                                input.style.backgroundColor = 'white';
+                                input.style.cursor = 'text';
+                                input.style.userSelect = 'text';
+                            });
+
+                            textareas.forEach(function(textarea) {
+                                textarea.setAttribute('contenteditable', 'true');
+                                textarea.removeAttribute('readonly');
+                                textarea.removeAttribute('disabled');
+                                textarea.style.pointerEvents = 'auto';
+                                textarea.style.backgroundColor = 'white';
+                                textarea.style.cursor = 'text';
+                                textarea.style.userSelect = 'text';
+                            });
+                        });
+                    }
+
+                    // Load title
+                    var titleElement = document.getElementById('templatePreviewTitle');
+                    if (titleElement && submission.title) titleElement.textContent = submission.title;
+
+                    // Load year and period
+                    if (submission.school_year) {
+                        var displaySchoolYear = document.getElementById('templatePreviewSchoolYear');
+                        if (displaySchoolYear) displaySchoolYear.textContent = submission.school_year;
+                    }
+                    if (submission.semester) {
+                        var displaySemester = document.getElementById('templatePreviewSemester');
+                        if (displaySemester) displaySemester.textContent = submission.semester;
+                    }
+
+                    // Unhide all columns in the preview modal
+                    var previewModal = document.getElementById('templatePreviewModal');
+                    if (previewModal) {
+                        var headers = previewModal.querySelectorAll('thead th.hidden');
+                        headers.forEach(function(header) { header.classList.remove('hidden'); });
+                        var hiddenCells = previewModal.querySelectorAll('td.hidden');
+                        hiddenCells.forEach(function(cell) { cell.classList.remove('hidden'); });
+                    }
+
+                    // Hide Edit IPCR button and show Update Submission button (green for OPCR)
+                    var saveCopyBtn = document.getElementById('saveCopyBtn');
+                    if (saveCopyBtn) {
+                        saveCopyBtn.style.display = 'none';
+                        saveCopyBtn.classList.add('hidden');
+                    }
+
+                    var updateBtn = document.getElementById('updateSubmissionBtn');
+                    if (updateBtn) {
+                        updateBtn.classList.remove('hidden');
+                        updateBtn.style.display = 'flex';
+                    }
+
+                    document.getElementById('templatePreviewModal').classList.remove('hidden');
+                } else {
+                    showAlertModal('error', 'Not Found', 'OPCR submission could not be found.');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error viewing OPCR submission:', error);
+                showAlertModal('error', 'Error', 'An error occurred while loading the OPCR submission.');
+            });
+        };
+
+        window.deleteOpcrSubmission = function(submissionId) {
+            showConfirmModal(
+                'Delete OPCR Submission',
+                'Are you sure you want to delete this OPCR submission? This action cannot be undone.',
+                function() {
+                    fetch('/faculty/opcr/submissions/' + submissionId, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            showAlertModal('success', 'Deleted', 'OPCR submission deleted successfully.', function() {
+                                window.location.reload();
+                            });
+                        } else {
+                            showAlertModal('error', 'Error', data.message || 'Failed to delete OPCR submission');
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Error:', error);
+                        showAlertModal('error', 'Error', 'An error occurred while deleting the OPCR submission.');
+                    });
+                }
+            );
+        };
+
+        // =====================================================
+        // Dean Review Functions
+        // =====================================================
+        @if(auth()->user()->hasRole('dean'))
+
+        // Load faculty submissions for dean's department
+        window.loadDeanFacultySubmissions = async function() {
+            const container = document.getElementById('deanFacultySubmissionsList');
+            if (!container) return;
+
+            try {
+                const response = await fetch('/dean/review/faculty-submissions', {
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                });
+                const data = await response.json();
+
+                if (!data.success || data.submissions.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No faculty submissions yet</p>';
+                    return;
+                }
+
+                let html = '';
+                data.submissions.forEach(function(sub) {
+                    html += '<div class="mb-3 p-3 bg-indigo-50 rounded-lg border border-indigo-200">' +
+                        '<div class="flex justify-between items-start gap-2">' +
+                            '<div class="flex-1 min-w-0">' +
+                                '<p class="text-sm font-semibold text-gray-900 truncate">' + (sub.user_name || 'Unknown') + '</p>' +
+                                '<p class="text-xs text-gray-600 truncate">' + (sub.title || 'Untitled') + '</p>' +
+                                '<p class="text-xs text-gray-500">' + (sub.school_year || '') + ' &bull; ' + (sub.semester || '') + '</p>' +
+                                '<p class="text-xs text-gray-400">Submitted: ' + (sub.submitted_at || 'N/A') + '</p>' +
+                            '</div>' +
+                            '<div class="flex flex-col gap-1 flex-shrink-0">' +
+                                '<button onclick="viewFacultySubmission(' + sub.id + ')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1.5 px-3 rounded">View</button>' +
+                                '<span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded text-center">' + (sub.status ? sub.status.charAt(0).toUpperCase() + sub.status.slice(1) : 'N/A') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading faculty submissions:', error);
+                container.innerHTML = '<p class="text-xs text-red-500 text-center py-4">Failed to load submissions</p>';
+            }
+        };
+
+        // Load other deans' submissions for calibration
+        window.loadDeanCalibrationSubmissions = async function() {
+            const container = document.getElementById('deanCalibrationList');
+            if (!container) return;
+
+            try {
+                const response = await fetch('/dean/review/dean-submissions', {
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                });
+                const data = await response.json();
+
+                if (!data.success || data.submissions.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">No other deans\' submissions yet</p>';
+                    return;
+                }
+
+                let html = '';
+                data.submissions.forEach(function(sub) {
+                    html += '<div class="mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200">' +
+                        '<div class="flex justify-between items-start gap-2">' +
+                            '<div class="flex-1 min-w-0">' +
+                                '<p class="text-sm font-semibold text-gray-900 truncate">' + (sub.user_name || 'Unknown') + '</p>' +
+                                '<p class="text-xs text-amber-700 font-medium">' + (sub.department || 'N/A') + '</p>' +
+                                '<p class="text-xs text-gray-600 truncate">' + (sub.title || 'Untitled') + '</p>' +
+                                '<p class="text-xs text-gray-500">' + (sub.school_year || '') + ' &bull; ' + (sub.semester || '') + '</p>' +
+                                '<p class="text-xs text-gray-400">Submitted: ' + (sub.submitted_at || 'N/A') + '</p>' +
+                            '</div>' +
+                            '<div class="flex flex-col gap-1 flex-shrink-0">' +
+                                '<button onclick="viewDeanSubmission(' + sub.id + ')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-1.5 px-3 rounded">View</button>' +
+                                '<span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded text-center">' + (sub.status ? sub.status.charAt(0).toUpperCase() + sub.status.slice(1) : 'N/A') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading dean submissions:', error);
+                container.innerHTML = '<p class="text-xs text-red-500 text-center py-4">Failed to load submissions</p>';
+            }
+        };
+
+        // View a faculty's IPCR submission (read-only in preview modal)
+        window.viewFacultySubmission = async function(submissionId) {
+            try {
+                const response = await fetch('/dean/review/faculty-submissions/' + submissionId, {
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                });
+                const data = await response.json();
+
+                if (data.success && data.submission) {
+                    const submission = data.submission;
+
+                    // Clear any editing state
+                    const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+                    if (submissionIdField) submissionIdField.value = '';
+                    const submissionTypeField = document.getElementById('currentSubmissionType');
+                    if (submissionTypeField) submissionTypeField.value = 'ipcr';
+
+                    // Load table body
+                    const tableBody = document.getElementById('templatePreviewTableBody');
+                    if (tableBody && submission.table_body_html) {
+                        tableBody.innerHTML = submission.table_body_html;
+
+                        // Make all cells read-only with indigo tint
+                        tableBody.querySelectorAll('td').forEach(function(cell) {
+                            cell.setAttribute('contenteditable', 'false');
+                            cell.style.cursor = 'default';
+                            cell.style.userSelect = 'none';
+                            cell.style.backgroundColor = '#eef2ff';
+
+                            // Disable inputs/textareas
+                            cell.querySelectorAll('input, textarea').forEach(function(el) {
+                                el.setAttribute('readonly', 'true');
+                                el.setAttribute('disabled', 'true');
+                                el.style.pointerEvents = 'none';
+                                el.style.backgroundColor = '#eef2ff';
+                            });
+                        });
+                    }
+
+                    // Load title with faculty name
+                    const titleElement = document.getElementById('templatePreviewTitle');
+                    if (titleElement) {
+                        titleElement.textContent = (submission.title || 'IPCR') + ' — ' + (submission.user_name || 'Faculty');
+                    }
+
+                    if (submission.school_year) {
+                        const el = document.getElementById('templatePreviewSchoolYear');
+                        if (el) el.textContent = submission.school_year;
+                    }
+                    if (submission.semester) {
+                        const el = document.getElementById('templatePreviewSemester');
+                        if (el) el.textContent = submission.semester;
+                    }
+
+                    // Unhide all columns
+                    const previewModal = document.getElementById('templatePreviewModal');
+                    if (previewModal) {
+                        previewModal.querySelectorAll('thead th.hidden').forEach(function(h) { h.classList.remove('hidden'); });
+                        previewModal.querySelectorAll('td.hidden').forEach(function(c) { c.classList.remove('hidden'); });
+                    }
+
+                    // Hide all action buttons (read-only mode)
+                    const saveCopyBtn = document.getElementById('saveCopyBtn');
+                    if (saveCopyBtn) { saveCopyBtn.style.display = 'none'; saveCopyBtn.classList.add('hidden'); }
+                    const updateBtn = document.getElementById('updateSubmissionBtn');
+                    if (updateBtn) { updateBtn.classList.add('hidden'); updateBtn.style.display = 'none'; }
+
+                    document.getElementById('templatePreviewModal').classList.remove('hidden');
+                } else {
+                    showAlertModal('error', 'Not Found', 'Faculty submission could not be found.');
+                }
+            } catch (error) {
+                console.error('Error viewing faculty submission:', error);
+                showAlertModal('error', 'Error', 'An error occurred while loading the submission.');
+            }
+        };
+
+        // View another dean's IPCR submission (read-only in preview modal)
+        window.viewDeanSubmission = async function(submissionId) {
+            try {
+                const response = await fetch('/dean/review/dean-submissions/' + submissionId, {
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                });
+                const data = await response.json();
+
+                if (data.success && data.submission) {
+                    const submission = data.submission;
+
+                    // Clear any editing state
+                    const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+                    if (submissionIdField) submissionIdField.value = '';
+                    const submissionTypeField = document.getElementById('currentSubmissionType');
+                    if (submissionTypeField) submissionTypeField.value = 'ipcr';
+
+                    // Load table body
+                    const tableBody = document.getElementById('templatePreviewTableBody');
+                    if (tableBody && submission.table_body_html) {
+                        tableBody.innerHTML = submission.table_body_html;
+
+                        // Make all cells read-only with amber tint
+                        tableBody.querySelectorAll('td').forEach(function(cell) {
+                            cell.setAttribute('contenteditable', 'false');
+                            cell.style.cursor = 'default';
+                            cell.style.userSelect = 'none';
+                            cell.style.backgroundColor = '#fffbeb';
+
+                            // Disable inputs/textareas
+                            cell.querySelectorAll('input, textarea').forEach(function(el) {
+                                el.setAttribute('readonly', 'true');
+                                el.setAttribute('disabled', 'true');
+                                el.style.pointerEvents = 'none';
+                                el.style.backgroundColor = '#fffbeb';
+                            });
+                        });
+                    }
+
+                    // Load title with dean name and department
+                    const titleElement = document.getElementById('templatePreviewTitle');
+                    if (titleElement) {
+                        const deptLabel = submission.department ? ' (' + submission.department + ')' : '';
+                        titleElement.textContent = (submission.title || 'IPCR') + ' — ' + (submission.user_name || 'Dean') + deptLabel;
+                    }
+
+                    if (submission.school_year) {
+                        const el = document.getElementById('templatePreviewSchoolYear');
+                        if (el) el.textContent = submission.school_year;
+                    }
+                    if (submission.semester) {
+                        const el = document.getElementById('templatePreviewSemester');
+                        if (el) el.textContent = submission.semester;
+                    }
+
+                    // Unhide all columns
+                    const previewModal = document.getElementById('templatePreviewModal');
+                    if (previewModal) {
+                        previewModal.querySelectorAll('thead th.hidden').forEach(function(h) { h.classList.remove('hidden'); });
+                        previewModal.querySelectorAll('td.hidden').forEach(function(c) { c.classList.remove('hidden'); });
+                    }
+
+                    // Hide all action buttons (read-only mode)
+                    const saveCopyBtn = document.getElementById('saveCopyBtn');
+                    if (saveCopyBtn) { saveCopyBtn.style.display = 'none'; saveCopyBtn.classList.add('hidden'); }
+                    const updateBtn = document.getElementById('updateSubmissionBtn');
+                    if (updateBtn) { updateBtn.classList.add('hidden'); updateBtn.style.display = 'none'; }
+
+                    document.getElementById('templatePreviewModal').classList.remove('hidden');
+                } else {
+                    showAlertModal('error', 'Not Found', 'Dean submission could not be found.');
+                }
+            } catch (error) {
+                console.error('Error viewing dean submission:', error);
+                showAlertModal('error', 'Error', 'An error occurred while loading the submission.');
+            }
+        };
+
+        @endif
+    </script>
 </body>
 </html>

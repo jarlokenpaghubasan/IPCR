@@ -230,10 +230,16 @@
                         <div class="flex-1 text-center sm:text-left">
                             <h2 class="text-xl sm:text-2xl font-bold text-gray-900">{{ auth()->user()->name }}</h2>
                             <p class="text-sm sm:text-base text-gray-600 mt-1">{{ auth()->user()->email }}</p>
-                            <div class="mt-3 sm:mt-4">
-                                <span class="inline-block bg-blue-100 text-blue-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
-                                    {{ ucfirst(auth()->user()->getPrimaryRole()) }}
-                                </span>
+                            <div class="mt-3 sm:mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
+                                @forelse(auth()->user()->roles() as $role)
+                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
+                                        {{ ucfirst($role) }}
+                                    </span>
+                                @empty
+                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
+                                        No roles assigned
+                                    </span>
+                                @endforelse
                             </div>
                         </div>
                     </div>

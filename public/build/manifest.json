@@ -36,7 +36,7 @@
     ]
   },
   "resources/css/auth_login-selection.css": {
-    "file": "assets/auth_login-selection-B1PbaqaZ.css",
+    "file": "assets/auth_login-selection-BLNf1NqU.css",
     "src": "resources/css/auth_login-selection.css",
     "isEntry": true,
     "name": "auth_login-selection",
@@ -162,7 +162,7 @@
     "isEntry": true
   },
   "resources/js/dashboard_faculty_my-ipcrs.js": {
-    "file": "assets/dashboard_faculty_my-ipcrs-CRIr_OYD.js",
+    "file": "assets/dashboard_faculty_my-ipcrs-j7zaLiKq.js",
     "name": "dashboard_faculty_my-ipcrs",
     "src": "resources/js/dashboard_faculty_my-ipcrs.js",
     "isEntry": true

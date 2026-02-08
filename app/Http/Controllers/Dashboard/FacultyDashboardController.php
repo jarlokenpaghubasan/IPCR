@@ -148,8 +148,18 @@ class FacultyDashboardController extends Controller
         $submissions = IpcrSubmission::where('user_id', auth()->id())
             ->orderBy('submitted_at', 'desc')
             ->get();
+
+        $opcrSubmissions = \App\Models\OpcrSubmission::where('user_id', auth()->id())
+            ->orderBy('submitted_at', 'desc')
+            ->get();
+
+        $departmentName = auth()->user()->department?->name ?? 'Your Department';
+        $departmentCode = auth()->user()->department?->code ?? '';
             
-        return view('dashboard.faculty.my-ipcrs', compact('templates', 'submissions'));
+        return view('dashboard.faculty.my-ipcrs', compact(
+            'templates', 'submissions', 'opcrSubmissions',
+            'departmentName', 'departmentCode'
+        ));
     }
 
     public function profile(): View

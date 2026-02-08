@@ -23,9 +23,6 @@
                         @case('faculty')
                             Faculty & Staff Login
                             @break
-                        @case('dean')
-                            Dean Login
-                            @break
                         @case('director')
                             Director Login
                             @break

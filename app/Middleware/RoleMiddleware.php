@@ -21,9 +21,15 @@ class RoleMiddleware
 
         // Allow multiple roles separated by comma (e.g., 'role:faculty,admin')
         $allowedRoles = explode(',', str_replace(' ', '', $role));
-        $userRole = auth()->guard('web')->user()->role;
 
-        if (!in_array($userRole, $allowedRoles)) {
+        // Dean users are also allowed through faculty gates
+        if (in_array('faculty', $allowedRoles) && !in_array('dean', $allowedRoles)) {
+            $allowedRoles[] = 'dean';
+        }
+
+        $user = auth()->guard('web')->user();
+
+        if (!$user->hasAnyRole($allowedRoles)) {
             abort(403, 'You do not have permission to access this resource');
         }
 

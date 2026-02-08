@@ -16,19 +16,12 @@
             <p>Performance Commitment and Review Module</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 place-items-center max-w-5xl mx-auto">
             <!-- Faculty/Staff Card -->
             <a href="{{ route('login.form', 'faculty') }}" class="role-card group">
                 <i class="fas fa-chalkboard-user text-blue-600"></i>
                 <h3>Faculty & Staff</h3>
                 <p>Login as Faculty or Staff Member</p>
-            </a>
-
-            <!-- Dean Card -->
-            <a href="{{ route('login.form', 'dean') }}" class="role-card group">
-                <i class="fas fa-person-chalkboard text-purple-600"></i>
-                <h3>Dean</h3>
-                <p>Login as Department Dean</p>
             </a>
 
             <!-- Director Card -->

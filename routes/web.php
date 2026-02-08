@@ -11,6 +11,10 @@ use App\Http\Controllers\Admin\PhotoController;
 use App\Http\Controllers\Faculty\IpcrTemplateController;
 use App\Http\Controllers\Faculty\IpcrSubmissionController;
 use App\Http\Controllers\Faculty\IpcrSavedCopyController;
+use App\Http\Controllers\Faculty\OpcrTemplateController;
+use App\Http\Controllers\Faculty\OpcrSubmissionController;
+use App\Http\Controllers\Faculty\OpcrSavedCopyController;
+use App\Http\Controllers\Dean\DeanReviewController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -177,6 +181,76 @@ Route::delete('/faculty/ipcr/saved-copies/{id}', [IpcrSavedCopyController::class
     ->name('faculty.ipcr.saved-copies.destroy')
     ->middleware(['auth', 'role:faculty']);
 
+// OPCR Template Routes (Dean only via faculty gate)
+Route::get('/faculty/opcr/templates', [OpcrTemplateController::class, 'index'])
+    ->name('faculty.opcr.templates.index')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/store', [OpcrTemplateController::class, 'store'])
+    ->name('faculty.opcr.store')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/templates/from-saved-copy', [OpcrTemplateController::class, 'storeFromSavedCopy'])
+    ->name('faculty.opcr.templates.from-saved-copy')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/templates/{id}/save-copy', [OpcrTemplateController::class, 'saveCopy'])
+    ->name('faculty.opcr.templates.save-copy')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::get('/faculty/opcr/templates/{id}', [OpcrTemplateController::class, 'show'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::delete('/faculty/opcr/templates/{id}', [OpcrTemplateController::class, 'destroy'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::put('/faculty/opcr/templates/{id}', [OpcrTemplateController::class, 'update'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/templates/{id}/set-active', [OpcrTemplateController::class, 'setActive'])
+    ->middleware(['auth', 'role:faculty']);
+
+// OPCR Submission Routes
+Route::post('/faculty/opcr/submissions', [OpcrSubmissionController::class, 'store'])
+    ->name('faculty.opcr.submissions.store')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::get('/faculty/opcr/submissions/{id}', [OpcrSubmissionController::class, 'show'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::put('/faculty/opcr/submissions/{id}', [OpcrSubmissionController::class, 'update'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/submissions/{id}/set-active', [OpcrSubmissionController::class, 'setActive'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/submissions/{id}/deactivate', [OpcrSubmissionController::class, 'deactivate'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::delete('/faculty/opcr/submissions/{id}', [OpcrSubmissionController::class, 'destroy'])
+    ->middleware(['auth', 'role:faculty,admin']);
+
+// OPCR Saved Copy Routes
+Route::get('/faculty/opcr/saved-copies', [OpcrSavedCopyController::class, 'index'])
+    ->name('faculty.opcr.saved-copies.index')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/saved-copies', [OpcrSavedCopyController::class, 'store'])
+    ->name('faculty.opcr.saved-copies.store')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::get('/faculty/opcr/saved-copies/{id}', [OpcrSavedCopyController::class, 'show'])
+    ->name('faculty.opcr.saved-copies.show')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::put('/faculty/opcr/saved-copies/{id}', [OpcrSavedCopyController::class, 'update'])
+    ->name('faculty.opcr.saved-copies.update')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::delete('/faculty/opcr/saved-copies/{id}', [OpcrSavedCopyController::class, 'destroy'])
+    ->name('faculty.opcr.saved-copies.destroy')
+    ->middleware(['auth', 'role:faculty']);
+
 
 /*
 |--------------------------------------------------------------------------
@@ -186,6 +260,23 @@ Route::delete('/faculty/ipcr/saved-copies/{id}', [IpcrSavedCopyController::class
 
 Route::get('/dean/dashboard', [DeanDashboardController::class, 'index'])
     ->name('dean.dashboard')
+    ->middleware(['auth', 'role:dean']);
+
+// Dean IPCR Review Routes
+Route::get('/dean/review/faculty-submissions', [DeanReviewController::class, 'facultySubmissions'])
+    ->name('dean.review.faculty-submissions')
+    ->middleware(['auth', 'role:dean']);
+
+Route::get('/dean/review/faculty-submissions/{id}', [DeanReviewController::class, 'showFacultySubmission'])
+    ->name('dean.review.faculty-submission.show')
+    ->middleware(['auth', 'role:dean']);
+
+Route::get('/dean/review/dean-submissions', [DeanReviewController::class, 'deanSubmissions'])
+    ->name('dean.review.dean-submissions')
+    ->middleware(['auth', 'role:dean']);
+
+Route::get('/dean/review/dean-submissions/{id}', [DeanReviewController::class, 'showDeanSubmission'])
+    ->name('dean.review.dean-submission.show')
     ->middleware(['auth', 'role:dean']);
 
 
