@@ -9,6 +9,7 @@ use App\Models\UserPhoto;
 use App\Services\PhotoService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -166,8 +167,14 @@ class FacultyDashboardController extends Controller
     {
         $departments = \App\Models\Department::all();
         $designations = \App\Models\Designation::all();
+        $user = auth()->user();
+        $profileCompleteness = $user->getProfileCompleteness();
+        $completenessColor = $user->getCompletenessColor();
+        $photoCount = $user->photos()->count();
         
-        return view('dashboard.faculty.profile', compact('departments', 'designations'));
+        return view('dashboard.faculty.profile', compact(
+            'departments', 'designations', 'profileCompleteness', 'completenessColor', 'photoCount'
+        ));
     }
 
     public function changePassword(Request $request)
@@ -211,10 +218,31 @@ class FacultyDashboardController extends Controller
             'designation_id' => ['nullable', 'exists:designations,id'],
         ]);
 
-        $user->update($validated);
+        $emailChanged = $validated['email'] !== $user->email;
+
+        if ($emailChanged) {
+            $validated['email_verified_at'] = null;
+        }
+
+        $user->fill($validated);
+
+        if ($emailChanged) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        if ($emailChanged) {
+            DB::table('email_verifications')
+                ->where('user_id', $user->id)
+                ->delete();
+        }
 
         return response()->json([
-            'message' => 'Profile updated successfully!',
+            'message' => $emailChanged
+                ? 'Profile updated. Please verify your new email address.'
+                : 'Profile updated successfully!',
+            'email_changed' => $emailChanged,
             'user' => $user
         ]);
     }

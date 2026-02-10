@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\Dashboard\FacultyDashboardController;
 use App\Http\Controllers\Dashboard\DeanDashboardController;
 use App\Http\Controllers\Dashboard\DirectorDashboardController;
@@ -67,6 +68,15 @@ Route::get('/reset-password', [PasswordResetController::class, 'showResetPasswor
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
     ->name('password.update')
     ->middleware('guest');
+
+// Email Verification Routes
+Route::post('/email/verification/send', [EmailVerificationController::class, 'sendVerificationCode'])
+    ->name('verification.send')
+    ->middleware('auth');
+
+Route::post('/email/verification/verify', [EmailVerificationController::class, 'verifyCode'])
+    ->name('verification.verify')
+    ->middleware('auth');
 
 
 /*
@@ -249,6 +259,27 @@ Route::put('/faculty/opcr/saved-copies/{id}', [OpcrSavedCopyController::class, '
 
 Route::delete('/faculty/opcr/saved-copies/{id}', [OpcrSavedCopyController::class, 'destroy'])
     ->name('faculty.opcr.saved-copies.destroy')
+    ->middleware(['auth', 'role:faculty']);
+
+// Supporting Document Routes
+Route::get('/faculty/supporting-documents', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'index'])
+    ->name('faculty.supporting-documents.index')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/supporting-documents', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'store'])
+    ->name('faculty.supporting-documents.store')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::delete('/faculty/supporting-documents/{id}', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'destroy'])
+    ->name('faculty.supporting-documents.destroy')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::put('/faculty/supporting-documents/{id}/rename', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'rename'])
+    ->name('faculty.supporting-documents.rename')
+    ->middleware(['auth', 'role:faculty']);
+
+Route::get('/faculty/supporting-documents/{id}/download', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'download'])
+    ->name('faculty.supporting-documents.download')
     ->middleware(['auth', 'role:faculty']);
 
 

@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_roles', function (Blueprint $table) {
+        Schema::create('email_verifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('role', ['admin', 'hr', 'director', 'dean', 'faculty'])->index();
+            $table->string('code', 6);
             $table->timestamps();
-            
-            // Prevent duplicate role assignments
-            $table->unique(['user_id', 'role']);
+
+            $table->index('user_id');
         });
     }
 
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_roles');
+        Schema::dropIfExists('email_verifications');
     }
 };

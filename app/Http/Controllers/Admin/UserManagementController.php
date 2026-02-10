@@ -34,7 +34,7 @@ class UserManagementController extends Controller
      */
     public function create()
     {
-        $roles = ['admin', 'director', 'dean', 'faculty'];
+        $roles = ['admin', 'hr', 'director', 'dean', 'faculty'];
         $departments = Department::all();
         $designations = Designation::all();
         return view('admin.users.create', compact('roles', 'departments', 'designations'));
@@ -52,7 +52,7 @@ class UserManagementController extends Controller
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
-            'roles.*' => 'in:admin,director,dean,faculty',
+            'roles.*' => 'in:admin,hr,director,dean,faculty',
             'is_active' => 'boolean',
             'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
@@ -61,14 +61,28 @@ class UserManagementController extends Controller
         $validated['password'] = bcrypt($validated['password']);
         $validated['is_active'] = $request->has('is_active');
 
-        // Generate unique employee ID if department is provided
-        if (!empty($validated['department_id'])) {
+        // Generate unique employee ID
+        $roles = $validated['roles'];
+        $isHrOrDirector = in_array('hr', $roles) || in_array('director', $roles);
+        
+        if ($isHrOrDirector) {
+            // HR and Director get unique IDs without department codes
+            $validated['employee_id'] = EmployeeIdService::generateForHrOrDirector($roles);
+        } elseif (!empty($validated['department_id'])) {
+            // Other roles get department-based IDs
             $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
         }
 
         // Store roles separately
         $roles = $validated['roles'];
         unset($validated['roles']);
+        
+        // Clear department and designation for HR and Director
+        $isHrOrDirector = in_array('hr', $roles) || in_array('director', $roles);
+        if ($isHrOrDirector) {
+            $validated['department_id'] = null;
+            $validated['designation_id'] = null;
+        }
 
         // Create user
         $user = User::create($validated);
@@ -100,7 +114,7 @@ class UserManagementController extends Controller
             return redirect()->route('admin.users.index')->with('error', 'The administrator account cannot be edited');
         }
 
-        $roles = ['admin', 'director', 'dean', 'faculty'];
+        $roles = ['admin', 'hr', 'director', 'dean', 'faculty'];
         $departments = Department::all();
         $designations = Designation::all();
         $user->load('userRoles');
@@ -124,7 +138,7 @@ class UserManagementController extends Controller
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
-            'roles.*' => 'in:admin,director,dean,faculty',
+            'roles.*' => 'in:admin,hr,director,dean,faculty',
             'is_active' => 'boolean',
             'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
@@ -138,26 +152,41 @@ class UserManagementController extends Controller
 
         $validated['is_active'] = $request->has('is_active');
 
-        // Handle employee ID update when department changes
-        if (isset($validated['department_id']) && $validated['department_id'] != $user->department_id) {
-            // Department changed - update employee ID with new department code
-            if ($user->employee_id) {
-                $validated['employee_id'] = EmployeeIdService::updateDepartmentCode(
-                    $user->employee_id, 
-                    $validated['department_id']
-                );
-            } else {
-                // User doesn't have employee ID yet, generate new one
-                $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
-            }
-        } elseif (isset($validated['department_id']) && !$user->employee_id) {
-            // Department exists but user has no employee ID, generate one
-            $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
-        }
-
         // Handle roles separately
         $newRoles = $validated['roles'];
         unset($validated['roles']);
+        
+        // Check if user has HR or Director role
+        $isHrOrDirector = in_array('hr', $newRoles) || in_array('director', $newRoles);
+        
+        // Handle employee ID and department logic
+        if ($isHrOrDirector) {
+            // HR and Director don't need department or designation
+            $validated['department_id'] = null;
+            $validated['designation_id'] = null;
+            
+            // Generate unique employee ID if they don't have one or need role-based update
+            if (!$user->employee_id) {
+                $validated['employee_id'] = EmployeeIdService::generateForHrOrDirector($newRoles);
+            }
+        } else {
+            // For other roles, handle department changes
+            if (isset($validated['department_id']) && $validated['department_id'] != $user->department_id) {
+                // Department changed - update employee ID with new department code
+                if ($user->employee_id) {
+                    $validated['employee_id'] = EmployeeIdService::updateDepartmentCode(
+                        $user->employee_id, 
+                        $validated['department_id']
+                    );
+                } else {
+                    // User doesn't have employee ID yet, generate new one
+                    $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
+                }
+            } elseif (isset($validated['department_id']) && !$user->employee_id) {
+                // Department exists but user has no employee ID, generate one
+                $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
+            }
+        }
 
         // Update user data
         $user->update($validated);

@@ -204,192 +204,382 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            <!-- Main Content (2/3 width) -->
-            <div class="lg:col-span-2 space-y-4 sm:space-y-6">
-                <!-- Profile Header -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
-                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">My Profile</h1>
-                    
-                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-                        <!-- Profile Photo -->
-                        <div class="flex-shrink-0">
-                            @if(auth()->user()->hasProfilePhoto())
-                                <img src="{{ auth()->user()->profile_photo_url }}" 
-                                     alt="{{ auth()->user()->name }}" 
-                                     class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6">
+        
+        <!-- Profile Header Card (full width) -->
+        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
+            <div class="flex flex-col lg:flex-row lg:items-start gap-6">
+                <!-- Left: Profile Info -->
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 flex-1 min-w-0">
+                    <!-- Profile Photo with camera button -->
+                    <div class="flex-shrink-0 relative group">
+                        @if(auth()->user()->hasProfilePhoto())
+                            <img src="{{ auth()->user()->profile_photo_url }}" 
+                                 alt="{{ auth()->user()->name }}" 
+                                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-gray-200">
+                        @else
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&size=128&background=3b82f6&color=fff" 
+                                 alt="{{ auth()->user()->name }}" 
+                                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-gray-200">
+                        @endif
+                        <button onclick="openPhotoGalleryModal()" class="absolute bottom-1 right-1 bg-white border-2 border-gray-200 rounded-full w-8 h-8 flex items-center justify-center shadow-sm hover:bg-gray-50 transition" title="Manage photos">
+                            <i class="fas fa-camera text-gray-500 text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Name, meta, badges -->
+                    <div class="flex-1 text-center sm:text-left min-w-0">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate">{{ auth()->user()->name }}</h1>
+                            <button onclick="openEditProfileModal()" class="hidden sm:inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded-md hover:bg-blue-50 transition flex-shrink-0">
+                                <i class="fas fa-pen text-[10px]"></i> Edit
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-0.5">{{ auth()->user()->email }}</p>
+                        @if(auth()->user()->department || auth()->user()->designation)
+                            <p class="text-sm text-gray-600 mt-1">
+                                {{ auth()->user()->designation->title ?? '' }}{{ auth()->user()->department && auth()->user()->designation ? ' &middot; ' : '' }}{{ auth()->user()->department->name ?? '' }}
+                            </p>
+                        @endif
+                        <div class="mt-2.5 flex flex-wrap gap-1.5 justify-center sm:justify-start">
+                            @forelse(auth()->user()->roles() as $role)
+                                <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    {{ ucfirst($role) }}
+                                </span>
+                            @empty
+                                <span class="inline-block bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    No roles assigned
+                                </span>
+                            @endforelse
+                            @if(auth()->user()->is_active)
+                                <span class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    <i class="fas fa-circle text-[5px] align-middle mr-0.5"></i>Active
+                                </span>
                             @else
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&size=128&background=3b82f6&color=fff" 
-                                     alt="{{ auth()->user()->name }}" 
-                                     class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-gray-200">
+                                <span class="inline-block bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                    <i class="fas fa-circle text-[5px] align-middle mr-0.5"></i>Inactive
+                                </span>
                             @endif
                         </div>
-
-                        <!-- Basic Info -->
-                        <div class="flex-1 text-center sm:text-left">
-                            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">{{ auth()->user()->name }}</h2>
-                            <p class="text-sm sm:text-base text-gray-600 mt-1">{{ auth()->user()->email }}</p>
-                            <div class="mt-3 sm:mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
-                                @forelse(auth()->user()->roles() as $role)
-                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
-                                        {{ ucfirst($role) }}
-                                    </span>
-                                @empty
-                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
-                                        No roles assigned
-                                    </span>
-                                @endforelse
-                            </div>
-                        </div>
+                        <!-- Mobile edit button -->
+                        <button onclick="openEditProfileModal()" class="sm:hidden mt-3 inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-semibold">
+                            <i class="fas fa-pen text-xs"></i> Edit Profile
+                        </button>
                     </div>
                 </div>
 
-                <!-- Personal Information -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
-                    <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Personal Information</h2>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <!-- Employee ID -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Employee ID</label>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ auth()->user()->employee_id ?? 'Not assigned' }}</p>
-                        </div>
-                        
-                        <!-- Username -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Username</label>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ auth()->user()->username }}</p>
-                        </div>
-                        
-                        <!-- Phone -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Phone Number</label>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ auth()->user()->phone ?? 'Not provided' }}</p>
-                        </div>
-                        
-                        <!-- Email -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Email Address</label>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ auth()->user()->email }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Work Information -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
-                    <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Work Information</h2>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <!-- Department -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Department</label>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ auth()->user()->department->name ?? 'Not assigned' }}</p>
-                        </div>
-                        
-                        <!-- Designation -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Designation</label>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ auth()->user()->designation->title ?? 'Not assigned' }}</p>
-                        </div>
-                        
-                        <!-- Roles -->
-                        <div class="sm:col-span-2">
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-2">Assigned Roles</label>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach(auth()->user()->roles() as $role)
-                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
-                                        {{ ucfirst($role) }}
-                                    </span>
-                                @endforeach
+                <!-- Right: Account Activity (compact) -->
+                <div class="flex-shrink-0 lg:w-56 xl:w-64 w-full border-t lg:border-t-0 lg:border-l border-gray-200 pt-4 lg:pt-0 lg:pl-6">
+                    <h3 class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Activity</h3>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fas fa-sign-in-alt text-blue-500 text-xs w-4 text-center"></i>
+                            <div class="min-w-0">
+                                <p class="text-[10px] text-gray-400 leading-tight">Last Login</p>
+                                <p class="text-xs font-semibold text-gray-700 truncate">
+                                    @if(auth()->user()->last_login_at)
+                                        {{ auth()->user()->last_login_at->format('M d, Y g:i A') }}
+                                    @else
+                                        Never
+                                    @endif
+                                </p>
                             </div>
                         </div>
-
-                        <!-- Account Status -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Account Status</label>
+                        <div class="flex items-center gap-2.5">
+                            <i class="fas fa-calendar-plus text-green-500 text-xs w-4 text-center"></i>
                             <div>
-                                @if(auth()->user()->is_active)
-                                    <span class="inline-block bg-green-100 text-green-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
-                                        Active
-                                    </span>
-                                @else
-                                    <span class="inline-block bg-red-100 text-red-800 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
-                                        Inactive
-                                    </span>
-                                @endif
+                                <p class="text-[10px] text-gray-400 leading-tight">Member Since</p>
+                                <p class="text-xs font-semibold text-gray-700">{{ auth()->user()->created_at->format('M d, Y') }}</p>
                             </div>
                         </div>
-
-                        <!-- Member Since -->
-                        <div>
-                            <label class="text-xs sm:text-sm text-gray-500 block mb-1">Member Since</label>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900">{{ auth()->user()->created_at->format('F d, Y') }}</p>
+                        <div class="flex items-center gap-2.5">
+                            <i class="fas fa-images text-purple-500 text-xs w-4 text-center"></i>
+                            <div>
+                                <p class="text-[10px] text-gray-400 leading-tight">Photos</p>
+                                <p class="text-xs font-semibold text-gray-700"><span id="activityPhotoCount">{{ $photoCount }}</span> uploaded</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="lg:col-span-1 space-y-4 sm:space-y-6">
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Quick Actions</h3>
-                    
-                    <div class="space-y-2 sm:space-y-3">
-                        <button onclick="openEditProfileModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition">
-                            Edit Profile
-                        </button>
-                        <button onclick="openChangePasswordModal()" class="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base transition">
-                            Change Password
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Account Activity -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Account Activity</h3>
-                    
-                    <div class="space-y-3 sm:space-y-4">
-                        <div>
-                            <p class="text-xs sm:text-sm text-gray-500">Last Login</p>
-                            <p class="text-sm sm:text-base font-semibold text-gray-900 mt-1">
-                                @if(auth()->user()->last_login_at)
-                                    {{ auth()->user()->last_login_at->format('F d, Y g:i A') }}
-                                @else
-                                    Never logged in
-                                @endif
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <p class="text-xs sm:text-sm text-gray-500">Profile Completeness</p>
-                            <div class="mt-2">
-                                <div class="flex justify-between mb-1">
-                                    <span class="text-xs sm:text-sm font-semibold text-gray-900">85%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 85%"></div>
-                                </div>
+            <!-- Profile Completeness (compact bar) -->
+            @if($profileCompleteness['percentage'] < 100)
+                <div class="mt-5 pt-4 border-t border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-xs font-medium text-gray-500">Profile {{ $profileCompleteness['percentage'] }}% complete <span class="text-gray-400">({{ $profileCompleteness['completed'] }}/{{ $profileCompleteness['total'] }})</span></span>
+                                <button onclick="toggleCompletenessDetails()" class="text-xs text-blue-600 hover:text-blue-700 font-medium" id="completenessToggle">
+                                    Show details <i class="fas fa-chevron-down text-[9px] ml-0.5 completeness-chevron transition-transform"></i>
+                                </button>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="h-2 rounded-full completeness-bar {{ $completenessColor === 'green' ? 'bg-green-500' : ($completenessColor === 'yellow' ? 'bg-yellow-500' : 'bg-red-500') }}" style="width: {{ $profileCompleteness['percentage'] }}%"></div>
                             </div>
                         </div>
                     </div>
+                    <!-- Expandable Checklist -->
+                    <div id="completenessDetails" class="hidden mt-3 animate-slideDown">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            @foreach($profileCompleteness['fields'] as $field)
+                                <div class="flex items-center gap-1.5 text-xs {{ $field['completed'] ? 'text-green-600' : 'text-gray-400' }}">
+                                    <i class="fas {{ $field['completed'] ? 'fa-check-circle' : 'fa-circle' }} text-[10px]"></i>
+                                    <span>{{ $field['label'] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">
+                            <i class="fas fa-lightbulb text-yellow-400 mr-1"></i>
+                            Complete your profile to help administrators identify you.
+                        </p>
+                    </div>
                 </div>
+            @else
+                <div class="mt-5 pt-4 border-t border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full bg-green-500 completeness-bar" style="width: 100%"></div>
+                        </div>
+                        <span class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-green-600">
+                            <i class="fas fa-check-circle"></i> Complete
+                        </span>
+                    </div>
+                </div>
+            @endif
+        </div>
 
-                <!-- Contact Information -->
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <!-- Left: Information -->
+            <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+                <!-- Personal Information -->
                 <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Need Help?</h3>
-                    
-                    <div class="space-y-2 text-xs sm:text-sm text-gray-600">
-                        <p>If you need to update your information or have any questions, please contact the administrator.</p>
-                        <div class="mt-3 sm:mt-4">
-                            <button class="text-blue-600 hover:text-blue-700 font-semibold">
-                                Contact Support
-                            </button>
+                    <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-4">Personal Information</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">Employee ID</label>
+                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->employee_id ?? 'Not assigned' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">Username</label>
+                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->username }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">Email Address</label>
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->email }}</p>
+                                @if(auth()->user()->email_verified_at)
+                                    <span class="text-[10px] text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-full"><i class="fas fa-check-circle mr-0.5"></i>Verified</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">Phone Number</label>
+                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->phone ?? 'Not provided' }}</p>
                         </div>
                     </div>
                 </div>
+
+                <!-- Work Information -->
+                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-4">Work Information</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">Department</label>
+                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->department->name ?? 'Not assigned' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-0.5">Designation</label>
+                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->designation->title ?? 'Not assigned' }}</p>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Right: Account & Security -->
+            <div class="lg:col-span-1 space-y-4 sm:space-y-6">
+                <!-- Account & Security -->
+                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3">Account & Security</h3>
+                    
+                    <div class="space-y-2">
+                        <!-- Edit Profile -->
+                        <button onclick="openEditProfileModal()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user-edit text-blue-600 text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">Edit Profile</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500 transition"></i>
+                        </button>
+
+                        <!-- Change Password -->
+                        <button onclick="openChangePasswordModal()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-key text-amber-600 text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">Change Password</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500 transition"></i>
+                        </button>
+
+                        <!-- Manage Photos -->
+                        <button onclick="openPhotoGalleryModal()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-images text-purple-600 text-xs"></i>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium text-gray-700">Manage Photos</span>
+                                    <span class="text-[10px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-full font-medium" id="sidebarPhotoCount">{{ $photoCount }}</span>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500 transition"></i>
+                        </button>
+
+                        <!-- Divider -->
+                        <div class="border-t border-gray-100 my-1"></div>
+
+                        <!-- Email Verification -->
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 {{ auth()->user()->email_verified_at ? 'bg-green-100' : 'bg-orange-100' }} rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-envelope {{ auth()->user()->email_verified_at ? 'text-green-600' : 'text-orange-500' }} text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">Email Verification</span>
+                            </div>
+                            @if(auth()->user()->email_verified_at)
+                                <span class="text-[10px] text-green-600 font-semibold bg-green-50 px-2 py-1 rounded-full">
+                                    <i class="fas fa-check-circle mr-0.5"></i> Verified
+                                </span>
+                            @else
+                                <button onclick="openEmailVerificationModal()" class="text-[10px] text-orange-600 hover:text-orange-700 font-semibold bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded-full transition">
+                                    <i class="fas fa-exclamation-triangle mr-0.5"></i> Verify
+                                </button>
+                            @endif
+                        </div>
+
+                        <!-- Roles -->
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user-tag text-indigo-600 text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-700">Roles</span>
+                            </div>
+                            <span class="text-[10px] text-gray-500 font-semibold bg-gray-200 px-2 py-1 rounded-full">
+                                {{ count(auth()->user()->roles()) }} assigned
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Need Help -->
+                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-2">Need Help?</h3>
+                    <p class="text-xs text-gray-500 mb-3">Contact the administrator for restricted information updates.</p>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-[10px] text-gray-400 mb-0.5">Administrator</p>
+                        <p class="text-sm font-medium text-gray-800"><i class="fas fa-envelope mr-1.5 text-gray-400"></i>admin@urs.edu.ph</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Gallery Modal -->
+    <div id="photoGalleryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full animate-scale-in my-8">
+            <div class="bg-purple-50 border-b border-purple-200 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-purple-100 rounded-full p-3">
+                        <i class="fas fa-images text-purple-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Photo Gallery</h2>
+                        <p class="text-sm text-gray-600">Manage your profile photos (<span id="galleryPhotoCount">0</span> photos)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePhotoGalleryModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="px-6 py-4">
+                <!-- Upload New Photo -->
+                <div class="mb-4 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition text-center">
+                    <input type="file" id="galleryPhotoInput" accept="image/*" class="hidden">
+                    <button type="button" onclick="document.getElementById('galleryPhotoInput').click()" class="w-full">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-600">Click to upload a new photo</p>
+                        <p class="text-xs text-gray-400 mt-1">Max 5MB &bull; JPEG, PNG, GIF, WebP</p>
+                    </button>
+                    <div id="galleryUploadProgress" class="hidden mt-3">
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div id="galleryProgressBar" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Uploading...</p>
+                    </div>
+                    <div id="galleryUploadMessage" class="text-xs mt-2"></div>
+                </div>
+
+                <!-- Photo Grid -->
+                <div id="galleryPhotos" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    <p class="text-xs text-gray-500 col-span-full text-center py-8">Loading photos...</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+                <button type="button" onclick="closePhotoGalleryModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Profile Photo Confirmation Modal -->
+    <div id="setProfileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-[55] p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full animate-scale-in">
+            <div class="px-6 py-4 text-center">
+                <div class="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-user-circle text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Set as Profile Photo?</h3>
+                <p class="text-sm text-gray-600">This photo will be used as your profile picture across the system.</p>
+            </div>
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-center">
+                <button type="button" onclick="closeSetProfileModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                    Cancel
+                </button>
+                <button type="button" onclick="confirmSetProfile()" class="px-4 py-2 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition text-sm">
+                    <i class="fas fa-check mr-1"></i> Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Photo Confirmation Modal -->
+    <div id="deletePhotoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-[55] p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full animate-scale-in">
+            <div class="px-6 py-4 text-center">
+                <div class="bg-red-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-trash-alt text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Delete Photo?</h3>
+                <p class="text-sm text-gray-600">This action cannot be undone. The photo will be permanently removed.</p>
+            </div>
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3 justify-center">
+                <button type="button" onclick="closeDeletePhotoModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                    Cancel
+                </button>
+                <button type="button" onclick="confirmDeletePhoto()" class="px-4 py-2 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition text-sm">
+                    <i class="fas fa-trash mr-1"></i> Delete
+                </button>
             </div>
         </div>
     </div>
@@ -698,6 +888,86 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Email Verification Modal -->
+    <div id="emailVerificationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full animate-scale-in">
+            <div class="bg-green-50 border-b border-green-200 px-6 py-4 flex items-center gap-3">
+                <div class="bg-green-100 rounded-full p-3">
+                    <i class="fas fa-envelope-open-text text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">Verify Email Address</h2>
+                    <p class="text-sm text-gray-600">Confirm your email to secure your account</p>
+                </div>
+            </div>
+
+            <div id="verificationContent" class="px-6 py-4">
+                <!-- Step 1: Request Code -->
+                <div id="verifyStep1">
+                    <p class="text-sm text-gray-600 mb-4">
+                        Click the button below to receive a 6-digit verification code at <strong>{{ auth()->user()->email }}</strong>
+                    </p>
+                    
+                    <button type="button" onclick="sendVerificationCode()" id="sendCodeBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fas fa-paper-plane"></i> Send Verification Code
+                    </button>
+                    
+                    <div id="sendCodeMessage" class="mt-3 text-sm hidden"></div>
+                </div>
+
+                <!-- Step 2: Enter Code -->
+                <div id="verifyStep2" class="hidden">
+                    <p class="text-sm text-gray-600 mb-1">
+                        Enter the 6-digit code sent to your email:
+                    </p>
+                    <p class="text-xs text-gray-500 mb-4">
+                        <i class="fas fa-envelope mr-1"></i>{{ auth()->user()->email }}
+                    </p>
+
+                    <form id="verifyCodeForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3 text-center">Verification Code</label>
+                            <div class="flex justify-center gap-2 mb-3">
+                                <input type="text" class="verify-code-input" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="verify-code-input" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="verify-code-input" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="verify-code-input" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="verify-code-input" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="verify-code-input" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                            </div>
+                            <input type="hidden" id="verification_code_hidden" name="code" value="">
+                            <p class="text-xs text-gray-500 text-center">Code expires in 30 minutes</p>
+                        </div>
+
+                        <div id="verifyCodeMessage" class="text-sm hidden"></div>
+
+                        <div class="flex gap-3">
+                            <button type="button" onclick="backToStep1()" class="flex-1 border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg transition">
+                                <i class="fas fa-arrow-left mr-1"></i> Back
+                            </button>
+                            <button type="submit" id="verifyCodeBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                                <i class="fas fa-check mr-1"></i> Verify
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
+                        <p class="text-xs text-blue-700 mb-2">Didn't receive the code?</p>
+                        <button type="button" onclick="sendVerificationCode()" class="text-xs text-blue-600 hover:text-blue-700 font-semibold">
+                            <i class="fas fa-redo mr-1"></i> Resend Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+                <button type="button" onclick="closeEmailVerificationModal()" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition text-sm">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 

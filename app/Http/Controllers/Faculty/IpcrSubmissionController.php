@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\IpcrSubmission;
+use App\Models\SupportingDocument;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class IpcrSubmissionController extends Controller
 {
@@ -16,6 +18,7 @@ class IpcrSubmissionController extends Controller
             'semester' => ['required', 'string', 'max:50'],
             'table_body_html' => ['required', 'string'],
             'so_count_json' => ['nullable'],
+            'template_id' => ['nullable', 'integer'],
         ]);
 
         // Decode so_count_json if it's a string
@@ -39,10 +42,56 @@ class IpcrSubmissionController extends Controller
             'submitted_at' => now(),
         ]);
 
+        // Copy supporting documents from template to submission
+        if (!empty($validated['template_id'])) {
+            $this->copySupportingDocuments(
+                'ipcr_template',
+                $validated['template_id'],
+                'ipcr_submission',
+                $submission->id,
+                $request->user()->id
+            );
+        }
+
         return response()->json([
             'message' => 'IPCR submitted successfully',
             'id' => $submission->id,
         ]);
+    }
+
+    /**
+     * Copy supporting documents from template to submission
+     */
+    private function copySupportingDocuments($fromType, $fromId, $toType, $toId, $userId)
+    {
+        try {
+            $documents = SupportingDocument::where('user_id', $userId)
+                ->where('documentable_type', $fromType)
+                ->where('documentable_id', $fromId)
+                ->get();
+
+            foreach ($documents as $doc) {
+                SupportingDocument::create([
+                    'user_id' => $userId,
+                    'documentable_type' => $toType,
+                    'documentable_id' => $toId,
+                    'so_label' => $doc->so_label,
+                    'filename' => $doc->filename,
+                    'path' => $doc->path,
+                    'original_name' => $doc->original_name,
+                    'mime_type' => $doc->mime_type,
+                    'file_size' => $doc->file_size,
+                ]);
+            }
+
+            Log::info('Copied supporting documents', [
+                'from' => "{$fromType}:{$fromId}",
+                'to' => "{$toType}:{$toId}",
+                'count' => $documents->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to copy supporting documents: ' . $e->getMessage());
+        }
     }
 
     public function show($id)

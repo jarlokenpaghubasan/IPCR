@@ -37,7 +37,8 @@ class UserPhoto extends Model
      */
     public function getPhotoUrlAttribute()
     {
-        return asset("storage/user_photos/{$this->user_id}/{$this->filename}");
+        // Return Cloudinary URL stored in 'path' column
+        return $this->path;
     }
 
     /**

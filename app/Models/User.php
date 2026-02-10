@@ -68,17 +68,7 @@ class User extends Authenticatable
      */
     public function roles()
     {
-        // Map database enum values back to simple role names
-        $reverseMap = [
-            'admin' => 'admin',
-            'directorUser' => 'director',
-            'deanUser' => 'dean',
-            'facultyUser' => 'faculty',
-        ];
-        
-        return array_map(function($role) use ($reverseMap) {
-            return $reverseMap[$role] ?? $role;
-        }, $this->userRoles()->pluck('role')->toArray());
+        return $this->userRoles()->pluck('role')->toArray();
     }
 
     /**
@@ -108,20 +98,10 @@ class User extends Authenticatable
      */
     public function assignRole($role)
     {
-        // Map simple role names to database enum values
-        $roleMap = [
-            'admin' => 'admin',
-            'director' => 'directorUser',
-            'dean' => 'deanUser',
-            'faculty' => 'facultyUser',
-        ];
-        
-        $dbRole = $roleMap[$role] ?? $role;
-        
         if (!$this->hasRole($role)) {
             UserRole::create([
                 'user_id' => $this->id,
-                'role' => $dbRole,
+                'role' => $role,
             ]);
         }
     }
@@ -131,18 +111,8 @@ class User extends Authenticatable
      */
     public function removeRole($role)
     {
-        // Map simple role names to database enum values
-        $roleMap = [
-            'admin' => 'admin',
-            'director' => 'directorUser',
-            'dean' => 'deanUser',
-            'faculty' => 'facultyUser',
-        ];
-        
-        $dbRole = $roleMap[$role] ?? $role;
-        
         UserRole::where('user_id', $this->id)
-            ->where('role', $dbRole)
+            ->where('role', $role)
             ->delete();
     }
 
@@ -228,6 +198,87 @@ class User extends Authenticatable
         
         // Return generic silhouette avatar
         return 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" fill="#e5e7eb"/><path fill="#9ca3af" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+    }
+
+    /**
+     * Calculate profile completeness percentage and details
+     * Returns array with 'percentage', 'completed', 'total', and 'fields' breakdown
+     */
+    public function getProfileCompleteness(): array
+    {
+        $fields = [
+            [
+                'key' => 'name',
+                'label' => 'Full Name',
+                'icon' => 'fa-user',
+                'completed' => !empty($this->name),
+            ],
+            [
+                'key' => 'email',
+                'label' => 'Email Address',
+                'icon' => 'fa-envelope',
+                'completed' => !empty($this->email),
+            ],
+            [
+                'key' => 'username',
+                'label' => 'Username',
+                'icon' => 'fa-at',
+                'completed' => !empty($this->username),
+            ],
+            [
+                'key' => 'phone',
+                'label' => 'Phone Number',
+                'icon' => 'fa-phone',
+                'completed' => !empty($this->phone),
+            ],
+            [
+                'key' => 'employee_id',
+                'label' => 'Employee ID',
+                'icon' => 'fa-id-badge',
+                'completed' => !empty($this->employee_id),
+            ],
+            [
+                'key' => 'department_id',
+                'label' => 'Department',
+                'icon' => 'fa-building',
+                'completed' => !empty($this->department_id),
+            ],
+            [
+                'key' => 'designation_id',
+                'label' => 'Designation',
+                'icon' => 'fa-briefcase',
+                'completed' => !empty($this->designation_id),
+            ],
+            [
+                'key' => 'profile_photo',
+                'label' => 'Profile Photo',
+                'icon' => 'fa-camera',
+                'completed' => $this->hasProfilePhoto(),
+            ],
+        ];
+
+        $completedCount = collect($fields)->where('completed', true)->count();
+        $total = count($fields);
+        $percentage = $total > 0 ? round(($completedCount / $total) * 100) : 0;
+
+        return [
+            'percentage' => $percentage,
+            'completed' => $completedCount,
+            'total' => $total,
+            'fields' => $fields,
+        ];
+    }
+
+    /**
+     * Get the color class for profile completeness
+     */
+    public function getCompletenessColor(): string
+    {
+        $percentage = $this->getProfileCompleteness()['percentage'];
+
+        if ($percentage >= 80) return 'green';
+        if ($percentage >= 50) return 'yellow';
+        return 'red';
     }
 
     /**

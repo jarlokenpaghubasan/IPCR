@@ -45,6 +45,39 @@ class EmployeeIdService
     }
 
     /**
+     * Generate a unique employee ID for HR or Director roles (no department code)
+     * Format: URS<YY>-<ROLE_CODE><5_DIGIT_RANDOM>
+     * Example: URS26-HRD12345 (HR), URS26-DIR12345 (Director)
+     */
+    public static function generateForHrOrDirector(array $roles): string
+    {
+        // Determine role code based on priority (Director > HR)
+        $roleCode = in_array('director', $roles) ? 'DIR' : 'HRD';
+        
+        $year = date('y'); // Last 2 digits of current year
+        
+        // Generate a unique 5-digit random number
+        $maxAttempts = 100;
+        $attempt = 0;
+        
+        do {
+            $randomDigits = str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+            $employeeId = "URS{$year}-{$roleCode}{$randomDigits}";
+            $attempt++;
+            
+            // Check if this employee ID already exists
+            $exists = User::where('employee_id', $employeeId)->exists();
+            
+            if (!$exists) {
+                return $employeeId;
+            }
+            
+        } while ($attempt < $maxAttempts);
+        
+        throw new \Exception('Could not generate unique employee ID after ' . $maxAttempts . ' attempts');
+    }
+
+    /**
      * Update employee ID department code when department changes
      * Keeps the same random digits, just updates the department code
      * Format: URS<YY>-<NEW_DEPT_CODE><EXISTING_DIGITS>

@@ -351,3 +351,46 @@ window.togglePasswordVisibility = function(fieldId) {
         eyeClosed.classList.add('hidden');
     }
 };
+
+// Handle role selection to show/hide department and designation
+window.handleRoleSelection = function() {
+    const hrCheckbox = document.getElementById('role_hr');
+    const directorCheckbox = document.getElementById('role_director');
+    const departmentField = document.getElementById('department_id');
+    const designationField = document.getElementById('designation_id');
+    
+    if (!departmentField || !designationField) return;
+    
+    const isHrOrDirector = (hrCheckbox && hrCheckbox.checked) || (directorCheckbox && directorCheckbox.checked);
+    
+    // Get the parent divs
+    const departmentDiv = departmentField.closest('div').parentElement;
+    const designationDiv = designationField.closest('div').parentElement;
+    
+    if (isHrOrDirector) {
+        // Hide department and designation fields
+        if (departmentDiv && departmentDiv.querySelector('#department_id')) {
+            departmentDiv.style.display = 'none';
+        }
+        if (designationDiv && designationDiv.querySelector('#designation_id')) {
+            designationDiv.style.display = 'none';
+        }
+        
+        // Clear their values
+        departmentField.value = '';
+        designationField.value = '';
+    } else {
+        // Show department and designation fields
+        if (departmentDiv && departmentDiv.querySelector('#department_id')) {
+            departmentDiv.style.display = 'block';
+        }
+        if (designationDiv && designationDiv.querySelector('#designation_id')) {
+            designationDiv.style.display = 'block';
+        }
+    }
+};
+
+// Initialize role selection handler on page load
+setTimeout(function() {
+    handleRoleSelection();
+}, 100);

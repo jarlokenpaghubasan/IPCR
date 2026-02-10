@@ -47,7 +47,7 @@ class UserSeeder extends Seeder
 
         UserRole::create([
             'user_id' => $dean->id,
-            'role' => 'deanUser',
+            'role' => 'dean',
         ]);
 
         // Create director user
@@ -66,7 +66,7 @@ class UserSeeder extends Seeder
 
         UserRole::create([
             'user_id' => $director->id,
-            'role' => 'directorUser',
+            'role' => 'director',
         ]);
 
         // Create faculty user (College of Computer Studies)
@@ -85,7 +85,7 @@ class UserSeeder extends Seeder
 
         UserRole::create([
             'user_id' => $faculty->id,
-            'role' => 'facultyUser',
+            'role' => 'faculty',
         ]);
 
         // Create additional faculty user (College of Business)
@@ -104,7 +104,7 @@ class UserSeeder extends Seeder
 
         UserRole::create([
             'user_id' => $faculty2->id,
-            'role' => 'facultyUser',
+            'role' => 'faculty',
         ]);
     }
 }

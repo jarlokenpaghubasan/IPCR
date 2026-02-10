@@ -29,7 +29,7 @@ class DeanReviewController extends Controller
         $facultyUserIds = User::where('department_id', $departmentId)
             ->where('id', '!=', $user->id)
             ->whereHas('userRoles', function ($query) {
-                $query->where('role', 'facultyUser');
+                $query->where('role', 'faculty');
             })
             ->pluck('id');
 
@@ -77,6 +77,7 @@ class DeanReviewController extends Controller
             'success' => true,
             'submission' => [
                 'id' => $submission->id,
+                'user_id' => $submission->user_id,
                 'title' => $submission->title,
                 'school_year' => $submission->school_year,
                 'semester' => $submission->semester,
@@ -99,7 +100,7 @@ class DeanReviewController extends Controller
         // Get all users with the dean role (excluding the current user)
         $deanUserIds = User::where('id', '!=', $user->id)
             ->whereHas('userRoles', function ($query) {
-                $query->where('role', 'deanUser');
+                $query->where('role', 'dean');
             })
             ->pluck('id');
 
@@ -137,7 +138,7 @@ class DeanReviewController extends Controller
         // The submission must belong to another dean
         $deanUserIds = User::where('id', '!=', $user->id)
             ->whereHas('userRoles', function ($query) {
-                $query->where('role', 'deanUser');
+                $query->where('role', 'dean');
             })
             ->pluck('id');
 
@@ -150,6 +151,7 @@ class DeanReviewController extends Controller
             'success' => true,
             'submission' => [
                 'id' => $submission->id,
+                'user_id' => $submission->user_id,
                 'title' => $submission->title,
                 'school_year' => $submission->school_year,
                 'semester' => $submission->semester,

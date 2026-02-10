@@ -237,7 +237,7 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-3">Roles *</label>
                                             <div class="space-y-2 bg-gray-50 p-4 rounded-lg">
                                                 @php
-                                                    $availableRoles = ['admin', 'director', 'dean', 'faculty'];
+                                                    $availableRoles = ['admin', 'hr', 'director', 'dean', 'faculty'];
                                                     $userRoles = $user->roles();
                                                 @endphp
                                                 
@@ -249,10 +249,11 @@
                                                             id="role_{{ $role }}" 
                                                             value="{{ $role }}"
                                                             {{ in_array($role, $userRoles) ? 'checked' : '' }}
-                                                            class="w-4 h-4 text-blue-600 rounded"
+                                                            class="w-4 h-4 text-blue-600 rounded role-checkbox"
+                                                            onchange="handleRoleSelection()"
                                                         >
                                                         <label for="role_{{ $role }}" class="ml-2 text-sm text-gray-700 cursor-pointer">
-                                                            {{ ucfirst($role) }}
+                                                            {{ $role == 'hr' ? 'Human Resource' : ucfirst($role) }}
                                                         </label>
                                                     </div>
                                                 @endforeach

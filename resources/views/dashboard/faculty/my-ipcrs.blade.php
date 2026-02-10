@@ -313,13 +313,13 @@
                                     $deanUser = $deptId
                                         ? \App\Models\User::where('department_id', $deptId)
                                             ->whereHas('userRoles', function ($query) {
-                                                $query->where('role', 'deanUser');
+                                                $query->where('role', 'dean');
                                             })
                                             ->first()
                                         : null;
                                     
                                     $directorUser = \App\Models\User::whereHas('userRoles', function ($query) {
-                                        $query->where('role', 'directorUser');
+                                        $query->where('role', 'director');
                                     })->first();
                                 @endphp
                                 <div class="pt-2 border-t border-gray-200">
@@ -384,13 +384,13 @@
                                     $deanUser = $deptId
                                         ? \App\Models\User::where('department_id', $deptId)
                                             ->whereHas('userRoles', function ($query) {
-                                                $query->where('role', 'deanUser');
+                                                $query->where('role', 'dean');
                                             })
                                             ->first()
                                         : null;
                                     
                                     $directorUser = \App\Models\User::whereHas('userRoles', function ($query) {
-                                        $query->where('role', 'directorUser');
+                                        $query->where('role', 'director');
                                     })->first();
                                 @endphp
                                 <div class="pt-2 border-t border-gray-200">
@@ -719,6 +719,142 @@
                                 <input type="hidden" id="currentPreviewTemplateId" value="">
                                 <input type="hidden" id="currentSubmissionIdToUpdate" value="">
                                 <input type="hidden" id="currentSubmissionType" value="ipcr">
+                                <input type="hidden" id="currentDocumentOwnerId" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SO Supporting Documents Modal -->
+                    <div id="soDocumentsModal" class="fixed inset-0 z-[60] hidden">
+                        <div class="absolute inset-0 bg-black/60" onclick="closeSoDocumentsModal()"></div>
+                        <div class="relative mx-auto mt-8 sm:mt-16 w-full max-w-xl bg-white rounded-xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                            <!-- Header -->
+                            <div class="px-5 py-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+                                <div class="flex justify-between items-center">
+                                    <div class="min-w-0 flex-1">
+                                        <h3 id="soDocModalTitle" class="text-base sm:text-lg font-bold text-gray-900 truncate">SO Details</h3>
+                                        <p id="soDocModalDescription" class="text-xs sm:text-sm text-gray-500 mt-0.5 truncate"></p>
+                                    </div>
+                                    <button onclick="closeSoDocumentsModal()" class="text-gray-400 hover:text-gray-600 ml-3 flex-shrink-0 p-1">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Upload Area -->
+                            <div id="soDocUploadSection" class="px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                                <form id="soDocUploadForm" enctype="multipart/form-data" class="flex items-center gap-3">
+                                    @csrf
+                                    <input type="file" id="soDocFileInput" name="file" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                                    <input type="hidden" id="soDocType" name="documentable_type" value="">
+                                    <input type="hidden" id="soDocId" name="documentable_id" value="">
+                                    <input type="hidden" id="soDocLabel" name="so_label" value="">
+                                    <button type="button" onclick="document.getElementById('soDocFileInput').click()" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition text-sm font-medium">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span id="soDocUploadText">Choose file to upload</span>
+                                    </button>
+                                    <button type="button" id="soDocUploadBtn" onclick="uploadSoDocument()" class="hidden px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition">
+                                        <i class="fas fa-upload mr-1"></i> Upload
+                                    </button>
+                                </form>
+                                <div id="soDocUploadProgress" class="hidden mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div id="soDocProgressBar" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Uploading...</p>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2">Images, PDF, Office docs up to 10MB</p>
+                            </div>
+
+                            <!-- Documents List -->
+                            <div class="flex-1 overflow-y-auto px-5 py-3" style="max-height: 45vh;">
+                                <div id="soDocumentsList">
+                                    <div class="flex items-center justify-center py-8">
+                                        <i class="fas fa-spinner fa-spin text-gray-300 mr-2"></i>
+                                        <span class="text-sm text-gray-400">Loading documents...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="px-5 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+                                <button type="button" onclick="closeSoDocumentsModal()" class="w-full px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview Modal (z-index 70) -->
+                    <div id="imagePreviewModal" class="fixed inset-0 z-[70] hidden">
+                        <div class="absolute inset-0 bg-black/80" onclick="closeImagePreview()"></div>
+                        <div class="relative z-10 flex items-center justify-center h-full p-4">
+                            <div class="bg-white rounded-lg shadow-2xl" style="width: 920px; max-width: 95vw;">
+                                <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
+                                    <h3 id="imagePreviewTitle" class="text-sm font-semibold text-gray-800 flex-1 truncate mr-4">Image Preview</h3>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="zoomOut()" class="px-3 py-1.5 rounded text-gray-600 hover:bg-gray-200 transition" title="Zoom Out">
+                                            <i class="fas fa-search-minus"></i>
+                                        </button>
+                                        <span id="zoomLevel" class="text-xs text-gray-500 font-medium w-12 text-center">100%</span>
+                                        <button onclick="zoomIn()" class="px-3 py-1.5 rounded text-gray-600 hover:bg-gray-200 transition" title="Zoom In">
+                                            <i class="fas fa-search-plus"></i>
+                                        </button>
+                                        <button onclick="resetZoom()" class="px-3 py-1.5 rounded text-gray-600 hover:bg-gray-200 transition text-xs" title="Reset Zoom">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                                        <button onclick="closeImagePreview()" class="text-gray-400 hover:text-gray-600">
+                                            <i class="fas fa-times text-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="imagePreviewContainer" class="bg-gray-100 overflow-auto" style="height: 700px; max-height: 75vh;">
+                                    <div class="flex items-center justify-center min-h-full p-4">
+                                        <img id="imagePreviewImg" src="" alt="Image preview" class="rounded shadow-lg transition-transform duration-200" style="cursor: move; max-width: none;" />
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 border-t">
+                                    <span class="text-xs text-gray-500"><i class="fas fa-info-circle mr-1"></i>Use zoom controls or scroll to zoom. Drag to pan when zoomed.</span>
+                                    <div class="flex gap-2">
+                                        <a id="imagePreviewDownload" href="" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">
+                                            <i class="fas fa-download mr-1"></i> Download
+                                        </a>
+                                        <button onclick="closeImagePreview()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rename Document Modal (z-index 60) -->
+                    <div id="renameDocumentModal" class="fixed inset-0 z-[60] hidden">
+                        <div class="absolute inset-0 bg-black/60" onclick="closeRenameModal()"></div>
+                        <div class="relative z-10 flex items-center justify-center h-full p-4">
+                            <div class="bg-white rounded-lg w-full max-w-md shadow-xl">
+                                <div class="flex items-center justify-between px-5 py-4 border-b">
+                                    <h3 class="text-lg font-bold text-gray-800">Rename Document</h3>
+                                    <button onclick="closeRenameModal()" class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="p-5">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">New filename</label>
+                                    <input type="text" id="renameDocumentInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter new filename" />
+                                    <p class="text-xs text-gray-500 mt-1">Extension will be preserved automatically</p>
+                                </div>
+                                <div class="flex items-center justify-end gap-2 px-5 py-4 bg-gray-50 border-t">
+                                    <button onclick="closeRenameModal()" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
+                                        Cancel
+                                    </button>
+                                    <button onclick="submitRename()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700">
+                                        <i class="fas fa-check mr-1"></i> Rename
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -853,15 +989,6 @@
                                     <p class="text-xs text-gray-500">Saved on {{ $template->created_at->format('M d, Y') }}</p>
                                 </div>
                                 <div class="flex gap-2 ml-7">
-                                    @if($template->table_body_html)
-                                        <button onclick="loadTemplateToDocument({{ $template->id }})" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded">
-                                            Use
-                                        </button>
-                                    @else
-                                        <button onclick="loadTemplate({{ $template->id }})" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded">
-                                            Edit
-                                        </button>
-                                    @endif
                                     <button onclick="viewTemplate({{ $template->id }})" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded">
                                         View
                                     </button>
@@ -1450,6 +1577,7 @@
                 formData.append('semester', item.semester);
                 formData.append('table_body_html', item.table_body_html || '');
                 formData.append('so_count_json', JSON.stringify(soCounts));
+                formData.append('template_id', selectedId); // Include template_id for document copying
                 
                 console.log('FormData entries:');
                 for (let pair of formData.entries()) {
@@ -2552,6 +2680,12 @@
                             templateIdField.value = templateId;
                         }
 
+                        // Clear submission fields so doc context resolves to template
+                        const submIdField = document.getElementById('currentSubmissionIdToUpdate');
+                        if (submIdField) submIdField.value = '';
+                        const submTypeField = document.getElementById('currentSubmissionType');
+                        if (submTypeField) submTypeField.value = 'ipcr';
+
                         // Unhide all columns in the preview modal
                         const previewModal = document.getElementById('templatePreviewModal');
                         if (previewModal) {
@@ -2568,6 +2702,7 @@
                         if (updateBtn) updateBtn.classList.add('hidden');
 
                         document.getElementById('templatePreviewModal').classList.remove('hidden');
+                        attachSoDocumentClickHandlers();
                     } else {
                         showAlertModal('info', 'Legacy Template', 'This template was created with the old format. Please use the Edit button to modify it.');
                     }
@@ -2603,9 +2738,13 @@
         }
 
         window.closeTemplatePreview = function() {
+            // Skip unsaved-changes prompt if in read-only dean view
+            const ownerIdField = document.getElementById('currentDocumentOwnerId');
+            const isReadOnly = ownerIdField && ownerIdField.value;
+
             // Check if we're in edit mode with unsaved changes
             const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
-            if (submissionIdField && submissionIdField.value) {
+            if (!isReadOnly && submissionIdField && submissionIdField.value) {
                 const tableBody = document.getElementById('templatePreviewTableBody');
                 if (tableBody && tableBody.innerHTML.trim() !== '') {
                     openConfirmationModal(
@@ -3324,6 +3463,12 @@
                                 templateIdField.value = templateId;
                             }
 
+                            // Clear submission fields so doc context resolves to template
+                            const submIdField = document.getElementById('currentSubmissionIdToUpdate');
+                            if (submIdField) submIdField.value = '';
+                            const submTypeField = document.getElementById('currentSubmissionType');
+                            if (submTypeField) submTypeField.value = 'ipcr';
+
                             // Unhide all columns in the preview modal
                             const previewModal = document.getElementById('templatePreviewModal');
                             if (previewModal) {
@@ -3340,6 +3485,7 @@
                             if (updateBtn) updateBtn.classList.add('hidden');
 
                             document.getElementById('templatePreviewModal').classList.remove('hidden');
+                            attachSoDocumentClickHandlers();
                         } else {
                             showAlertModal('info', 'Legacy Template', 'This template was created with the old format. Please use the Edit button to modify it.');
                         }
@@ -3460,6 +3606,7 @@
                         }
 
                         document.getElementById('templatePreviewModal').classList.remove('hidden');
+                        attachSoDocumentClickHandlers();
                     } else {
                         showAlertModal('error', 'Not Found', 'Submission could not be found.');
                     }
@@ -3549,7 +3696,12 @@
                             console.log('Update button shown, display:', window.getComputedStyle(updateBtn).display);
                         }
 
+                        // Set submission type for document context
+                        const submTypeField2 = document.getElementById('currentSubmissionType');
+                        if (submTypeField2) submTypeField2.value = 'ipcr';
+
                         document.getElementById('templatePreviewModal').classList.remove('hidden');
+                        attachSoDocumentClickHandlers();
                     } else {
                         showAlertModal('error', 'Not Found', 'Submission could not be found.');
                     }
@@ -4102,6 +4254,536 @@
             }
         };
 
+        // ========================================
+        // SO Supporting Documents Functions
+        // ========================================
+        
+        let soDocCurrentContext = { type: '', id: 0, label: '', ownerId: '' };
+
+        /**
+         * After rendering table body in preview modal, make SO rows clickable.
+         * Called after loading template/submission/saved copy into preview.
+         * @param {string} ownerId - Optional user_id of document owner (for dean viewing faculty docs)
+         */
+        function attachSoDocumentClickHandlers(ownerId) {
+            // Track document owner - empty means current auth user, set means viewing someone else's
+            const ownerIdField = document.getElementById('currentDocumentOwnerId');
+            if (ownerIdField) ownerIdField.value = ownerId || '';
+
+            const tableBody = document.getElementById('templatePreviewTableBody');
+            if (!tableBody) return;
+
+            const rows = tableBody.querySelectorAll('tr.bg-blue-100');
+            rows.forEach(function(row) {
+                // Extract the SO label text from the row
+                const soSpan = row.querySelector('span.font-semibold.text-gray-800');
+                const soInput = row.querySelector('input[type="text"]');
+                let soLabel = '';
+                let soDescription = '';
+
+                if (soSpan) {
+                    soLabel = soSpan.textContent.trim().replace(/:$/, '');
+                }
+                if (soInput) {
+                    soDescription = soInput.value || soInput.getAttribute('value') || '';
+                }
+
+                if (!soLabel) return;
+
+                // Add visual click indicator
+                row.style.cursor = 'pointer';
+                row.title = 'Click to view/attach supporting documents';
+
+                // Add a small document icon indicator
+                const existingBadge = row.querySelector('.so-doc-badge');
+                if (!existingBadge) {
+                    const td = row.querySelector('td');
+                    if (td) {
+                        const badge = document.createElement('span');
+                        badge.className = 'so-doc-badge ml-2 inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full';
+                        badge.innerHTML = '<i class="fas fa-paperclip text-[10px]"></i> <span class="so-doc-count">...</span>';
+                        badge.style.fontSize = '11px';
+                        
+                        const innerDiv = td.querySelector('div.flex') || td;
+                        innerDiv.appendChild(badge);
+
+                        // Fetch count async
+                        fetchSoDocCount(soLabel, badge.querySelector('.so-doc-count'));
+                    }
+                }
+
+                // Remove any old listeners by cloning
+                const newRow = row.cloneNode(true);
+                newRow.style.cursor = 'pointer';
+                newRow.title = 'Click to view/attach supporting documents';
+                newRow.addEventListener('click', function(e) {
+                    // Don't open modal if clicking on input fields
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                    openSoDocumentsModal(soLabel, soDescription);
+                });
+                row.parentNode.replaceChild(newRow, row);
+            });
+        }
+
+        function fetchSoDocCount(soLabel, countElement) {
+            const docType = getCurrentDocumentableType();
+            const docId = getCurrentDocumentableId();
+            if (!docType || !docId) {
+                if (countElement) countElement.textContent = '0';
+                return;
+            }
+
+            const ownerId = document.getElementById('currentDocumentOwnerId')?.value || '';
+            const ownerParam = ownerId ? `&owner_id=${ownerId}` : '';
+            fetch(`{{ route('faculty.supporting-documents.index') }}?documentable_type=${docType}&documentable_id=${docId}&so_label=${encodeURIComponent(soLabel)}${ownerParam}`, {
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && countElement) {
+                    countElement.textContent = data.documents.length;
+                }
+            })
+            .catch(() => { if (countElement) countElement.textContent = '0'; });
+        }
+
+        function getCurrentDocumentableType() {
+            const submissionType = document.getElementById('currentSubmissionType')?.value || 'ipcr';
+            const submissionId = document.getElementById('currentSubmissionIdToUpdate')?.value;
+            const templateId = document.getElementById('currentPreviewTemplateId')?.value;
+
+            if (submissionId) {
+                return submissionType === 'opcr' ? 'opcr_submission' : 'ipcr_submission';
+            }
+            if (templateId) {
+                return submissionType === 'opcr' ? 'opcr_template' : 'ipcr_template';
+            }
+            return 'ipcr_template';
+        }
+
+        function getCurrentDocumentableId() {
+            const submissionId = document.getElementById('currentSubmissionIdToUpdate')?.value;
+            const templateId = document.getElementById('currentPreviewTemplateId')?.value;
+
+            return submissionId || templateId || 0;
+        }
+
+        function openSoDocumentsModal(soLabel, soDescription) {
+            soDocCurrentContext.type = getCurrentDocumentableType();
+            soDocCurrentContext.id = getCurrentDocumentableId();
+            soDocCurrentContext.label = soLabel;
+            // Read owner_id from hidden field (set by dean view functions)
+            soDocCurrentContext.ownerId = document.getElementById('currentDocumentOwnerId')?.value || '';
+
+            document.getElementById('soDocType').value = soDocCurrentContext.type;
+            document.getElementById('soDocId').value = soDocCurrentContext.id;
+            document.getElementById('soDocLabel').value = soDocCurrentContext.label;
+
+            document.getElementById('soDocModalTitle').textContent = soLabel;
+            document.getElementById('soDocModalDescription').textContent = soDescription || '';
+
+            // Hide upload section when viewing someone else's documents (dean view)
+            const uploadSection = document.getElementById('soDocUploadSection');
+            if (soDocCurrentContext.ownerId) {
+                if (uploadSection) uploadSection.classList.add('hidden');
+            } else {
+                if (uploadSection) uploadSection.classList.remove('hidden');
+                // Reset upload form
+                document.getElementById('soDocFileInput').value = '';
+                document.getElementById('soDocUploadText').textContent = 'Choose file to upload';
+                document.getElementById('soDocUploadBtn').classList.add('hidden');
+                document.getElementById('soDocUploadProgress').classList.add('hidden');
+            }
+
+            document.getElementById('soDocumentsModal').classList.remove('hidden');
+
+            loadSoDocuments();
+        }
+
+        window.closeSoDocumentsModal = function() {
+            document.getElementById('soDocumentsModal').classList.add('hidden');
+            // Refresh badge counts in the preview (preserve owner_id context)
+            const ownerId = document.getElementById('currentDocumentOwnerId')?.value || '';
+            attachSoDocumentClickHandlers(ownerId);
+        };
+
+        // File input change handler
+        document.getElementById('soDocFileInput').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const name = this.files[0].name;
+                const displayName = name.length > 30 ? name.substring(0, 27) + '...' : name;
+                document.getElementById('soDocUploadText').textContent = displayName;
+                document.getElementById('soDocUploadBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('soDocUploadText').textContent = 'Choose file to upload';
+                document.getElementById('soDocUploadBtn').classList.add('hidden');
+            }
+        });
+
+        function loadSoDocuments() {
+            const container = document.getElementById('soDocumentsList');
+            container.innerHTML = '<div class="flex items-center justify-center py-8"><i class="fas fa-spinner fa-spin text-gray-300 mr-2"></i><span class="text-sm text-gray-400">Loading documents...</span></div>';
+
+            const { type, id, label, ownerId } = soDocCurrentContext;
+            const ownerParam = ownerId ? `&owner_id=${ownerId}` : '';
+
+            fetch(`{{ route('faculty.supporting-documents.index') }}?documentable_type=${type}&documentable_id=${id}&so_label=${encodeURIComponent(label)}${ownerParam}`, {
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    renderSoDocuments(data.documents, !!ownerId);
+                } else {
+                    container.innerHTML = '<p class="text-sm text-red-500 text-center py-4">Failed to load documents</p>';
+                }
+            })
+            .catch(() => {
+                container.innerHTML = '<p class="text-sm text-red-500 text-center py-4">Error loading documents</p>';
+            });
+        }
+
+        function renderSoDocuments(documents, readOnly) {
+            const container = document.getElementById('soDocumentsList');
+
+            if (!documents || documents.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-folder-open text-gray-200 text-3xl mb-3"></i>
+                        <p class="text-sm text-gray-400">No supporting documents yet</p>
+                        ${readOnly ? '' : '<p class="text-xs text-gray-300 mt-1">Upload files using the form above</p>'}
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = documents.map(function(doc) {
+                const isImage = (doc.mime_type || '').match(/jpg|jpeg|png|gif|webp|image/i);
+                const isPdf = (doc.mime_type || '').match(/pdf/i) || (doc.original_name || '').endsWith('.pdf');
+                let icon = 'fas fa-file text-gray-400';
+                if (isImage) icon = 'fas fa-image text-green-500';
+                else if (isPdf) icon = 'fas fa-file-pdf text-red-500';
+                else if ((doc.original_name || '').match(/\.(doc|docx)$/i)) icon = 'fas fa-file-word text-blue-500';
+                else if ((doc.original_name || '').match(/\.(xls|xlsx)$/i)) icon = 'fas fa-file-excel text-green-600';
+                else if ((doc.original_name || '').match(/\.(ppt|pptx)$/i)) icon = 'fas fa-file-powerpoint text-orange-500';
+
+                const nameDisplay = doc.original_name.length > 30 ? doc.original_name.substring(0, 27) + '...' : doc.original_name;
+
+                // Image preview thumbnail or icon
+                let previewHtml = `<i class="${icon} text-lg flex-shrink-0"></i>`;
+                if (isImage) {
+                    previewHtml = `<div class="w-12 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-200"><img src="${doc.path}" alt="${doc.original_name}" class="w-full h-full object-cover" /></div>`;
+                }
+
+                // View button - popup for images, download route for others
+                const viewAction = isImage 
+                    ? `onclick="viewImagePreview(${doc.id}, '${doc.path.replace(/'/g, "\\'")}', '${doc.original_name.replace(/'/g, "\\'")}')"` 
+                    : `onclick="window.location.href='/faculty/supporting-documents/${doc.id}/download'"`;
+
+                // Hide rename/delete for read-only (dean viewing faculty docs)
+                const actionButtons = readOnly ? '' : `
+                            <button onclick="openRenameModal(${doc.id}, '${doc.original_name.replace(/'/g, "\\'")}')" class="p-2 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-all" title="Rename">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteSoDocument(${doc.id})" class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>`;
+
+                return `
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-2 hover:bg-gray-100 transition relative">
+                        ${previewHtml}
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 truncate" title="${doc.original_name}">${nameDisplay}</p>
+                            <p class="text-xs text-gray-400">${doc.file_size_human} &bull; ${doc.created_at}</p>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-shrink-0">
+                            <button ${viewAction} class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all" title="${isImage ? 'Preview' : 'View'}">
+                                <i class="fas fa-${isImage ? 'search-plus' : 'external-link-alt'}"></i>
+                            </button>
+                            ${actionButtons}
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        window.uploadSoDocument = function() {
+            const fileInput = document.getElementById('soDocFileInput');
+            if (!fileInput.files.length) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('documentable_type', soDocCurrentContext.type);
+            formData.append('documentable_id', soDocCurrentContext.id);
+            formData.append('so_label', soDocCurrentContext.label);
+
+            const progressContainer = document.getElementById('soDocUploadProgress');
+            const progressBar = document.getElementById('soDocProgressBar');
+            const uploadBtn = document.getElementById('soDocUploadBtn');
+
+            progressContainer.classList.remove('hidden');
+            uploadBtn.disabled = true;
+            uploadBtn.classList.add('opacity-50');
+            progressBar.style.width = '0%';
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '{{ route("faculty.supporting-documents.store") }}');
+            xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+            xhr.setRequestHeader('Accept', 'application/json');
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                progressContainer.classList.add('hidden');
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50');
+                fileInput.value = '';
+                document.getElementById('soDocUploadText').textContent = 'Choose file to upload';
+                uploadBtn.classList.add('hidden');
+
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        loadSoDocuments();
+                    } else {
+                        showAlertModal('error', 'Upload Failed', data.message || 'Failed to upload document.');
+                    }
+                } catch (e) {
+                    showAlertModal('error', 'Upload Failed', 'An error occurred during upload.');
+                }
+            };
+
+            xhr.onerror = function() {
+                progressContainer.classList.add('hidden');
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50');
+                showAlertModal('error', 'Upload Failed', 'Network error occurred.');
+            };
+
+            xhr.send(formData);
+        };
+
+        // Image preview functions
+        let currentZoom = 1;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        window.viewImagePreview = function(docId, url, filename) {
+            const img = document.getElementById('imagePreviewImg');
+            const container = document.getElementById('imagePreviewContainer');
+            
+            img.src = url;
+            document.getElementById('imagePreviewTitle').textContent = filename;
+            // Use server-side download route for proper filename
+            document.getElementById('imagePreviewDownload').href = '/faculty/supporting-documents/' + docId + '/download';
+            document.getElementById('imagePreviewModal').classList.remove('hidden');
+            
+            // Reset zoom
+            currentZoom = 1;
+            img.style.transform = 'scale(1)';
+            document.getElementById('zoomLevel').textContent = '100%';
+            
+            // Enable dragging when image loads
+            img.onload = function() {
+                setupImageDrag();
+            };
+        };
+
+        window.closeImagePreview = function() {
+            document.getElementById('imagePreviewModal').classList.add('hidden');
+            document.getElementById('imagePreviewImg').src = '';
+            currentZoom = 1;
+        };
+
+        window.zoomIn = function() {
+            currentZoom = Math.min(currentZoom + 0.25, 4);
+            updateZoom();
+        };
+
+        window.zoomOut = function() {
+            currentZoom = Math.max(currentZoom - 0.25, 0.5);
+            updateZoom();
+        };
+
+        window.resetZoom = function() {
+            currentZoom = 1;
+            updateZoom();
+            document.getElementById('imagePreviewContainer').scrollTo(0, 0);
+        };
+
+        function updateZoom() {
+            const img = document.getElementById('imagePreviewImg');
+            img.style.transform = `scale(${currentZoom})`;
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        function setupImageDrag() {
+            const container = document.getElementById('imagePreviewContainer');
+            const img = document.getElementById('imagePreviewImg');
+            
+            // Mouse drag
+            img.addEventListener('mousedown', function(e) {
+                if (currentZoom > 1) {
+                    isDragging = true;
+                    img.style.cursor = 'grabbing';
+                    startX = e.pageX - container.offsetLeft;
+                    startY = e.pageY - container.offsetTop;
+                    scrollLeft = container.scrollLeft;
+                    scrollTop = container.scrollTop;
+                }
+            });
+
+            container.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const y = e.pageY - container.offsetTop;
+                const walkX = (x - startX) * 2;
+                const walkY = (y - startY) * 2;
+                container.scrollLeft = scrollLeft - walkX;
+                container.scrollTop = scrollTop - walkY;
+            });
+
+            container.addEventListener('mouseup', function() {
+                isDragging = false;
+                if (currentZoom > 1) {
+                    img.style.cursor = 'move';
+                } else {
+                    img.style.cursor = 'default';
+                }
+            });
+
+            container.addEventListener('mouseleave', function() {
+                isDragging = false;
+                if (currentZoom > 1) {
+                    img.style.cursor = 'move';
+                } else {
+                    img.style.cursor = 'default';
+                }
+            });
+
+            // Mouse wheel zoom
+            container.addEventListener('wheel', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    if (e.deltaY < 0) {
+                        zoomIn();
+                    } else {
+                        zoomOut();
+                    }
+                }
+            }, { passive: false });
+        }
+
+        // Rename document functions
+        let currentRenameDocId = null;
+        let currentRenameOriginal = '';
+
+        window.openRenameModal = function(docId, originalName) {
+            currentRenameDocId = docId;
+            currentRenameOriginal = originalName;
+            
+            // Extract filename without extension
+            const lastDot = originalName.lastIndexOf('.');
+            const nameWithoutExt = lastDot > 0 ? originalName.substring(0, lastDot) : originalName;
+            
+            document.getElementById('renameDocumentInput').value = nameWithoutExt;
+            document.getElementById('renameDocumentModal').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('renameDocumentInput').focus();
+                document.getElementById('renameDocumentInput').select();
+            }, 100);
+        };
+
+        window.closeRenameModal = function() {
+            document.getElementById('renameDocumentModal').classList.add('hidden');
+            currentRenameDocId = null;
+            currentRenameOriginal = '';
+        };
+
+        window.submitRename = function() {
+            const newName = document.getElementById('renameDocumentInput').value.trim();
+            if (!newName) {
+                showAlertModal('error', 'Invalid Name', 'Please enter a valid filename.');
+                return;
+            }
+
+            // Preserve original extension
+            const lastDot = currentRenameOriginal.lastIndexOf('.');
+            const extension = lastDot > 0 ? currentRenameOriginal.substring(lastDot) : '';
+            const newFullName = newName + extension;
+
+            fetch(`/faculty/supporting-documents/${currentRenameDocId}/rename`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ original_name: newFullName })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    closeRenameModal();
+                    loadSoDocuments();
+                    attachSoDocumentClickHandlers();
+                } else {
+                    showAlertModal('error', 'Rename Failed', data.message || 'Failed to rename document.');
+                }
+            })
+            .catch(() => {
+                showAlertModal('error', 'Error', 'An error occurred while renaming.');
+            });
+        };
+
+        // Handle Enter key in rename input
+        document.addEventListener('DOMContentLoaded', function() {
+            const renameInput = document.getElementById('renameDocumentInput');
+            if (renameInput) {
+                renameInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitRename();
+                    }
+                });
+            }
+        });
+
+        window.deleteSoDocument = function(id) {
+            openConfirmationModal(
+                'Delete Document',
+                'Are you sure you want to delete this supporting document?',
+                'This action cannot be undone.',
+                'danger',
+                'Delete',
+                function() {
+                    fetch(`/faculty/supporting-documents/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadSoDocuments();
+                            attachSoDocumentClickHandlers();
+                        } else {
+                            showAlertModal('error', 'Error', data.message || 'Failed to delete document.');
+                        }
+                    })
+                    .catch(() => {
+                        showAlertModal('error', 'Error', 'An error occurred while deleting.');
+                    });
+                }
+            );
+        };
+
         // OPCR Templates Functions
         window.renderOpcrTemplates = async function() {
             const container = document.getElementById('opcrTemplatesContainer');
@@ -4135,9 +4817,6 @@
                         '<p class="text-xs text-gray-500">Saved on ' + dateStr + '</p>' +
                         '</div>' +
                         '<div class="flex gap-2 ml-7">' +
-                        '<button onclick="loadOpcrTemplateToDocument(' + template.id + ')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded">' +
-                        'Use' +
-                        '</button>' +
                         '<button onclick="viewOpcrTemplate(' + template.id + ')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold py-2 px-3 sm:px-4 rounded">' +
                         'View' +
                         '</button>' +
@@ -4272,6 +4951,14 @@
                             cells.forEach(function(cell) { cell.classList.remove('hidden'); });
                         }
 
+                        // Set OPCR template context for supporting documents
+                        const templateIdField = document.getElementById('currentPreviewTemplateId');
+                        if (templateIdField) templateIdField.value = id;
+                        const submIdField = document.getElementById('currentSubmissionIdToUpdate');
+                        if (submIdField) submIdField.value = '';
+                        const submTypeField = document.getElementById('currentSubmissionType');
+                        if (submTypeField) submTypeField.value = 'opcr';
+
                         // Hide the Edit IPCR / save copy button for OPCR template view
                         const saveCopyBtn = document.getElementById('saveCopyBtn');
                         if (saveCopyBtn) saveCopyBtn.style.display = 'none';
@@ -4279,6 +4966,7 @@
                         if (updateBtn) updateBtn.classList.add('hidden');
 
                         document.getElementById('templatePreviewModal').classList.remove('hidden');
+                        attachSoDocumentClickHandlers();
                     } else {
                         showAlertModal('info', 'Legacy Template', 'This template was created with the old format.');
                     }
@@ -4366,6 +5054,7 @@
                 formData.append('semester', item.semester || 'N/A');
                 formData.append('table_body_html', item.table_body_html || '');
                 formData.append('so_count_json', JSON.stringify(soCounts));
+                formData.append('template_id', selectedId); // Include template_id for document copying
 
                 var submitResponse = await fetch('/faculty/opcr/submissions', {
                     method: 'POST',
@@ -4484,6 +5173,7 @@
                     }
 
                     document.getElementById('templatePreviewModal').classList.remove('hidden');
+                    attachSoDocumentClickHandlers();
                 } else {
                     showAlertModal('error', 'Not Found', 'OPCR submission could not be found.');
                 }
@@ -4621,11 +5311,16 @@
                 if (data.success && data.submission) {
                     const submission = data.submission;
 
-                    // Clear any editing state
+                    // Set submission context so SO docs can load for this submission
                     const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
-                    if (submissionIdField) submissionIdField.value = '';
+                    if (submissionIdField) submissionIdField.value = submission.id;
                     const submissionTypeField = document.getElementById('currentSubmissionType');
                     if (submissionTypeField) submissionTypeField.value = 'ipcr';
+                    const templateIdField = document.getElementById('currentPreviewTemplateId');
+                    if (templateIdField) templateIdField.value = '';
+                    // Track the faculty member's user_id so we query THEIR documents
+                    const ownerIdField = document.getElementById('currentDocumentOwnerId');
+                    if (ownerIdField) ownerIdField.value = submission.user_id || '';
 
                     // Load table body
                     const tableBody = document.getElementById('templatePreviewTableBody');
@@ -4678,6 +5373,9 @@
                     if (updateBtn) { updateBtn.classList.add('hidden'); updateBtn.style.display = 'none'; }
 
                     document.getElementById('templatePreviewModal').classList.remove('hidden');
+
+                    // Attach SO document handlers with faculty's user_id for dean access
+                    attachSoDocumentClickHandlers(submission.user_id);
                 } else {
                     showAlertModal('error', 'Not Found', 'Faculty submission could not be found.');
                 }
@@ -4698,11 +5396,16 @@
                 if (data.success && data.submission) {
                     const submission = data.submission;
 
-                    // Clear any editing state
+                    // Set submission context so SO docs can load for this submission
                     const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
-                    if (submissionIdField) submissionIdField.value = '';
+                    if (submissionIdField) submissionIdField.value = submission.id;
                     const submissionTypeField = document.getElementById('currentSubmissionType');
                     if (submissionTypeField) submissionTypeField.value = 'ipcr';
+                    const templateIdField = document.getElementById('currentPreviewTemplateId');
+                    if (templateIdField) templateIdField.value = '';
+                    // Track the dean's user_id so we query THEIR documents
+                    const ownerIdField = document.getElementById('currentDocumentOwnerId');
+                    if (ownerIdField) ownerIdField.value = submission.user_id || '';
 
                     // Load table body
                     const tableBody = document.getElementById('templatePreviewTableBody');
@@ -4756,6 +5459,9 @@
                     if (updateBtn) { updateBtn.classList.add('hidden'); updateBtn.style.display = 'none'; }
 
                     document.getElementById('templatePreviewModal').classList.remove('hidden');
+
+                    // Attach SO document handlers with dean's user_id for cross-dean access
+                    attachSoDocumentClickHandlers(submission.user_id);
                 } else {
                     showAlertModal('error', 'Not Found', 'Dean submission could not be found.');
                 }

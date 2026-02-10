@@ -5,21 +5,116 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 ## ✨ Features
 
 - 🔐 **Multi-Role Authentication** (Admin, Director, Dean, Faculty)
-- � **Password Reset via Email** with 6-digit verification codes
-- �📊 **Performance Dashboard** with charts and metrics
+- 📧 **Password Reset via Email** with 6-digit verification codes
+- ✅ **Email Verification System** with Brevo integration and auto-reset on email change
+- 📊 **Performance Dashboard** with charts and metrics
 - 📱 **Fully Responsive Design** (Mobile, Tablet, Desktop)
 - 🔔 **Notification System** with real-time updates
-- 👤 **User Profile Management** with photo uploads
+- 👤 **User Profile Management** with photo uploads via Cloudinary CDN
+- 📈 **Profile Completeness Tracking** with 8 monitored fields and visual progress
 - 🆔 **Automatic Employee ID Generation**
 - 🔑 **Password Management** with secure hashing
-- 🕒 **Last Login Tracking**
+- ⏰ **Last Login Tracking**
 - 🌏 **Hong Kong Timezone (Asia/Hong_Kong)**
 - ⚡ **Vite Asset Bundling** with optimized CSS/JS
 - 🎨 **Tailwind CSS v4.0** for modern styling
+- 📸 **Cloudinary Photo Management** with crop, resize, and CDN delivery
 
-## 📦 Latest Updates (February 9, 2026)
+## ✨ Latest Updates (February 9-10, 2026)
 
-### 👨‍🏫 Dean Review & Calibration System (February 9, 2026)
+### 👤 Profile Management Overhaul (February 9-10, 2026)
+
+#### Profile Completeness System
+- ✅ **Dynamic Calculation** - Real-time profile completeness tracking with 8 fields monitored
+- 📊 **Tracked Fields** - Name, Email, Username, Phone, Employee ID, Department, Designation, Profile Photo
+- 🎨 **Compact Progress Bar** - Replaced circular SVG with slim horizontal progress bar
+- 📋 **Expandable Checklist** - "Show details" toggle reveals field-by-field completion status
+- 🎨 **Color-Coded Progress** - Green (100%), Yellow (50-99%), Red (0-49%)
+- 🔢 **Percentage Display** - Shows completion percentage and completed/total ratio
+- 💾 **User Model Methods** - `getProfileCompleteness()` and `getCompletenessColor()` for reusable logic
+
+#### Email Verification System
+- 📧 **Brevo Integration** - Email verification codes sent via Brevo SMTP
+- 🔢 **6-Digit Codes** - Secure random codes with 30-minute expiration
+- ⌨️ **Individual Digit Inputs** - Modern UX with 6 separate input boxes
+- ⚡ **Auto-Focus & Auto-Submit** - Automatic focus advance and submission when complete
+- 📋 **Paste Support** - Paste full code to auto-distribute across boxes
+- ⏱️ **Rate Limiting** - 1-minute cooldown between verification code requests
+- 🎨 **Visual States** - Filled (green), error (red shake animation), focus states
+- 🔄 **Two-Step Modal** - Request code → Enter code with back/resend options
+- 🔒 **Database Table** - `email_verifications` table stores codes with user_id and timestamps
+- 📁 **New Files Created:**
+  - `app/Http/Controllers/EmailVerificationController.php` - Send and verify codes
+  - `app/Notifications/EmailVerificationNotification.php` - Email template
+  - Migration: `2026_02_09_192529_create_email_verifications_table.php`
+  - Routes: `/email/verification/send` and `/email/verification/verify`
+
+#### Email Change Detection & Re-verification
+- 🔄 **Automatic Reset** - Changing email in profile clears `email_verified_at` timestamp
+- 🗑️ **Code Cleanup** - Old verification codes deleted when email changes
+- 🔔 **Auto-Prompt** - Verification modal opens automatically after email update
+- 💾 **Session Storage** - Uses sessionStorage to trigger modal after page reload
+- 🎯 **User Message** - "Profile updated. Please verify your new email address."
+
+#### Profile Page Complete Redesign
+- 🎨 **Modern Layout** - Full-width header card with compact sections
+- 📸 **Photo with Camera Button** - Inline photo upload access with overlay button
+- 🏷️ **Badge Integration** - Roles and status displayed as inline badges in header
+- 📊 **Activity in Header** - Last login, member since, photos moved to top-right sidebar
+- 🔐 **Unified Security Section** - Edit Profile, Change Password, Manage Photos, Email Verification, and Roles in one card
+- 🎨 **Icon-Based Actions** - Colored circle icons for each action (blue, amber, purple, green, indigo)
+- ➡️ **Chevron Navigation** - Hover effects with right-pointing chevrons
+- 🧹 **Eliminated Redundancies:**
+  - Removed duplicate "Roles" from Work Information (kept in header + security)
+  - Removed duplicate "Account Status" from Work Information (kept as badge)
+  - Removed duplicate "Member Since" from Work Information (kept in activity)
+  - Consolidated all actions into Account & Security section
+- 📱 **Mobile Responsive** - Optimized layout for all screen sizes
+
+#### Photo Gallery Cloudinary Integration
+- ☁️ **Cloudinary CDN** - Photos now served from Cloudinary instead of local storage
+- 🔧 **Model Update** - `UserPhoto->photo_url` accessor returns `path` column (Cloudinary URL)
+- 🖼️ **Gallery Fix** - Photo gallery modal now displays images from Cloudinary API
+- 🔗 **Direct URLs** - No more asset() wrapper, uses direct Cloudinary secure_url
+- 📦 **Existing Upload** - PhotoService already uploading to Cloudinary (now retrieval matches)
+
+#### Technical Implementation
+- 📁 **JavaScript Updates:**
+  - `toggleCompletenessDetails()` - Toggle checklist visibility with animation
+  - Chevron rotation on toggle (up/down)
+  - Session storage for email verification prompt
+- 🎨 **CSS Additions:**
+  - `.completeness-bar` - Progress bar with 1s ease-in-out transition
+  - `.animate-slideDown` - Smooth expand animation for checklist (0.3s)
+  - `.completeness-chevron` - Rotation transform for toggle icon
+- 🔄 **Controller Updates:**
+  - Email change detection in `FacultyDashboardController->updateProfile()`
+  - Returns `email_changed` flag to frontend
+  - Explicit `email_verified_at = null` on email update
+- 🗄️ **Database Changes:**
+  - New table: `email_verifications` (user_id, code, timestamps)
+  - Uses DB facade for code management (create, check, delete)
+
+#### Files Modified/Created
+**New Files:**
+- `app/Http/Controllers/EmailVerificationController.php` - Verification logic
+- `app/Notifications/EmailVerificationNotification.php` - Email template
+- `database/migrations/2026_02_09_192529_create_email_verifications_table.php`
+
+**Modified Files:**
+- `app/Models/User.php` - Added `getProfileCompleteness()` and `getCompletenessColor()`
+- `app/Models/UserPhoto.php` - Updated `photo_url` accessor for Cloudinary URLs
+- `app/Http/Controllers/Dashboard/FacultyDashboardController.php` - Email change detection
+- `resources/views/dashboard/faculty/profile.blade.php` - Complete layout redesign
+- `resources/js/dashboard_faculty_profile.js` - Toggle function and email verification
+- `resources/css/dashboard_faculty_profile.css` - Progress bar animations
+- `routes/web.php` - Added email verification routes (POST /email/verification/send, /verify)
+
+---
+
+## 📦 Previous Updates
+
+### ‍🏫 Dean Review & Calibration System (February 9, 2026)
 - ✨ **Faculty IPCR Review** - Deans can view all IPCR submissions from faculty in their department
 - 🏛️ **Department-Based Filtering** - Automatic filtering shows only relevant department submissions
 - 🔄 **Cross-Dean Calibration** - Deans can view and calibrate other deans' IPCR submissions
@@ -74,7 +169,7 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 - 📦 **Optimized Builds** - All assets now properly minified and cache-busted
 - ✅ **Clean Blade Templates** - Removed ~200+ lines of inline code across 5 files
 
-### 🗄️ Database Schema Updates (February 5, 2026)
+### 🗄️ Database Schema Updates (February 5-9, 2026)
 - 📊 **SO Count JSON Column** - Added `so_count_json` to `ipcr_templates` table
 - 🔄 **Auto-casting** - Configured Eloquent to auto-convert JSON to array
 - 💾 **Migration Created** - `2026_02_05_000213_add_so_count_json_to_ipcr_templates_table.php`
@@ -86,6 +181,11 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
     "support_functions": 3
   }
   ```
+- 📧 **Email Verifications Table** - New table for storing verification codes
+- 🔐 **Migration Created** - `2026_02_09_192529_create_email_verifications_table.php`
+- 🔑 **Schema:** `user_id`, `code` (6-digit), `created_at`, `updated_at`
+- ⏱️ **Code Expiration** - 30-minute validity checked via timestamps
+- 🗑️ **Auto-Cleanup** - Old codes deleted on new email or successful verification
 
 ### 🐛 Bug Fixes (February 5, 2026)
 - ✅ Fixed SO numbering increment glitch (no longer jumps from SO I to SO III after removal)
@@ -210,12 +310,19 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 - 🔧 **@vite directive** - All blade files now use Laravel Vite plugin
 - 🔧 **Build optimization** - Assets reduced from ~200KB to gzipped builds
 - 🔧 **Blade templates cleaned** - Removed ~200+ lines of inline code
+- 🔧 **Cloudinary Integration** - Full CDN support for user photos (upload, retrieve, delete)
+- 🔧 **Session Storage** - Used for cross-page state management (email verification prompt)
+- 🔧 **Eloquent Accessors** - Custom attribute accessors for profile completeness and photo URLs
 
 ### UI/UX Enhancements
 - 🎨 **Split-Screen Login Design** - Modern login page with title on left, form on right
 - 🌊 **Fixed Blob Animations** - Eliminated visual artifacts during scrolling
 - 📱 **Mobile Scrolling Fix** - Proper overflow handling for mobile devices
 - 🎯 **Responsive Layout** - Optimized for all screen sizes (mobile, tablet, desktop)
+- 🎨 **Badge System** - Inline role and status badges with color coding
+- 🎨 **Icon-Based Navigation** - Color-coded circular icons for quick action identification
+- ⚡ **Smooth Animations** - Slide-down, fade-in, and shake animations for better UX
+- 🎨 **Progress Indicators** - Horizontal bars replace circular SVG for compact display
 
 ### Developer Experience
 - 🔧 **Laravel Blade Snippets** - Recommended VS Code extension for better IDE support
@@ -265,7 +372,9 @@ php artisan serve
 **Access:** http://localhost:8000  
 **Login:** `admin` / `password`
 
-### Cloudinary Setup (Required for Photo Uploads)
+### Cloudinary Setup (Required for Photo Uploads & Storage)
+
+Cloudinary is used for uploading, storing, and serving all user profile photos via CDN.
 
 Add these to your `.env` file:
 
@@ -275,6 +384,12 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 CLOUDINARY_URL=cloudinary://your_api_key:your_api_secret@your_cloud_name
 ```
+
+**Features:**
+- ☁️ Upload photos directly to Cloudinary CDN
+- 🖼️ Automatic image optimization and transformation
+- 📸 Photos served from Cloudinary URLs (no local storage)
+- 🗑️ Delete photos from cloud on removal
 
 See [INSTRUCTIONS.md](INSTRUCTIONS.md) for detailed Cloudinary setup guide.
 
@@ -329,12 +444,17 @@ After logging in as admin, you can:
 ### Faculty Dashboard
 
 Faculty users can:
-- View performance metrics
-- Access IPCR forms
-- Manage their profile
-- Change password
-- Update profile photo
-- View notifications
+- 📊 View performance metrics and dashboard analytics
+- 📝 Access and submit IPCR forms
+- 👤 Manage their profile with comprehensive controls
+- 🔑 Change password securely
+- 📸 Upload and manage multiple profile photos via Cloudinary
+- 🖼️ Crop and resize photos before upload
+- ✅ Verify email address with 6-digit codes
+- 📈 Track profile completeness (8 fields monitored)
+- 🔔 View notifications and system updates
+- 📅 See account activity (last login, member since, photo count)
+- 🏷️ View assigned roles and account status
 
 ### Creating Additional Users
 
@@ -528,6 +648,9 @@ php artisan make:seeder NameSeeder
 - **Charts:** Chart.js
 - **Authentication:** Laravel Breeze (customized)
 - **Icons:** Font Awesome 6.4.0
+- **Cloud Storage:** Cloudinary (image uploads & CDN)
+- **Email Service:** Brevo/Sendinblue SMTP (password reset & email verification)
+- **Image Processing:** Cropper.js 1.6.1 (client-side crop & resize)
 
 ---
 

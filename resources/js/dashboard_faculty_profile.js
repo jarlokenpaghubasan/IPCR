@@ -12,11 +12,40 @@ window.toggleNotificationPopup = function() {
     popup.classList.toggle('active');
 };
 
+// Profile completeness details toggle
+window.toggleCompletenessDetails = function() {
+    const details = document.getElementById('completenessDetails');
+    const toggle = document.getElementById('completenessToggle');
+    const chevron = toggle?.querySelector('.completeness-chevron');
+    
+    if (details) {
+        details.classList.toggle('hidden');
+        const isVisible = !details.classList.contains('hidden');
+        
+        if (toggle) {
+            toggle.innerHTML = isVisible 
+                ? 'Hide details <i class="fas fa-chevron-up text-[9px] ml-0.5 completeness-chevron"></i>'
+                : 'Show details <i class="fas fa-chevron-down text-[9px] ml-0.5 completeness-chevron"></i>';
+        }
+    }
+};
+
 // Notification popup toggle for mobile
 window.toggleNotificationPopupMobile = function() {
     const popup = document.getElementById('notificationPopupMobile');
     popup.classList.toggle('active');
 };
+
+// Open email verification modal after profile email change
+document.addEventListener('DOMContentLoaded', function() {
+    const shouldOpenVerify = sessionStorage.getItem('triggerEmailVerification');
+    if (shouldOpenVerify) {
+        sessionStorage.removeItem('triggerEmailVerification');
+        if (typeof window.openEmailVerificationModal === 'function') {
+            window.openEmailVerificationModal();
+        }
+    }
+});
 
 // Close notification popups when clicking outside
 document.addEventListener('click', function(e) {
@@ -157,95 +186,382 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         window.closeChangePasswordModal();
         window.closeEditProfileModal();
+        window.closePhotoGalleryModal();
+        window.closeSetProfileModal();
+        window.closeDeletePhotoModal();
+        window.closeEmailVerificationModal();
+    }
+});
+
+// Email Verification Functions
+window.openEmailVerificationModal = function() {
+    document.getElementById('emailVerificationModal').classList.remove('hidden');
+    // Reset to step 1
+    document.getElementById('verifyStep1').classList.remove('hidden');
+    document.getElementById('verifyStep2').classList.add('hidden');
+    // Clear code inputs
+    const codeInputs = document.querySelectorAll('.verify-code-input');
+    codeInputs.forEach(input => {
+        input.value = '';
+        input.classList.remove('filled', 'error');
+    });
+    document.getElementById('verification_code_hidden').value = '';
+    // Clear messages
+    document.getElementById('sendCodeMessage').classList.add('hidden');
+    document.getElementById('sendCodeMessage').textContent = '';
+    document.getElementById('verifyCodeMessage').classList.add('hidden');
+    document.getElementById('verifyCodeMessage').textContent = '';
+};
+
+window.closeEmailVerificationModal = function() {
+    document.getElementById('emailVerificationModal').classList.add('hidden');
+};
+
+window.sendVerificationCode = function() {
+    const btn = document.getElementById('sendCodeBtn');
+    const messageDiv = document.getElementById('sendCodeMessage');
+    
+    // Disable button
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    
+    fetch('/email/verification/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            messageDiv.className = 'mt-3 text-sm bg-green-50 text-green-700 p-3 rounded-lg border border-green-200';
+            messageDiv.innerHTML = '<i class="fas fa-check-circle mr-1"></i>' + data.message;
+            messageDiv.classList.remove('hidden');
+            
+            // Move to step 2 after 1 second
+            setTimeout(() => {
+                document.getElementById('verifyStep1').classList.add('hidden');
+                document.getElementById('verifyStep2').classList.remove('hidden');
+                // Focus first digit input
+                const firstInput = document.querySelector('.verify-code-input');
+                if (firstInput) firstInput.focus();
+            }, 1000);
+        } else {
+            messageDiv.className = 'mt-3 text-sm bg-red-50 text-red-700 p-3 rounded-lg border border-red-200';
+            messageDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>' + data.message;
+            messageDiv.classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        messageDiv.className = 'mt-3 text-sm bg-red-50 text-red-700 p-3 rounded-lg border border-red-200';
+        messageDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>An error occurred. Please try again.';
+        messageDiv.classList.remove('hidden');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Verification Code';
+    });
+};
+
+window.backToStep1 = function() {
+    document.getElementById('verifyStep2').classList.add('hidden');
+    document.getElementById('verifyStep1').classList.remove('hidden');
+    // Clear code inputs
+    const codeInputs = document.querySelectorAll('.verify-code-input');
+    codeInputs.forEach(input => {
+        input.value = '';
+        input.classList.remove('filled', 'error');
+    });
+    document.getElementById('verification_code_hidden').value = '';
+    document.getElementById('verifyCodeMessage').classList.add('hidden');
+};
+
+// Verify code form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const verifyForm = document.getElementById('verifyCodeForm');
+    if (verifyForm) {
+        // Handle individual digit inputs
+        const codeInputs = document.querySelectorAll('.verify-code-input');
+        const hiddenCodeInput = document.getElementById('verification_code_hidden');
+        
+        if (codeInputs.length && hiddenCodeInput) {
+            // Handle input for each box
+            codeInputs.forEach((input, index) => {
+                // Handle input
+                input.addEventListener('input', function(e) {
+                    let value = this.value;
+                    
+                    // Only allow numbers
+                    value = value.replace(/[^0-9]/g, '');
+                    this.value = value;
+
+                    if (value.length === 1) {
+                        this.classList.add('filled');
+                        // Move to next input
+                        if (index < codeInputs.length - 1) {
+                            codeInputs[index + 1].focus();
+                        }
+                    } else {
+                        this.classList.remove('filled');
+                    }
+
+                    updateVerificationCode();
+                });
+
+                // Handle paste
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                    
+                    if (pastedData.length > 0) {
+                        for (let i = 0; i < pastedData.length && i < codeInputs.length; i++) {
+                            codeInputs[i].value = pastedData[i];
+                            codeInputs[i].classList.add('filled');
+                        }
+                        
+                        // Focus the next empty input or the last one
+                        const nextIndex = Math.min(pastedData.length, codeInputs.length - 1);
+                        codeInputs[nextIndex].focus();
+                        
+                        updateVerificationCode();
+                    }
+                });
+
+                // Handle backspace
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                        codeInputs[index - 1].focus();
+                        codeInputs[index - 1].value = '';
+                        codeInputs[index - 1].classList.remove('filled');
+                        updateVerificationCode();
+                    }
+                    
+                    // Handle arrow keys
+                    if (e.key === 'ArrowLeft' && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                    if (e.key === 'ArrowRight' && index < codeInputs.length - 1) {
+                        codeInputs[index + 1].focus();
+                    }
+                });
+
+                // Select all on focus
+                input.addEventListener('focus', function() {
+                    this.select();
+                });
+            });
+
+            function updateVerificationCode() {
+                let code = '';
+                codeInputs.forEach(input => {
+                    code += input.value;
+                });
+                hiddenCodeInput.value = code;
+                
+                // Auto-submit the form when all 6 digits are entered
+                if (code.length === 6) {
+                    setTimeout(() => {
+                        submitVerificationCode(code);
+                    }, 300); // Small delay for better UX
+                }
+            }
+        }
+        
+        // Manual form submission (for the verify button)
+        verifyForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const code = document.getElementById('verification_code_hidden').value;
+            submitVerificationCode(code);
+        });
+    }
+    
+    async function submitVerificationCode(code) {
+        const messageDiv = document.getElementById('verifyCodeMessage');
+        const btn = document.getElementById('verifyCodeBtn');
+        const codeInputs = document.querySelectorAll('.verify-code-input');
+        
+        if (code.length !== 6) {
+            messageDiv.className = 'text-sm bg-red-50 text-red-700 p-3 rounded-lg border border-red-200';
+            messageDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>Please enter a 6-digit code.';
+            messageDiv.classList.remove('hidden');
+            
+            // Show error animation
+            codeInputs.forEach(input => {
+                input.classList.add('error');
+                setTimeout(() => input.classList.remove('error'), 500);
+            });
+            return;
+        }
+        
+        // Disable button
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Verifying...';
+        }
+        messageDiv.classList.add('hidden');
+        
+        try {
+            const response = await fetch('/email/verification/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]').value
+                },
+                body: JSON.stringify({ code: code })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                messageDiv.className = 'text-sm bg-green-50 text-green-700 p-3 rounded-lg border border-green-200';
+                messageDiv.innerHTML = '<i class="fas fa-check-circle mr-1"></i>' + data.message;
+                messageDiv.classList.remove('hidden');
+                
+                // Show success animation
+                codeInputs.forEach(input => {
+                    input.classList.add('filled');
+                });
+                
+                // Reload page after 2 seconds to update verification status
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                messageDiv.className = 'text-sm bg-red-50 text-red-700 p-3 rounded-lg border border-red-200';
+                messageDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>' + data.message;
+                messageDiv.classList.remove('hidden');
+                
+                // Show error animation
+                codeInputs.forEach(input => {
+                    input.classList.add('error');
+                    setTimeout(() => input.classList.remove('error'), 500);
+                });
+                
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check mr-1"></i> Verify';
+                }
+            }
+        } catch (error) {
+            messageDiv.className = 'text-sm bg-red-50 text-red-700 p-3 rounded-lg border border-red-200';
+            messageDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>An error occurred. Please try again.';
+            messageDiv.classList.remove('hidden');
+            console.error('Error:', error);
+            
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i> Verify';
+            }
+        }
     }
 });
 
 // Photo Management
-const photoInput = document.getElementById('photoInput');
-const uploadForm = document.getElementById('photoUploadForm');
-const uploadProgress = document.getElementById('uploadProgress');
-const progressBar = document.getElementById('progressBar');
-const uploadMessage = document.getElementById('uploadMessage');
-const uploadText = document.getElementById('uploadText');
-
 let pendingPhotoId = null;
 
-// Photo input change event
-if (photoInput) {
-    photoInput.addEventListener('change', function() {
-        if (this.files.length > 0) {
-            uploadText.textContent = this.files[0].name;
-            uploadPhoto(this.files[0]);
-        }
-    });
-}
-
-// Upload photo via AJAX
-function uploadPhoto(file) {
-    const formData = new FormData();
-    formData.append('photo', file);
-    formData.append('_token', document.querySelector('input[name="_token"]').value);
-
-    uploadProgress.classList.remove('hidden');
-    uploadMessage.innerHTML = '';
-
-    fetch('/faculty/profile/photo/upload', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        uploadProgress.classList.add('hidden');
-        if (data.success) {
-            uploadMessage.innerHTML = '<span class=\"text-green-600 text-xs\"><i class=\"fas fa-check-circle mr-1\"></i>' + data.message + '</span>';
-            photoInput.value = '';
-            uploadText.textContent = 'Choose Photo';
-            loadPhotos();
-        } else {
-            uploadMessage.innerHTML = '<span class=\"text-red-600 text-xs\"><i class=\"fas fa-times-circle mr-1\"></i>' + data.message + '</span>';
-        }
-    })
-    .catch(error => {
-        uploadProgress.classList.add('hidden');
-        uploadMessage.innerHTML = '<span class=\"text-red-600 text-xs\"><i class=\"fas fa-times-circle mr-1\"></i>Upload failed</span>';
-        console.error('Error:', error);
-    });
-}
-
-// Load all photos
+// Load all photos into gallery
 function loadPhotos() {
     fetch('/faculty/profile/photos')
         .then(response => response.json())
         .then(data => {
-            const allPhotos = document.getElementById('allPhotos');
-            const photoCount = document.getElementById('photoCount');
-            photoCount.textContent = data.photos.length;
+            // Update all photo count displays
+            const countElements = ['galleryPhotoCount', 'sidebarPhotoCount', 'activityPhotoCount'];
+            countElements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = data.photos.length;
+            });
+
+            const galleryPhotos = document.getElementById('galleryPhotos');
+            if (!galleryPhotos) return;
             
             if (data.photos.length === 0) {
-                allPhotos.innerHTML = '<p class=\"text-xs text-gray-500 col-span-3 text-center py-4\">No photos uploaded</p>';
+                galleryPhotos.innerHTML = '<p class="text-sm text-gray-500 col-span-full text-center py-8"><i class="fas fa-image text-gray-300 text-3xl block mb-2"></i>No photos uploaded yet</p>';
                 return;
             }
 
-            allPhotos.innerHTML = '';
+            galleryPhotos.innerHTML = '';
             data.photos.forEach(photo => {
                 const photoDiv = document.createElement('div');
-                photoDiv.className = 'relative group';
+                photoDiv.className = 'relative group rounded-lg overflow-hidden bg-gray-100';
                 photoDiv.innerHTML = `
-                    <img src="${photo.url}" alt="Profile photo" class="w-full aspect-square object-cover rounded cursor-pointer">
-                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition rounded flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
-                        <button onclick="openSetProfileModal(${photo.id})" class="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded text-xs" title="Set as profile">
-                            <i class="fas fa-check"></i>
+                    <img src="${photo.url}" alt="Profile photo" class="w-full aspect-square object-cover cursor-pointer">
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                        <button onclick="openSetProfileModal(${photo.id})" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg text-xs" title="Set as profile photo">
+                            <i class="fas fa-user-circle"></i>
                         </button>
-                        <button onclick="openDeletePhotoModal(${photo.id})" class="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded text-xs" title="Delete">
+                        <button onclick="openDeletePhotoModal(${photo.id})" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg text-xs" title="Delete photo">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
-                    ${photo.is_profile ? '<div class="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-xs"><i class="fas fa-check"></i></div>' : ''}
+                    ${photo.is_profile ? '<div class="absolute top-1.5 right-1.5 bg-green-500 text-white px-2 py-0.5 rounded-full text-[10px] font-semibold shadow"><i class="fas fa-check mr-0.5"></i>Current</div>' : ''}
                 `;
-                allPhotos.appendChild(photoDiv);
+                galleryPhotos.appendChild(photoDiv);
             });
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => console.error('Error loading photos:', error));
+}
+
+// Photo Gallery Modal
+window.openPhotoGalleryModal = function() {
+    document.getElementById('photoGalleryModal').classList.remove('hidden');
+    loadPhotos();
+};
+
+window.closePhotoGalleryModal = function() {
+    document.getElementById('photoGalleryModal').classList.add('hidden');
+};
+
+// Gallery photo upload with crop
+document.addEventListener('DOMContentLoaded', function() {
+    const galleryPhotoInput = document.getElementById('galleryPhotoInput');
+    if (galleryPhotoInput) {
+        galleryPhotoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showGalleryMessage('File size must be less than 5MB', 'error');
+                this.value = '';
+                return;
+            }
+
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showGalleryMessage('Please upload a valid image file (JPEG, PNG, GIF, WebP)', 'error');
+                this.value = '';
+                return;
+            }
+
+            // Store file and open crop modal
+            currentFile = file;
+            window._uploadSource = 'gallery';
+            openCropModal(file);
+        });
+    }
+
+    // Close gallery modal on outside click
+    const galleryModal = document.getElementById('photoGalleryModal');
+    if (galleryModal) {
+        galleryModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.closePhotoGalleryModal();
+            }
+        });
+    }
+});
+
+function showGalleryMessage(message, type) {
+    const messageDiv = document.getElementById('galleryUploadMessage');
+    if (!messageDiv) return;
+    messageDiv.textContent = message;
+    messageDiv.className = type === 'success' ? 'text-xs mt-2 text-green-600' : 'text-xs mt-2 text-red-600';
+    setTimeout(() => {
+        messageDiv.textContent = '';
+        messageDiv.className = 'text-xs mt-2';
+    }, 3000);
 }
 
 // Set as profile modal
@@ -266,7 +582,7 @@ window.confirmSetProfile = function() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('input[name=\"_token\"]').value
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]').value
         },
         body: JSON.stringify({ photo_id: pendingPhotoId })
     })
@@ -298,7 +614,7 @@ window.confirmDeletePhoto = function() {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('input[name=\"_token\"]').value
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]').value
         }
     })
     .then(response => response.json())
@@ -310,11 +626,6 @@ window.confirmDeletePhoto = function() {
     })
     .catch(error => console.error('Error:', error));
 };
-
-// Load photos on page load
-if (document.getElementById('allPhotos')) {
-    loadPhotos();
-}
 
 // Edit Profile Modal Functions
 window.openEditProfileModal = function() {
@@ -381,6 +692,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageDiv.className = 'rounded-lg p-3 text-sm bg-green-50 text-green-800 border border-green-200';
                     messageDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + (data.message || 'Profile updated successfully!');
                     messageDiv.classList.remove('hidden');
+
+                    if (data.email_changed) {
+                        sessionStorage.setItem('triggerEmailVerification', '1');
+                    }
                     
                     // Close modal and reload page after 2 seconds
                     setTimeout(() => {
@@ -442,6 +757,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Store file and open crop modal
             currentFile = file;
+            window._uploadSource = 'modal';
             openCropModal(file);
         });
     }
@@ -549,33 +865,47 @@ window.applyCropAndUpload = function() {
             type: currentFile.type,
             lastModified: Date.now(),
         });
+
+        const uploadSource = window._uploadSource || 'modal';
         
         // Close crop modal
         closeCropModal();
         
-        // Show preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('modalPhotoPreview');
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="w-full h-full object-cover">`;
-        };
-        reader.readAsDataURL(croppedFile);
+        // Show preview in edit profile modal if source is modal
+        if (uploadSource === 'modal') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('modalPhotoPreview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="w-full h-full object-cover">`;
+            };
+            reader.readAsDataURL(croppedFile);
+        }
         
         // Upload the cropped photo
-        uploadModalPhoto(croppedFile);
+        uploadCroppedPhoto(croppedFile, uploadSource);
+        
+        // Reset upload source
+        window._uploadSource = 'modal';
     }, currentFile.type, 0.9);
 }
 
-function uploadModalPhoto(file) {
+function uploadCroppedPhoto(file, source) {
     const formData = new FormData();
     formData.append('photo', file);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]').value);
 
-    const progressContainer = document.getElementById('modalUploadProgress');
-    const progressBar = document.getElementById('modalProgressBar');
+    let progressContainer, progressBar;
+    
+    if (source === 'gallery') {
+        progressContainer = document.getElementById('galleryUploadProgress');
+        progressBar = document.getElementById('galleryProgressBar');
+    } else {
+        progressContainer = document.getElementById('modalUploadProgress');
+        progressBar = document.getElementById('modalProgressBar');
+    }
 
-    progressContainer.classList.remove('hidden');
-    progressBar.style.width = '0%';
+    if (progressContainer) progressContainer.classList.remove('hidden');
+    if (progressBar) progressBar.style.width = '0%';
 
     fetch('/faculty/profile/photo/upload', {
         method: 'POST',
@@ -586,23 +916,35 @@ function uploadModalPhoto(file) {
     })
     .then(response => response.json())
     .then(data => {
-        progressBar.style.width = '100%';
+        if (progressBar) progressBar.style.width = '100%';
         setTimeout(() => {
-            progressContainer.classList.add('hidden');
+            if (progressContainer) progressContainer.classList.add('hidden');
             if (data.success) {
-                showModalMessage(data.message, 'success');
-                // Update all profile images on the page
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
+                if (source === 'gallery') {
+                    showGalleryMessage(data.message, 'success');
+                    loadPhotos();
+                } else {
+                    showModalMessage(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                }
             } else {
-                showModalMessage(data.message || 'Failed to upload photo', 'error');
+                const msg = data.message || 'Failed to upload photo';
+                if (source === 'gallery') {
+                    showGalleryMessage(msg, 'error');
+                } else {
+                    showModalMessage(msg, 'error');
+                }
             }
         }, 500);
     })
     .catch(error => {
-        progressContainer.classList.add('hidden');
-        showModalMessage('An error occurred while uploading', 'error');
+        if (progressContainer) progressContainer.classList.add('hidden');
+        const msg = 'An error occurred while uploading';
+        if (source === 'gallery') {
+            showGalleryMessage(msg, 'error');
+        } else {
+            showModalMessage(msg, 'error');
+        }
         console.error('Upload error:', error);
     });
 }
