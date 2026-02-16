@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Faculty;
 use App\Http\Controllers\Controller;
 use App\Models\OpcrSubmission;
 use App\Models\SupportingDocument;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -51,6 +52,8 @@ class OpcrSubmissionController extends Controller
                 $request->user()->id
             );
         }
+
+        ActivityLogService::log('opcr_submitted', 'Submitted OPCR: ' . $submission->title, $submission);
 
         return response()->json([
             'message' => 'OPCR submitted successfully',
@@ -145,6 +148,8 @@ class OpcrSubmissionController extends Controller
             $submission->update($updateData);
             $submission->refresh();
 
+            ActivityLogService::log('opcr_submission_updated', 'Updated OPCR submission: ' . $submission->title, $submission);
+
             return response()->json([
                 'success' => true,
                 'message' => 'OPCR submission updated successfully',
@@ -176,6 +181,8 @@ class OpcrSubmissionController extends Controller
 
         $submission->update(['is_active' => true]);
 
+        ActivityLogService::log('opcr_submission_activated', 'Activated OPCR submission: ' . $submission->title, $submission);
+
         return response()->json([
             'success' => true,
             'message' => 'OPCR submission set as active successfully',
@@ -192,9 +199,32 @@ class OpcrSubmissionController extends Controller
 
         $submission->update(['is_active' => false]);
 
+        ActivityLogService::log('opcr_submission_deactivated', 'Deactivated OPCR submission: ' . $submission->title, $submission);
+
         return response()->json([
             'success' => true,
             'message' => 'OPCR submission deactivated successfully',
+        ]);
+    }
+
+    public function unsubmit($id)
+    {
+        $userId = auth()->id();
+
+        $submission = OpcrSubmission::where('id', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $submission->update([
+            'status' => 'draft',
+            'submitted_at' => null,
+        ]);
+
+        ActivityLogService::log('opcr_unsubmitted', 'Unsubmitted OPCR: ' . $submission->title, $submission);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OPCR submission has been reverted to draft status',
         ]);
     }
 
@@ -212,7 +242,10 @@ class OpcrSubmissionController extends Controller
             ], 403);
         }
 
+        $title = $submission->title;
         $submission->delete();
+
+        ActivityLogService::log('opcr_submission_deleted', 'Deleted OPCR submission: ' . $title);
 
         return response()->json([
             'success' => true,

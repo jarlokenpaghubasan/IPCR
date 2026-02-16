@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Services\ActivityLogService;
 
 class LoginController extends Controller
 {
@@ -76,6 +77,9 @@ class LoginController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        // Log activity
+        ActivityLogService::log('login', 'Logged in as ' . $credentials['role'], $user);
+
         // Redirect to appropriate dashboard
         return $this->redirectToDashboard($credentials['role']);
     }
@@ -114,6 +118,9 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        ActivityLogService::log('logout', 'Logged out', $user);
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

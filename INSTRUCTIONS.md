@@ -66,8 +66,23 @@ composer install
 **Troubleshooting:**
 - Ensure Composer is installed: `composer -v`
 - Check PHP version: `php -v` (must be 8.1+)
-- For XAMPP: `C:\xampp\php\php.exe composer.phar install`
 
+---
+
+### Step 3️⃣-b Turbo.js Integration (SPA Navigation)
+
+The project uses **Turbo.js** (`@hotwired/turbo`) for seamless single-page navigation and instant transitions.
+
+- **Turbo.js is automatically installed** with the `npm install` command above (see `package.json`).
+- No extra installation is needed.
+- Turbo is imported and started in `resources/js/admin_layout.js`.
+- All admin navigation and dynamic content swaps use Turbo.js for a fast SPA experience.
+
+**If you encounter issues with navigation or page transitions:**
+- Ensure `npm install` completed successfully.
+- Check that `@hotwired/turbo` appears in your `node_modules` and `package.json`.
+- Rebuild assets with `npm run build` if needed.
+- For XAMPP: `C:\xampp\php\php.exe composer.phar install`
 ---
 
 ### Step 3️⃣ Install NPM Dependencies

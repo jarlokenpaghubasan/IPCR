@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\OpcrSavedCopy;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -52,6 +53,8 @@ class OpcrSavedCopyController extends Controller
                 'table_body_html' => $request->table_body_html,
                 'saved_at' => now(),
             ]);
+
+            ActivityLogService::log('opcr_draft_saved', 'Saved OPCR draft: ' . $savedCopy->title, $savedCopy);
 
             return response()->json([
                 'success' => true,
@@ -114,6 +117,8 @@ class OpcrSavedCopyController extends Controller
                 'saved_at' => now(),
             ]);
 
+            ActivityLogService::log('opcr_draft_updated', 'Updated OPCR draft: ' . $savedCopy->title, $savedCopy);
+
             return response()->json([
                 'success' => true,
                 'message' => 'OPCR draft updated successfully',
@@ -138,7 +143,10 @@ class OpcrSavedCopyController extends Controller
                 ->where('user_id', Auth::id())
                 ->firstOrFail();
 
+            $title = $savedCopy->title;
             $savedCopy->delete();
+
+            ActivityLogService::log('opcr_draft_deleted', 'Deleted OPCR draft: ' . $title);
 
             return response()->json([
                 'success' => true,

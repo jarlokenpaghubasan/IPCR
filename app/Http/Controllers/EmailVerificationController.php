@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Notifications\EmailVerificationNotification;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -53,6 +54,8 @@ class EmailVerificationController extends Controller
         // Send notification
         try {
             $user->notify(new EmailVerificationNotification($code));
+
+            ActivityLogService::log('email_verification_sent', 'Requested email verification code', $user);
 
             return response()->json([
                 'success' => true,
@@ -123,6 +126,8 @@ class EmailVerificationController extends Controller
         DB::table('email_verifications')
             ->where('user_id', $user->id)
             ->delete();
+
+        ActivityLogService::log('email_verified', 'Verified email address', $user);
 
         return response()->json([
             'success' => true,

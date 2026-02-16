@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\IpcrSubmission;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 
 class DeanReviewController extends Controller
@@ -72,6 +73,8 @@ class DeanReviewController extends Controller
             })
             ->with('user:id,name,employee_id')
             ->firstOrFail();
+
+        ActivityLogService::log('dean_reviewed_faculty_submission', 'Reviewed faculty IPCR submission: ' . $submission->title . ' by ' . ($submission->user->name ?? 'Unknown'), $submission);
 
         return response()->json([
             'success' => true,
@@ -146,6 +149,8 @@ class DeanReviewController extends Controller
             ->whereIn('user_id', $deanUserIds)
             ->with(['user:id,name,employee_id,department_id', 'user.department:id,name,code'])
             ->firstOrFail();
+
+        ActivityLogService::log('dean_reviewed_dean_submission', 'Reviewed dean IPCR submission: ' . $submission->title . ' by ' . ($submission->user->name ?? 'Unknown'), $submission);
 
         return response()->json([
             'success' => true,

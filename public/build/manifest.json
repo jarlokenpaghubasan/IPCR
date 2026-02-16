@@ -1,11 +1,11 @@
 {
-  "resources/css/admin_users_create.css": {
-    "file": "assets/admin_users_create-tn0RQdqM.css",
-    "src": "resources/css/admin_users_create.css",
+  "resources/css/admin_layout.css": {
+    "file": "assets/admin_layout-CMBjNTH_.css",
+    "src": "resources/css/admin_layout.css",
     "isEntry": true,
-    "name": "admin_users_create",
+    "name": "admin_layout",
     "names": [
-      "admin_users_create.css"
+      "admin_layout.css"
     ]
   },
   "resources/css/admin_users_edit.css": {
@@ -15,15 +15,6 @@
     "name": "admin_users_edit",
     "names": [
       "admin_users_edit.css"
-    ]
-  },
-  "resources/css/admin_users_index.css": {
-    "file": "assets/admin_users_index-DoEDZy1m.css",
-    "src": "resources/css/admin_users_index.css",
-    "isEntry": true,
-    "name": "admin_users_index",
-    "names": [
-      "admin_users_index.css"
     ]
   },
   "resources/css/admin_users_show.css": {
@@ -71,15 +62,6 @@
       "auth_verify-code.css"
     ]
   },
-  "resources/css/dashboard_admin_index.css": {
-    "file": "assets/dashboard_admin_index-B54pyw2M.css",
-    "src": "resources/css/dashboard_admin_index.css",
-    "isEntry": true,
-    "name": "dashboard_admin_index",
-    "names": [
-      "dashboard_admin_index.css"
-    ]
-  },
   "resources/css/dashboard_faculty_index.css": {
     "file": "assets/dashboard_faculty_index-VbUmN1Cs.css",
     "src": "resources/css/dashboard_faculty_index.css",
@@ -107,22 +89,16 @@
       "dashboard_faculty_profile.css"
     ]
   },
-  "resources/js/admin_users_create.js": {
-    "file": "assets/admin_users_create-DSx-DIQs.js",
-    "name": "admin_users_create",
-    "src": "resources/js/admin_users_create.js",
+  "resources/js/admin_layout.js": {
+    "file": "assets/admin_layout-BCJPn_JP.js",
+    "name": "admin_layout",
+    "src": "resources/js/admin_layout.js",
     "isEntry": true
   },
   "resources/js/admin_users_edit.js": {
     "file": "assets/admin_users_edit-BOJFbJrP.js",
     "name": "admin_users_edit",
     "src": "resources/js/admin_users_edit.js",
-    "isEntry": true
-  },
-  "resources/js/admin_users_index.js": {
-    "file": "assets/admin_users_index-_BsD-v7G.js",
-    "name": "admin_users_index",
-    "src": "resources/js/admin_users_index.js",
     "isEntry": true
   },
   "resources/js/admin_users_show.js": {
@@ -149,12 +125,6 @@
     "src": "resources/js/auth_verify-code.js",
     "isEntry": true
   },
-  "resources/js/dashboard_admin_index.js": {
-    "file": "assets/dashboard_admin_index-csowaPGd.js",
-    "name": "dashboard_admin_index",
-    "src": "resources/js/dashboard_admin_index.js",
-    "isEntry": true
-  },
   "resources/js/dashboard_faculty_index.js": {
     "file": "assets/dashboard_faculty_index-BVFdaRBn.js",
     "name": "dashboard_faculty_index",
@@ -162,7 +132,7 @@
     "isEntry": true
   },
   "resources/js/dashboard_faculty_my-ipcrs.js": {
-    "file": "assets/dashboard_faculty_my-ipcrs-j7zaLiKq.js",
+    "file": "assets/dashboard_faculty_my-ipcrs-CIapWXQP.js",
     "name": "dashboard_faculty_my-ipcrs",
     "src": "resources/js/dashboard_faculty_my-ipcrs.js",
     "isEntry": true

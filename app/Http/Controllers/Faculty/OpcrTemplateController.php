@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\OpcrTemplate;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -68,6 +69,8 @@ class OpcrTemplateController extends Controller
                 'content' => $contentJson,
             ]);
 
+            ActivityLogService::log('opcr_template_created', 'Created OPCR template: ' . $template->title, $template);
+
             return response()->json([
                 'success' => true,
                 'message' => 'OPCR template saved successfully',
@@ -114,7 +117,10 @@ class OpcrTemplateController extends Controller
                 ->where('user_id', Auth::id())
                 ->firstOrFail();
 
+            $title = $template->title;
             $template->delete();
+
+            ActivityLogService::log('opcr_template_deleted', 'Deleted OPCR template: ' . $title);
 
             return response()->json([
                 'success' => true,
@@ -165,6 +171,8 @@ class OpcrTemplateController extends Controller
                 'content' => $contentJson,
             ]);
 
+            ActivityLogService::log('opcr_template_updated', 'Updated OPCR template: ' . $template->title, $template);
+
             return response()->json([
                 'success' => true,
                 'message' => 'OPCR template updated successfully',
@@ -206,6 +214,8 @@ class OpcrTemplateController extends Controller
                     'so_count_json' => $request->so_count_json,
                 ]);
 
+                ActivityLogService::log('opcr_template_updated', 'Updated OPCR template from saved copy: ' . $existingTemplate->title, $existingTemplate);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'OPCR template updated successfully',
@@ -224,6 +234,8 @@ class OpcrTemplateController extends Controller
                 'table_body_html' => $request->table_body_html,
                 'so_count_json' => $request->so_count_json,
             ]);
+
+            ActivityLogService::log('opcr_template_created', 'Created OPCR template from saved copy: ' . $template->title, $template);
 
             return response()->json([
                 'success' => true,
@@ -254,6 +266,8 @@ class OpcrTemplateController extends Controller
                 ->firstOrFail();
 
             $template->update(['is_active' => true]);
+
+            ActivityLogService::log('opcr_template_activated', 'Set OPCR template as active: ' . $template->title, $template);
 
             return response()->json([
                 'success' => true,
@@ -286,6 +300,8 @@ class OpcrTemplateController extends Controller
                 'table_body_html' => $template->table_body_html,
                 'saved_at' => now(),
             ]);
+
+            ActivityLogService::log('opcr_template_copy_saved', 'Saved copy of OPCR template: ' . $template->title, $template);
 
             return response()->json([
                 'success' => true,

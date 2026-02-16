@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\IpcrSavedCopy;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -52,6 +53,8 @@ class IpcrSavedCopyController extends Controller
                 'table_body_html' => $request->table_body_html,
                 'saved_at' => now(),
             ]);
+
+            ActivityLogService::log('ipcr_draft_saved', 'Saved IPCR draft: ' . $savedCopy->title, $savedCopy);
 
             return response()->json([
                 'success' => true,
@@ -114,6 +117,8 @@ class IpcrSavedCopyController extends Controller
                 'saved_at' => now(),
             ]);
 
+            ActivityLogService::log('ipcr_draft_updated', 'Updated IPCR draft: ' . $savedCopy->title, $savedCopy);
+
             return response()->json([
                 'success' => true,
                 'message' => 'IPCR draft updated successfully',
@@ -138,7 +143,10 @@ class IpcrSavedCopyController extends Controller
                 ->where('user_id', Auth::id())
                 ->firstOrFail();
 
+            $title = $savedCopy->title;
             $savedCopy->delete();
+
+            ActivityLogService::log('ipcr_draft_deleted', 'Deleted IPCR draft: ' . $title);
 
             return response()->json([
                 'success' => true,

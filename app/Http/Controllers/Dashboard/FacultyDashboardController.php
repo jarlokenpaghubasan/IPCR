@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\IpcrTemplate;
 use App\Models\IpcrSubmission;
+use App\Models\IpcrSavedCopy;
+use App\Models\OpcrSavedCopy;
 use App\Models\UserPhoto;
 use App\Services\PhotoService;
 use Illuminate\Http\Request;
@@ -12,6 +14,7 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use App\Services\ActivityLogService;
 
 class FacultyDashboardController extends Controller
 {
@@ -147,11 +150,21 @@ class FacultyDashboardController extends Controller
             ->get();
         
         $submissions = IpcrSubmission::where('user_id', auth()->id())
+            ->whereNotNull('submitted_at')
             ->orderBy('submitted_at', 'desc')
             ->get();
 
         $opcrSubmissions = \App\Models\OpcrSubmission::where('user_id', auth()->id())
+            ->whereNotNull('submitted_at')
             ->orderBy('submitted_at', 'desc')
+            ->get();
+
+        $savedIpcrs = IpcrSavedCopy::where('user_id', auth()->id())
+            ->orderBy('saved_at', 'desc')
+            ->get();
+
+        $savedOpcrs = OpcrSavedCopy::where('user_id', auth()->id())
+            ->orderBy('saved_at', 'desc')
             ->get();
 
         $departmentName = auth()->user()->department?->name ?? 'Your Department';
@@ -159,6 +172,7 @@ class FacultyDashboardController extends Controller
             
         return view('dashboard.faculty.my-ipcrs', compact(
             'templates', 'submissions', 'opcrSubmissions',
+            'savedIpcrs', 'savedOpcrs',
             'departmentName', 'departmentCode'
         ));
     }
@@ -200,6 +214,8 @@ class FacultyDashboardController extends Controller
             'password' => Hash::make($request->new_password)
         ]);
 
+        ActivityLogService::log('password_changed', 'Changed own password', $user);
+
         return response()->json([
             'message' => 'Password updated successfully!'
         ]);
@@ -232,6 +248,8 @@ class FacultyDashboardController extends Controller
 
         $user->save();
 
+        ActivityLogService::log('profile_updated', 'Updated own profile', $user);
+
         if ($emailChanged) {
             DB::table('email_verifications')
                 ->where('user_id', $user->id)
@@ -258,6 +276,8 @@ class FacultyDashboardController extends Controller
 
         try {
             $photoService->uploadPhoto($request->file('photo'), $user);
+
+            ActivityLogService::log('photo_uploaded', 'Uploaded a profile photo', $user);
 
             return response()->json([
                 'success' => true,
@@ -320,6 +340,8 @@ class FacultyDashboardController extends Controller
 
         try {
             $photoService->deletePhoto($photo);
+
+            ActivityLogService::log('photo_deleted', 'Deleted a profile photo', $user);
 
             return response()->json([
                 'success' => true,

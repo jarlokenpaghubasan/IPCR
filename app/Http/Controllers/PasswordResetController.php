@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Services\ActivityLogService;
 
 class PasswordResetController extends Controller
 {
@@ -175,6 +176,9 @@ class PasswordResetController extends Controller
         $user = User::where('email', $request->email)->first();
         $user->password = Hash::make($request->password);
         $user->save();
+
+        // Log the password reset
+        ActivityLogService::log('password_reset', 'Reset password via email verification', $user);
 
         // Delete the reset token
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();

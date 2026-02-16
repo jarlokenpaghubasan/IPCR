@@ -1,104 +1,94 @@
 let pendingDeleteForm = null;
 
-// Toggle sidebar visibility
-window.toggleSidebar = function() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    
-    sidebar.classList.toggle('sidebar-hidden');
-    overlay.classList.toggle('hidden');
-};
-
-// Close sidebar when clicking a link
-document.querySelectorAll('#sidebar a, #sidebar button').forEach(element => {
-    element.addEventListener('click', () => {
-        if (window.innerWidth < 1024) {
-            document.getElementById('sidebar').classList.add('sidebar-hidden');
-            document.getElementById('sidebarOverlay').classList.add('hidden');
-        }
-    });
-});
-
-// Handle window resize
-window.addEventListener('resize', () => {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    
-    if (window.innerWidth >= 1024) {
-        sidebar.classList.remove('sidebar-hidden');
-        overlay.classList.add('hidden');
-    } else {
-        sidebar.classList.add('sidebar-hidden');
-        overlay.classList.add('hidden');
-    }
-});
-
-// Initialize on page load
-window.addEventListener('load', () => {
-    const sidebar = document.getElementById('sidebar');
-    if (window.innerWidth < 1024) {
-        sidebar.classList.add('sidebar-hidden');
-    }
-});
-
-// Search and Filter Functionality
+// Search and Filter Functionality (server-side)
 const searchInput = document.getElementById('searchInput');
 const departmentFilter = document.getElementById('departmentFilter');
-const userRows = document.querySelectorAll('.user-row');
+const filterForm = document.getElementById('filterForm');
 
-function filterUsers() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const selectedDept = departmentFilter.value;
+let searchTimeout = null;
 
-    userRows.forEach(row => {
-        const name = row.dataset.name;
-        const email = row.dataset.email;
-        const username = row.dataset.username;
-        const department = row.dataset.department;
+// Debounced search — submits form after 500ms of no typing
+searchInput.addEventListener('input', function () {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        filterForm.submit();
+    }, 500);
+});
 
-        const matchesSearch = name.includes(searchTerm) || 
-                            email.includes(searchTerm) || 
-                            username.includes(searchTerm);
-        const matchesDept = !selectedDept || department === selectedDept;
+// Submit on Enter key immediately
+searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        clearTimeout(searchTimeout);
+        filterForm.submit();
+    }
+});
 
-        if (matchesSearch && matchesDept) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-}
-
-searchInput.addEventListener('input', filterUsers);
-departmentFilter.addEventListener('change', filterUsers);
+// Department filter — submit immediately on change
+departmentFilter.addEventListener('change', function () {
+    filterForm.submit();
+});
 
 // Confirmation modal functions
-window.openConfirmationModal = function(userName, form) {
+window.openConfirmationModal = function (userName, form) {
     document.getElementById('deleteUserName').textContent = userName;
     pendingDeleteForm = form;
     document.getElementById('confirmationModal').classList.remove('hidden');
 };
 
-window.closeConfirmationModal = function() {
+window.closeConfirmationModal = function () {
     document.getElementById('confirmationModal').classList.add('hidden');
     pendingDeleteForm = null;
 };
 
-window.confirmDelete = function() {
+window.confirmDelete = function () {
     if (pendingDeleteForm) {
         pendingDeleteForm.submit();
     }
     window.closeConfirmationModal();
 };
 
-document.getElementById('confirmationModal').addEventListener('click', function(e) {
+document.getElementById('confirmationModal').addEventListener('click', function (e) {
     if (e.target === this) {
         window.closeConfirmationModal();
     }
 });
 
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         window.closeConfirmationModal();
+        window.closeAddUserModal();
     }
 });
+
+// Add User Modal
+window.openAddUserModal = function () {
+    document.getElementById('addUserModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+};
+
+window.closeAddUserModal = function () {
+    document.getElementById('addUserModal').classList.add('hidden');
+    document.body.style.overflow = ''; // Restore background scrolling
+};
+
+// Close modal on outside click
+document.getElementById('addUserModal')?.addEventListener('click', function (e) {
+    if (e.target === this) closeAddUserModal();
+});
+
+// Toggle Password Visibility
+window.togglePasswordVisibility = function (fieldId) {
+    const passwordInput = document.getElementById(fieldId);
+    const eyeOpen = document.getElementById(fieldId + '_eye_open');
+    const eyeClosed = document.getElementById(fieldId + '_eye_closed');
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeOpen?.classList.add('hidden');
+        eyeClosed?.classList.remove('hidden');
+    } else {
+        passwordInput.type = 'password';
+        eyeOpen?.classList.remove('hidden');
+        eyeClosed?.classList.add('hidden');
+    }
+};

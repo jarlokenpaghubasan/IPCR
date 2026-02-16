@@ -208,7 +208,7 @@
             <div class="lg:col-span-2 space-y-4 sm:space-y-6">
                 <!-- Header Section -->
                 <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
-                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8">Individual Performance Commitment and Review for {{ auth()->user()->designation->title ?? 'Faculty' }}</h1>
+                    <h1 id="pageHeaderTitle" class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 md:mb-8"><span id="performanceType">Individual</span> Performance Commitment and Review for {{ auth()->user()->designation->title ?? 'Faculty' }}</h1>
                     
                     <!-- User Information Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -254,25 +254,120 @@
                         </div>
                     </div>
 
-                    <!-- Create IPCR Button Area -->
-                    <div id="createIpcrButtonArea" class="py-8 sm:py-12 flex justify-center">
-                        <button class="create-ipcr-button" onclick="openCreateIpcrModal()">
-                            Create IPCR
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                        </button>
+                    <!-- Create IPCR Button Area + Saved Copies -->
+                    <div id="createIpcrButtonArea">
+                        <div class="py-6 sm:py-8 flex justify-center">
+                            <button class="create-ipcr-button" onclick="openCreateIpcrModal()">
+                                Create IPCR
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <!-- IPCR Saved Copies (rendered via Blade) -->
+                        <div id="ipcrSavedCopiesSection" class="@if($savedIpcrs->isEmpty()) hidden @endif">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Saved Copies (Drafts)</h3>
+                            <div id="savedCopiesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($savedIpcrs as $savedIpcr)
+                                    <div class="group relative bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                                        <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onclick="deleteSavedCopy({{ $savedIpcr->id }})" 
+                                                    class="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                                                    title="Delete Draft">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600 uppercase tracking-wider border border-blue-100">IPCR</span>
+                                                <span class="text-xs text-gray-400 flex items-center gap-1">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    {{ $savedIpcr->saved_at->diffForHumans() }}
+                                                </span>
+                                            </div>
+                                            <h4 class="text-base font-bold text-gray-900 leading-tight mb-1">{{ $savedIpcr->title }}</h4>
+                                            <p class="text-sm font-medium text-gray-500">
+                                                {{ $savedIpcr->school_year }} &bull; <span class="text-gray-600">{{ ucfirst($savedIpcr->semester) }}</span>
+                                            </p>
+                                        </div>
+
+                                        <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                            <button onclick="editSavedCopy({{ $savedIpcr->id }})"
+                                               class="w-full text-center px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-pointer">
+                                                Continue Editing
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @if($savedIpcrs->isEmpty())
+                            <p id="savedCopiesEmpty" class="text-sm text-gray-500 text-center py-4">No saved drafts yet.</p>
+                        @endif
                     </div>
 
                     @if(auth()->user()->hasRole('dean'))
-                    <!-- Create OPCR Button Area -->
-                    <div id="createOpcrButtonArea" class="py-8 sm:py-12 flex justify-center hidden">
-                        <button class="create-ipcr-button" onclick="openCreateOpcrModal()">
-                            Create OPCR
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                        </button>
+                    <!-- Create OPCR Button Area + Saved Copies -->
+                    <div id="createOpcrButtonArea" class="hidden">
+                        <div class="py-6 sm:py-8 flex justify-center">
+                            <button class="create-ipcr-button" onclick="openCreateOpcrModal()">
+                                Create OPCR
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- OPCR Saved Copies (rendered via Blade) -->
+                        <div id="opcrSavedCopiesSection" class="@if($savedOpcrs->isEmpty()) hidden @endif">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Saved Copies (Drafts)</h3>
+                            <div id="opcrSavedCopiesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($savedOpcrs as $savedOpcr)
+                                    <div class="group relative bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                                        <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onclick="deleteOpcrSavedCopy({{ $savedOpcr->id }})" 
+                                                    class="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                                                    title="Delete Draft">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-600 uppercase tracking-wider border border-orange-100">OPCR</span>
+                                                <span class="text-xs text-gray-400 flex items-center gap-1">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    {{ $savedOpcr->saved_at->diffForHumans() }}
+                                                </span>
+                                            </div>
+                                            <h4 class="text-base font-bold text-gray-900 leading-tight mb-1">{{ $savedOpcr->title }}</h4>
+                                            <p class="text-sm font-medium text-gray-500">
+                                                {{ $savedOpcr->school_year }} &bull; <span class="text-gray-600">{{ ucfirst($savedOpcr->semester) }}</span>
+                                            </p>
+                                        </div>
+
+                                        <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                            <button onclick="editOpcrSavedCopy({{ $savedOpcr->id }})"
+                                               class="w-full text-center px-4 py-2 text-sm font-semibold text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 hover:text-orange-700 transition-colors cursor-pointer">
+                                                Continue Editing
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @if($savedOpcrs->isEmpty())
+                            <p id="opcrSavedCopiesEmpty" class="text-sm text-gray-500 text-center py-4 hidden">No saved OPCR drafts yet.</p>
+                        @endif
                     </div>
                     @endif
 
@@ -281,7 +376,7 @@
                         <div class="absolute inset-0 bg-black/50" onclick="closeCreateIpcrModal()"></div>
                         <div class="relative mx-auto mt-24 w-full max-w-lg bg-white rounded-xl shadow-lg">
                             <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                                <h2 class="text-lg sm:text-xl font-bold text-gray-900">Individual Performance Commitment and Review for {{ auth()->user()->designation->title ?? 'Faculty' }}</h2>
+                                <h2 id="modalHeaderTitle" class="text-lg sm:text-xl font-bold text-gray-900"><span id="modalPerformanceType">Individual</span> Performance Commitment and Review for {{ auth()->user()->designation->title ?? 'Faculty' }}</h2>
                                 <button type="button" onclick="closeCreateIpcrModal()" class="text-gray-500 hover:text-gray-700">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -421,8 +516,8 @@
                     @if(auth()->user()->hasRole('dean'))
                     <!-- OPCR Document Modal -->
                     <div id="opcrDocumentContainer" class="fixed inset-0 z-50 hidden">
-                        <div class="absolute inset-0 bg-black/50" onclick="closeOpcrDocument()"></div>
-                        <div class="relative mx-auto mt-2 sm:mt-8 mb-2 sm:mb-8 w-full max-w-6xl bg-white rounded-lg sm:rounded-xl shadow-lg max-h-[98vh] sm:max-h-[90vh] overflow-y-auto px-2 sm:px-0">
+                        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+                        <div class="relative mx-auto mt-2 sm:mt-8 mb-2 sm:mb-8 w-full max-w-6xl bg-white rounded-2xl shadow-lg max-h-[98vh] sm:max-h-[90vh] overflow-y-auto px-2 sm:px-0">
                             <!-- Document Header -->
                             <div class="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-300 sticky top-0 bg-white z-10">
                                 <div class="flex justify-between items-start mb-3 sm:mb-4">
@@ -537,8 +632,8 @@
 
                     <!-- IPCR Document Modal -->
                     <div id="ipcrDocumentContainer" class="fixed inset-0 z-50 hidden">
-                        <div class="absolute inset-0 bg-black/50" onclick="closeIpcrDocument()"></div>
-                        <div class="relative mx-auto mt-2 sm:mt-8 mb-2 sm:mb-8 w-full max-w-6xl bg-white rounded-lg sm:rounded-xl shadow-lg max-h-[98vh] sm:max-h-[90vh] overflow-y-auto px-2 sm:px-0">
+                        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+                        <div class="relative mx-auto mt-2 sm:mt-8 mb-2 sm:mb-8 w-full max-w-6xl bg-white rounded-2xl shadow-lg max-h-[98vh] sm:max-h-[90vh] overflow-y-auto px-2 sm:px-0">
                             <!-- Document Header -->
                             <div class="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-300 sticky top-0 bg-white z-10">
                                 <div class="flex justify-between items-start mb-3 sm:mb-4">
@@ -653,8 +748,8 @@
 
                     <!-- Template Preview Modal -->
                     <div id="templatePreviewModal" class="fixed inset-0 z-50 hidden">
-                        <div class="absolute inset-0 bg-black/50" onclick="closeTemplatePreview()"></div>
-                        <div class="relative mx-auto mt-2 sm:mt-8 mb-2 sm:mb-8 w-full max-w-6xl bg-white rounded-lg sm:rounded-xl shadow-lg max-h-[98vh] sm:max-h-[90vh] overflow-y-auto px-2 sm:px-0">
+                        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+                        <div class="relative mx-auto mt-2 sm:mt-8 mb-2 sm:mb-8 w-full max-w-6xl bg-white rounded-2xl shadow-lg max-h-[98vh] sm:max-h-[90vh] overflow-y-auto px-2 sm:px-0">
                             <!-- Document Header -->
                             <div class="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-300 sticky top-0 bg-white z-10">
                                 <div class="flex justify-between items-start mb-3 sm:mb-4">
@@ -936,41 +1031,15 @@
                         </div>
                     </div>
 
-                    <!-- Previous Submissions and Saved Copy Section -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8">
-                        <!-- Previous IPCR Submissions -->
-                        <div id="previousSubmissionsSection">
-                            <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Previous IPCR Submissions</h3>
-                            <div class="space-y-2 sm:space-y-3">
-                                <p class="text-sm text-gray-500 text-center py-6">No submissions yet. Create and submit an IPCR to see them here.</p>
-                            </div>
-                        </div>
 
-                        <!-- Saved Copy -->
-                        <div>
-                            <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Saved Copy</h3>
-                            <!-- IPCR Saved Copies -->
-                            <div id="ipcrSavedCopiesSection">
-                                <div id="savedCopiesList" class="space-y-2 sm:space-y-3"></div>
-                                <p id="savedCopiesEmpty" class="text-sm text-gray-500 text-center py-6">No saved copies yet. Save your IPCR draft to see them here.</p>
-                            </div>
-                            @if(auth()->user()->hasRole('dean'))
-                            <!-- OPCR Saved Copies -->
-                            <div id="opcrSavedCopiesSection" class="hidden">
-                                <div id="opcrSavedCopiesList" class="space-y-2 sm:space-y-3"></div>
-                                <p id="opcrSavedCopiesEmpty" class="text-sm text-gray-500 text-center py-6">No saved copies yet. Save your OPCR draft to see them here.</p>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
                 </div>
             </div>
 
             <!-- Right Sidebar (1/3 width) -->
-            <div class="space-y-4 sm:space-y-6">
-                <!-- Template -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Templates</h3>
+            <div id="rightSidebar" class="space-y-4 sm:space-y-6">
+                <!-- IPCR Templates -->
+                <div id="ipcrTemplatesSection" class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">IPCR Templates</h3>
                     
                     <div id="templatesContainer">
                         @forelse($templates ?? [] as $template)
@@ -1047,17 +1116,14 @@
                             <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                 <p class="text-sm font-semibold text-gray-900 mb-1">{{ $submission->title }}</p>
                                 <p class="text-xs text-gray-600">{{ $submission->school_year }} • {{ $submission->semester }}</p>
-                                <p class="text-xs text-gray-500 mb-2">Submitted: {{ $submission->submitted_at->format('M d, Y') }}</p>
+                                <p class="text-xs text-gray-500 mb-2">Submitted: {{ $submission->submitted_at ? $submission->submitted_at->format('M d, Y') : 'N/A' }}</p>
                                 <div class="flex gap-2">
                                     <button onclick="viewSubmission({{ $submission->id }})" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
                                         View & Edit
                                     </button>
-                                    <button onclick="deleteSubmission({{ $submission->id }})" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
-                                        Delete
+                                    <button onclick="unsubmitSubmission({{ $submission->id }})" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold py-1.5 px-3 rounded">
+                                        Unsubmit
                                     </button>
-                                    <span class="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                                        {{ ucfirst($submission->status) }}
-                                    </span>
                                 </div>
                             </div>
                         @empty
@@ -1100,17 +1166,14 @@
                             <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                 <p class="text-sm font-semibold text-gray-900 mb-1">{{ $opcrSub->title }}</p>
                                 <p class="text-xs text-gray-600">{{ $opcrSub->school_year }} • {{ $opcrSub->semester }}</p>
-                                <p class="text-xs text-gray-500 mb-2">Submitted: {{ $opcrSub->submitted_at->format('M d, Y') }}</p>
+                                <p class="text-xs text-gray-500 mb-2">Submitted: {{ $opcrSub->submitted_at ? $opcrSub->submitted_at->format('M d, Y') : 'N/A' }}</p>
                                 <div class="flex gap-2">
                                     <button onclick="viewOpcrSubmission({{ $opcrSub->id }})" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
                                         View & Edit
                                     </button>
-                                    <button onclick="deleteOpcrSubmission({{ $opcrSub->id }})" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1.5 px-3 rounded">
-                                        Delete
+                                    <button onclick="unsubmitOpcrSubmission({{ $opcrSub->id }})" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold py-1.5 px-3 rounded">
+                                        Unsubmit
                                     </button>
-                                    <span class="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                                        {{ ucfirst($opcrSub->status) }}
-                                    </span>
                                 </div>
                             </div>
                         @empty
@@ -1441,9 +1504,8 @@
             // Re-hide the rating/accomplishment/remarks columns for fresh creation
             hideIpcrTableColumns();
             
-            // Hide modal and create button
+            // Hide modal and show IPCR document
             closeCreateIpcrModal();
-            document.getElementById('createIpcrButtonArea').style.display = 'none';
             
             // Show IPCR document modal
             document.getElementById('ipcrDocumentContainer').classList.remove('hidden');
@@ -1451,7 +1513,7 @@
 
         window.closeIpcrDocument = function() {
             document.getElementById('ipcrDocumentContainer').classList.add('hidden');
-            document.getElementById('createIpcrButtonArea').style.display = 'flex';
+            
             hideIpcrTableColumns();
             currentSavedCopyId = null;
         };
@@ -1646,9 +1708,11 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    currentSavedCopyId = data.savedCopy.id;
-                    renderSavedCopies();
                     showAlertModal('success', 'Saved', data.message);
+                    // Reload page to ensure UI reflects database state
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } else {
                     showAlertModal('error', 'Error', data.message || 'Failed to save IPCR draft');
                 }
@@ -1893,7 +1957,7 @@
                                 currentSavedCopyId = null;
                             }
                             showAlertModal('success', 'Deleted', 'Saved copy deleted successfully!', function() {
-                                renderSavedCopies();
+                                window.location.reload();
                             });
                         } else {
                             showAlertModal('error', 'Error', data.message || 'Failed to delete saved copy');
@@ -1976,7 +2040,6 @@
 
                     updateSoHeaderCountFromTable();
                     currentSavedCopyId = item.id;
-                    document.getElementById('createIpcrButtonArea').style.display = 'none';
                     document.getElementById('ipcrDocumentContainer').classList.remove('hidden');
                 } else {
                     showAlertModal('error', 'Not Found', 'Saved copy could not be found.');
@@ -3332,6 +3395,74 @@
             );
         }
         
+        window.unsubmitSubmission = function(submissionId) {
+            openConfirmationModal(
+                'Unsubmit IPCR',
+                'Are you sure you want to unsubmit this IPCR?',
+                'It will be reverted to draft status.',
+                'warning',
+                'Unsubmit',
+                function() {
+                    fetch(`/faculty/ipcr/submissions/${submissionId}/unsubmit`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json().catch(() => ({ success: false, message: 'Invalid response' })))
+                    .then(data => {
+                        if (data.success) {
+                            showAlertModal('success', 'Unsubmitted', 'The IPCR has been reverted to draft status.', function() {
+                                setTimeout(() => { location.reload(); }, 500);
+                            });
+                        } else {
+                            showAlertModal('error', 'Failed', data.message || 'Failed to unsubmit');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Unsubmit error:', error);
+                        showAlertModal('error', 'Error', 'An error occurred while unsubmitting.');
+                    });
+                }
+            );
+        }
+
+        window.unsubmitOpcrSubmission = function(submissionId) {
+            openConfirmationModal(
+                'Unsubmit OPCR',
+                'Are you sure you want to unsubmit this OPCR?',
+                'It will be reverted to draft status.',
+                'warning',
+                'Unsubmit',
+                function() {
+                    fetch(`/faculty/opcr/submissions/${submissionId}/unsubmit`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json().catch(() => ({ success: false, message: 'Invalid response' })))
+                    .then(data => {
+                        if (data.success) {
+                            showAlertModal('success', 'Unsubmitted', 'The OPCR has been reverted to draft status.', function() {
+                                setTimeout(() => { location.reload(); }, 500);
+                            });
+                        } else {
+                            showAlertModal('error', 'Failed', data.message || 'Failed to unsubmit');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Unsubmit error:', error);
+                        showAlertModal('error', 'Error', 'An error occurred while unsubmitting.');
+                    });
+                }
+            );
+        }
+        
         function openConfirmationModal(title, message, subMessage, type, confirmText, callback) {
             const modal = document.getElementById('confirmationModal');
             const modalHeader = document.getElementById('modalHeader');
@@ -3828,15 +3959,13 @@
             hideOpcrTableColumns();
 
             closeCreateOpcrModal();
-            document.getElementById('createOpcrButtonArea').style.display = 'none';
 
             document.getElementById('opcrDocumentContainer').classList.remove('hidden');
         };
 
         window.closeOpcrDocument = function() {
             document.getElementById('opcrDocumentContainer').classList.add('hidden');
-            const btn = document.getElementById('createOpcrButtonArea');
-            if (btn) btn.style.display = 'flex';
+            
             hideOpcrTableColumns();
             currentOpcrSavedCopyId = null;
         }
@@ -4187,7 +4316,7 @@
                                 currentOpcrSavedCopyId = null;
                             }
                             showAlertModal('success', 'Deleted', 'OPCR saved copy deleted successfully!', function() {
-                                renderOpcrSavedCopies();
+                                window.location.reload();
                             });
                         } else {
                             showAlertModal('error', 'Error', data.message || 'Failed to delete OPCR saved copy');
@@ -4243,7 +4372,6 @@
                         unhideOpcrTableColumns();
                     }
                     
-                    document.getElementById('createOpcrButtonArea').style.display = 'none';
                     document.getElementById('opcrDocumentContainer').classList.remove('hidden');
                 } else {
                     showAlertModal('error', 'Not Found', 'OPCR saved copy could not be found.');
@@ -4899,6 +5027,9 @@
                     }
                     
                     document.getElementById('createOpcrButtonArea').style.display = 'none';
+                    // Hide right sidebar behind modal
+                    const rightSidebar2 = document.getElementById('rightSidebar');
+                    if (rightSidebar2) rightSidebar2.style.display = 'none';
                     document.getElementById('opcrDocumentContainer').classList.remove('hidden');
                 } else {
                     showAlertModal('error', 'Not Found', 'OPCR template could not be found.');

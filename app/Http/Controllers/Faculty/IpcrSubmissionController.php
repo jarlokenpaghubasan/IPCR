@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Faculty;
 use App\Http\Controllers\Controller;
 use App\Models\IpcrSubmission;
 use App\Models\SupportingDocument;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -52,6 +53,8 @@ class IpcrSubmissionController extends Controller
                 $request->user()->id
             );
         }
+
+        ActivityLogService::log('ipcr_submitted', 'Submitted IPCR: ' . $submission->title, $submission);
 
         return response()->json([
             'message' => 'IPCR submitted successfully',
@@ -177,6 +180,8 @@ class IpcrSubmissionController extends Controller
                 'updated_at' => $submission->updated_at
             ]);
 
+            ActivityLogService::log('ipcr_submission_updated', 'Updated IPCR submission: ' . $submission->title, $submission);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Submission updated successfully',
@@ -209,6 +214,8 @@ class IpcrSubmissionController extends Controller
 
         $submission->update(['is_active' => true]);
 
+        ActivityLogService::log('ipcr_submission_activated', 'Activated IPCR submission: ' . $submission->title, $submission);
+
         return response()->json([
             'success' => true,
             'message' => 'Submission set as active successfully',
@@ -225,9 +232,32 @@ class IpcrSubmissionController extends Controller
 
         $submission->update(['is_active' => false]);
 
+        ActivityLogService::log('ipcr_submission_deactivated', 'Deactivated IPCR submission: ' . $submission->title, $submission);
+
         return response()->json([
             'success' => true,
             'message' => 'Submission deactivated successfully',
+        ]);
+    }
+
+    public function unsubmit($id)
+    {
+        $userId = auth()->id();
+
+        $submission = IpcrSubmission::where('id', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $submission->update([
+            'status' => 'draft',
+            'submitted_at' => null,
+        ]);
+
+        ActivityLogService::log('ipcr_unsubmitted', 'Unsubmitted IPCR: ' . $submission->title, $submission);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Submission has been reverted to draft status',
         ]);
     }
 
@@ -247,7 +277,10 @@ class IpcrSubmissionController extends Controller
             ], 403);
         }
 
+        $title = $submission->title;
         $submission->delete();
+
+        ActivityLogService::log('ipcr_submission_deleted', 'Deleted IPCR submission: ' . $title);
 
         return response()->json([
             'success' => true,

@@ -9,6 +9,7 @@ use App\Services\PhotoService;
 use App\Services\EmployeeIdService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 
 class UserManagementController extends Controller
 {
@@ -22,23 +23,37 @@ class UserManagementController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('department', 'designation', 'userRoles')->paginate(10);
-        $departments = Department::all();
-        return view('admin.users.index', compact('users', 'departments'));
-    }
+        $query = User::with('department', 'designation', 'userRoles');
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        $roles = ['admin', 'hr', 'director', 'dean', 'faculty'];
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('department')) {
+            $query->where('department_id', $request->department);
+        }
+
+        $users = $query->paginate(10)->withQueryString();
         $departments = Department::all();
         $designations = Designation::all();
-        return view('admin.users.create', compact('roles', 'departments', 'designations'));
+        $roles = ['admin', 'hr', 'director', 'dean', 'faculty'];
+
+        // Stats for cards
+        $totalUsers = User::count();
+        $activeUsers = User::where('is_active', true)->count();
+        $inactiveUsers = User::where('is_active', false)->count();
+
+        return view('admin.users.index', compact('users', 'departments', 'designations', 'roles', 'totalUsers', 'activeUsers', 'inactiveUsers'));
     }
+
+
 
     /**
      * Store a newly created resource in storage.
@@ -91,6 +106,8 @@ class UserManagementController extends Controller
         foreach ($roles as $role) {
             $user->assignRole($role);
         }
+
+        ActivityLogService::log('created', 'Created user ' . $user->name, $user);
 
         return redirect()->route('admin.users.index')->with('success', 'User created successfully');
     }
@@ -208,6 +225,8 @@ class UserManagementController extends Controller
             }
         }
 
+        ActivityLogService::log('updated', 'Updated user ' . $user->name, $user);
+
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully');
     }
 
@@ -229,7 +248,10 @@ class UserManagementController extends Controller
         // Delete photos
         $this->photoService->deleteAllUserPhotos($user);
 
+        $userName = $user->name;
         $user->delete();
+
+        ActivityLogService::log('deleted', 'Deleted user ' . $userName);
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
     }
@@ -251,6 +273,8 @@ class UserManagementController extends Controller
         $user->update(['is_active' => !$user->is_active]);
 
         $status = $user->is_active ? 'activated' : 'deactivated';
+        ActivityLogService::log('toggled_active', ucfirst($status) . ' user ' . $user->name, $user);
+
         return redirect()->route('admin.users.index')->with('success', "User {$status} successfully");
     }
 }

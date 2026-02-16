@@ -9,6 +9,7 @@ use App\Http\Controllers\Dashboard\DirectorDashboardController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\PhotoController;
+use App\Http\Controllers\Admin\DatabaseManagementController;
 use App\Http\Controllers\Faculty\IpcrTemplateController;
 use App\Http\Controllers\Faculty\IpcrSubmissionController;
 use App\Http\Controllers\Faculty\IpcrSavedCopyController;
@@ -167,6 +168,9 @@ Route::post('/faculty/ipcr/submissions/{id}/set-active', [IpcrSubmissionControll
 Route::post('/faculty/ipcr/submissions/{id}/deactivate', [IpcrSubmissionController::class, 'deactivate'])
     ->middleware(['auth', 'role:faculty']);
 
+Route::post('/faculty/ipcr/submissions/{id}/unsubmit', [IpcrSubmissionController::class, 'unsubmit'])
+    ->middleware(['auth', 'role:faculty']);
+
 Route::delete('/faculty/ipcr/submissions/{id}', [IpcrSubmissionController::class, 'destroy'])
     ->middleware(['auth', 'role:faculty,admin']);
 
@@ -235,6 +239,9 @@ Route::post('/faculty/opcr/submissions/{id}/set-active', [OpcrSubmissionControll
     ->middleware(['auth', 'role:faculty']);
 
 Route::post('/faculty/opcr/submissions/{id}/deactivate', [OpcrSubmissionController::class, 'deactivate'])
+    ->middleware(['auth', 'role:faculty']);
+
+Route::post('/faculty/opcr/submissions/{id}/unsubmit', [OpcrSubmissionController::class, 'unsubmit'])
     ->middleware(['auth', 'role:faculty']);
 
 Route::delete('/faculty/opcr/submissions/{id}', [OpcrSubmissionController::class, 'destroy'])
@@ -358,4 +365,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/panel')->name('admin.')
     
     Route::get('users/{user}/photos', [PhotoController::class, 'getUserPhotos'])
         ->name('users.photos.get');
+
+    // Database Management
+    Route::get('database', [DatabaseManagementController::class, 'index'])->name('database.index');
+    Route::post('database/backup', [DatabaseManagementController::class, 'backup'])->name('database.backup');
+    Route::get('database/download/{filename}', [DatabaseManagementController::class, 'download'])->name('database.download');
+    Route::post('database/restore/{filename}', [DatabaseManagementController::class, 'restore'])->name('database.restore');
+    Route::delete('database/{filename}', [DatabaseManagementController::class, 'delete'])->name('database.delete');
+    Route::post('database/upload', [DatabaseManagementController::class, 'upload'])->name('database.upload');
+    Route::post('database/settings', [DatabaseManagementController::class, 'updateSettings'])->name('database.settings');
+
+    // Activity Logs
+    Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
 });

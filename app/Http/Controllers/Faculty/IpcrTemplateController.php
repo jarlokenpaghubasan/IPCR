@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\IpcrTemplate;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -84,6 +85,8 @@ class IpcrTemplateController extends Controller
                 'content' => $contentJson,
             ]);
 
+            ActivityLogService::log('ipcr_template_created', 'Created IPCR template: ' . $template->title, $template);
+
             return response()->json([
                 'success' => true,
                 'message' => 'IPCR template saved successfully',
@@ -130,7 +133,10 @@ class IpcrTemplateController extends Controller
                 ->where('user_id', Auth::id())
                 ->firstOrFail();
 
+            $title = $template->title;
             $template->delete();
+
+            ActivityLogService::log('ipcr_template_deleted', 'Deleted IPCR template: ' . $title);
 
             return response()->json([
                 'success' => true,
@@ -191,6 +197,8 @@ class IpcrTemplateController extends Controller
                 'content' => $contentJson,
             ]);
 
+            ActivityLogService::log('ipcr_template_updated', 'Updated IPCR template: ' . $template->title, $template);
+
             return response()->json([
                 'success' => true,
                 'message' => 'IPCR template updated successfully',
@@ -234,6 +242,8 @@ class IpcrTemplateController extends Controller
                     'so_count_json' => $request->so_count_json,
                 ]);
 
+                ActivityLogService::log('ipcr_template_updated', 'Updated IPCR template from saved copy: ' . $existingTemplate->title, $existingTemplate);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Template updated successfully',
@@ -253,6 +263,8 @@ class IpcrTemplateController extends Controller
                 'table_body_html' => $request->table_body_html,
                 'so_count_json' => $request->so_count_json,
             ]);
+
+            ActivityLogService::log('ipcr_template_created', 'Created IPCR template from saved copy: ' . $template->title, $template);
 
             return response()->json([
                 'success' => true,
@@ -286,6 +298,8 @@ class IpcrTemplateController extends Controller
 
             $template->update(['is_active' => true]);
 
+            ActivityLogService::log('ipcr_template_activated', 'Set IPCR template as active: ' . $template->title, $template);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Template set as active successfully',
@@ -316,6 +330,8 @@ class IpcrTemplateController extends Controller
                 'table_body_html' => $template->table_body_html,
                 'saved_at' => now(),
             ]);
+
+            ActivityLogService::log('ipcr_template_copy_saved', 'Saved copy of IPCR template: ' . $template->title, $template);
 
             return response()->json([
                 'success' => true,

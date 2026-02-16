@@ -20,7 +20,29 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 - 🎨 **Tailwind CSS v4.0** for modern styling
 - 📸 **Cloudinary Photo Management** with crop, resize, and CDN delivery
 
-## ✨ Latest Updates (February 9-10, 2026)
+## ✨ Latest Updates (February 14, 2026)
+
+### 🚀 Modular Admin Layout & SPA Navigation (February 14, 2026)
+
+#### Single Page Application (SPA) Experience
+- ⚡ **Turbo.js Integration** - Implemented `@hotwired/turbo` for seamless "no-reload" navigation
+- 🔄 **Instant Transitions** - Switching between Dashboard, Users, and Database is now instant
+- 💾 **State Persistence** - Admin layout remains loaded while content swaps dynamically
+- 🧩 **Smart Re-initialization** - JS logic (modals, search, filters) automatically re-attaches on navigation
+
+#### Modular Architecture
+- 🏗️ **Shared Layout System** - Unified `layouts/admin.blade.php` for all admin pages
+- 🎨 **Consolidated Assets** - Merged all admin CSS into `admin_layout.css` (reduced requests)
+- 📜 **Unified Logic** - Centralized all admin JS in `admin_layout.js`
+- 📱 **Enhanced Responsiveness** - Improved sidebar toggling and mobile overlay behavior (XL breakpoint)
+- 🧹 **Code Cleanup** - Removed redundant page-specific assets and duplicated HTML
+
+#### Files Refactored
+- **Layout:** `resources/views/layouts/admin.blade.php` (Master layout)
+- **Styles:** `resources/css/admin_layout.css` (single source of truth)
+- **Scripts:** `resources/js/admin_layout.js` (with `turbo:load` listeners)
+- **Views:** Refactored Dashboard, User Management, and Database Management to extend master layout
+- **Config:** Updated `vite.config.js` to serve consolidated assets
 
 ### 👤 Profile Management Overhaul (February 9-10, 2026)
 

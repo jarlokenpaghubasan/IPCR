@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\SupportingDocument;
+use App\Services\ActivityLogService;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary as CloudinaryFacade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -113,6 +114,8 @@ class SupportingDocumentController extends Controller
                 'file_size' => $file->getSize(),
             ]);
 
+            ActivityLogService::log('document_uploaded', 'Uploaded supporting document: ' . $document->original_name, $document);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Document uploaded successfully.',
@@ -154,7 +157,10 @@ class SupportingDocumentController extends Controller
                 }
             }
 
+            $docName = $document->original_name;
             $document->delete();
+
+            ActivityLogService::log('document_deleted', 'Deleted supporting document: ' . $docName);
 
             return response()->json([
                 'success' => true,
@@ -223,6 +229,8 @@ class SupportingDocumentController extends Controller
                 $document->save();
             }
 
+            ActivityLogService::log('document_renamed', 'Renamed supporting document to: ' . $document->original_name, $document);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Document renamed successfully.',
@@ -267,6 +275,8 @@ class SupportingDocumentController extends Controller
                     'message' => 'Failed to fetch file from storage.',
                 ], 500);
             }
+
+            ActivityLogService::log('document_downloaded', 'Downloaded supporting document: ' . $document->original_name, $document);
 
             // Return file with download headers
             return response($fileContent)
