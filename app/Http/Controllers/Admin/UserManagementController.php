@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
+use App\Models\Role;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Services\PhotoService;
 use App\Services\EmployeeIdService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogService;
 
@@ -43,7 +45,7 @@ class UserManagementController extends Controller
         $users = $query->paginate(10)->withQueryString();
         $departments = Department::all();
         $designations = Designation::all();
-        $roles = ['admin', 'hr', 'director', 'dean', 'faculty'];
+        $roles = Role::getNames();
 
         // Stats for cards
         $totalUsers = User::count();
@@ -67,7 +69,7 @@ class UserManagementController extends Controller
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
-            'roles.*' => 'in:admin,hr,director,dean,faculty',
+            'roles.*' => Rule::in(Role::getNames()),
             'is_active' => 'boolean',
             'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
@@ -122,6 +124,31 @@ class UserManagementController extends Controller
     }
 
     /**
+     * Return user data as JSON for AJAX modals.
+     */
+    public function showJson(User $user)
+    {
+        $user->load('department', 'designation', 'userRoles');
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'username' => $user->username,
+            'phone' => $user->phone,
+            'employee_id' => $user->employee_id,
+            'is_active' => $user->is_active,
+            'roles' => $user->roles(),
+            'department_id' => $user->department_id,
+            'department_name' => $user->department?->name,
+            'designation_id' => $user->designation_id,
+            'designation_name' => $user->designation?->title,
+            'profile_photo_url' => $user->profile_photo_url,
+            'has_profile_photo' => $user->hasProfilePhoto(),
+        ]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(User $user)
@@ -131,7 +158,7 @@ class UserManagementController extends Controller
             return redirect()->route('admin.users.index')->with('error', 'The administrator account cannot be edited');
         }
 
-        $roles = ['admin', 'hr', 'director', 'dean', 'faculty'];
+        $roles = Role::getNames();
         $departments = Department::all();
         $designations = Designation::all();
         $user->load('userRoles');
@@ -155,7 +182,7 @@ class UserManagementController extends Controller
             'phone' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
             'roles' => 'required|array|min:1',
-            'roles.*' => 'in:admin,hr,director,dean,faculty',
+            'roles.*' => Rule::in(Role::getNames()),
             'is_active' => 'boolean',
             'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',

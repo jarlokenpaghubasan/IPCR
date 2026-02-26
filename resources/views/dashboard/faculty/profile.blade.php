@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     @vite(['resources/css/dashboard_faculty_profile.css', 'resources/js/dashboard_faculty_profile.js'])
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" style="visibility: hidden;">
     <!-- Navigation Header -->
     <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
@@ -204,290 +204,271 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         
-        <!-- Profile Header Card (full width) -->
-        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col lg:flex-row lg:items-start gap-6">
+        <!-- Profile Header Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Left: Profile Info -->
-                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 flex-1 min-w-0">
-                    <!-- Profile Photo with camera button -->
-                    <div class="flex-shrink-0 relative group">
+                <div class="flex flex-col sm:flex-row gap-6 flex-1">
+                    <!-- Avatar -->
+                    <div class="flex-shrink-0 relative group mx-auto sm:mx-0">
                         @if(auth()->user()->hasProfilePhoto())
                             <img src="{{ auth()->user()->profile_photo_url }}" 
                                  alt="{{ auth()->user()->name }}" 
-                                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-gray-200">
+                                 class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md">
                         @else
                             <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&size=128&background=3b82f6&color=fff" 
                                  alt="{{ auth()->user()->name }}" 
-                                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-gray-200">
+                                 class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md">
                         @endif
-                        <button onclick="openPhotoGalleryModal()" class="absolute bottom-1 right-1 bg-white border-2 border-gray-200 rounded-full w-8 h-8 flex items-center justify-center shadow-sm hover:bg-gray-50 transition" title="Manage photos">
-                            <i class="fas fa-camera text-gray-500 text-xs"></i>
+                        <button onclick="openPhotoGalleryModal()" class="absolute bottom-0 right-0 bg-white border-2 border-white rounded-full w-9 h-9 flex items-center justify-center shadow-md hover:bg-gray-50 transition text-gray-500 hover:text-blue-600" title="Manage photos">
+                            <i class="fas fa-camera text-sm"></i>
                         </button>
                     </div>
 
-                    <!-- Name, meta, badges -->
-                    <div class="flex-1 text-center sm:text-left min-w-0">
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate">{{ auth()->user()->name }}</h1>
-                            <button onclick="openEditProfileModal()" class="hidden sm:inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded-md hover:bg-blue-50 transition flex-shrink-0">
-                                <i class="fas fa-pen text-[10px]"></i> Edit
+                    <!-- Details -->
+                    <div class="flex-1 text-center sm:text-left space-y-2">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ auth()->user()->name }}</h1>
+                                <p class="text-gray-500 font-medium">{{ auth()->user()->email }}</p>
+                            </div>
+                            <button onclick="openEditProfileModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm self-center sm:self-start">
+                                <i class="fas fa-pen"></i> Edit
                             </button>
                         </div>
-                        <p class="text-sm text-gray-500 mt-0.5">{{ auth()->user()->email }}</p>
-                        @if(auth()->user()->department || auth()->user()->designation)
-                            <p class="text-sm text-gray-600 mt-1">
-                                {{ auth()->user()->designation->title ?? '' }}{{ auth()->user()->department && auth()->user()->designation ? ' &middot; ' : '' }}{{ auth()->user()->department->name ?? '' }}
-                            </p>
-                        @endif
-                        <div class="mt-2.5 flex flex-wrap gap-1.5 justify-center sm:justify-start">
-                            @forelse(auth()->user()->roles() as $role)
-                                <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    {{ ucfirst($role) }}
-                                </span>
-                            @empty
-                                <span class="inline-block bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    No roles assigned
-                                </span>
-                            @endforelse
-                            @if(auth()->user()->is_active)
-                                <span class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    <i class="fas fa-circle text-[5px] align-middle mr-0.5"></i>Active
+
+                        <div class="text-gray-600">
+                            {{ auth()->user()->designation->title ?? 'No Designation' }} &middot; {{ auth()->user()->department->name ?? 'No Department' }}
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 justify-center sm:justify-start pt-1">
+                            @foreach(auth()->user()->roles() as $role)
+                                @if(in_array($role, ['dean', 'director']))
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                        {{ ucfirst($role) }}
+                                    </span>
+                                @endif
+                            @endforeach
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                Faculty
+                            </span>
+                             @if(auth()->user()->is_active)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    Active
                                 </span>
                             @else
-                                <span class="inline-block bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                                    <i class="fas fa-circle text-[5px] align-middle mr-0.5"></i>Inactive
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    Inactive
                                 </span>
                             @endif
                         </div>
-                        <!-- Mobile edit button -->
-                        <button onclick="openEditProfileModal()" class="sm:hidden mt-3 inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-semibold">
-                            <i class="fas fa-pen text-xs"></i> Edit Profile
-                        </button>
                     </div>
                 </div>
 
-                <!-- Right: Account Activity (compact) -->
-                <div class="flex-shrink-0 lg:w-56 xl:w-64 w-full border-t lg:border-t-0 lg:border-l border-gray-200 pt-4 lg:pt-0 lg:pl-6">
-                    <h3 class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Activity</h3>
-                    <div class="space-y-2.5">
-                        <div class="flex items-center gap-2.5">
-                            <i class="fas fa-sign-in-alt text-blue-500 text-xs w-4 text-center"></i>
-                            <div class="min-w-0">
-                                <p class="text-[10px] text-gray-400 leading-tight">Last Login</p>
-                                <p class="text-xs font-semibold text-gray-700 truncate">
-                                    @if(auth()->user()->last_login_at)
-                                        {{ auth()->user()->last_login_at->format('M d, Y g:i A') }}
-                                    @else
-                                        Never
-                                    @endif
-                                </p>
-                            </div>
+                <!-- Right: Activity Stats (Vertical Divider on Desktop) -->
+                <div class="lg:w-72 flex-shrink-0 lg:border-l lg:border-gray-200 lg:pl-8 flex flex-col justify-center">
+                    <h3 class="text-sm font-semibold text-gray-900 mb-4">Activity</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Last Login</span>
+                            <span class="text-sm font-medium text-gray-900">
+                                @if(auth()->user()->last_login_at)
+                                    {{ auth()->user()->last_login_at->format('M d, Y g:i A') }}
+                                @else
+                                    Never
+                                @endif
+                            </span>
                         </div>
-                        <div class="flex items-center gap-2.5">
-                            <i class="fas fa-calendar-plus text-green-500 text-xs w-4 text-center"></i>
-                            <div>
-                                <p class="text-[10px] text-gray-400 leading-tight">Member Since</p>
-                                <p class="text-xs font-semibold text-gray-700">{{ auth()->user()->created_at->format('M d, Y') }}</p>
-                            </div>
+                        <div class="border-t border-gray-100"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Member Since</span>
+                            <span class="text-sm font-medium text-gray-900">{{ auth()->user()->created_at->format('M d, Y') }}</span>
                         </div>
-                        <div class="flex items-center gap-2.5">
-                            <i class="fas fa-images text-purple-500 text-xs w-4 text-center"></i>
-                            <div>
-                                <p class="text-[10px] text-gray-400 leading-tight">Photos</p>
-                                <p class="text-xs font-semibold text-gray-700"><span id="activityPhotoCount">{{ $photoCount }}</span> uploaded</p>
-                            </div>
+                        <div class="border-t border-gray-100"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Photos</span>
+                            <span class="text-sm font-medium text-gray-900"><span id="activityPhotoCount">{{ $photoCount }}</span> uploaded</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Profile Completeness (compact bar) -->
-            @if($profileCompleteness['percentage'] < 100)
-                <div class="mt-5 pt-4 border-t border-gray-100">
-                    <div class="flex items-center gap-3">
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between mb-1.5">
-                                <span class="text-xs font-medium text-gray-500">Profile {{ $profileCompleteness['percentage'] }}% complete <span class="text-gray-400">({{ $profileCompleteness['completed'] }}/{{ $profileCompleteness['total'] }})</span></span>
-                                <button onclick="toggleCompletenessDetails()" class="text-xs text-blue-600 hover:text-blue-700 font-medium" id="completenessToggle">
-                                    Show details <i class="fas fa-chevron-down text-[9px] ml-0.5 completeness-chevron transition-transform"></i>
-                                </button>
+            <!-- Profile Completeness Bar -->
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-sm font-medium text-gray-700">Profile Completeness</span>
+                    @if($profileCompleteness['percentage'] < 100)
+                        <button onclick="document.getElementById('completenessDetails').classList.toggle('hidden')" class="text-sm text-green-600 hover:text-green-700 font-medium">
+                            {{ $profileCompleteness['percentage'] }}% &middot; Complete Now
+                        </button>
+                    @else
+                        <span class="text-sm text-green-600 font-medium">Complete</span>
+                    @endif
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2.5">
+                    <div class="bg-green-600 h-2.5 rounded-full transition-all duration-500" style="width: {{ $profileCompleteness['percentage'] }}%"></div>
+                </div>
+                 <!-- Expandable Checklist -->
+                 <div id="completenessDetails" class="hidden mt-4 animate-slideDown bg-gray-50 rounded-xl p-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        @foreach($profileCompleteness['fields'] as $field)
+                            <div class="flex items-center gap-2 text-sm {{ $field['completed'] ? 'text-green-700' : 'text-gray-500' }}">
+                                <i class="fas {{ $field['completed'] ? 'fa-check-circle' : 'fa-circle' }} {{ $field['completed'] ? 'text-green-500' : 'text-gray-300' }}"></i>
+                                <span>{{ $field['label'] }}</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="h-2 rounded-full completeness-bar {{ $completenessColor === 'green' ? 'bg-green-500' : ($completenessColor === 'yellow' ? 'bg-yellow-500' : 'bg-red-500') }}" style="width: {{ $profileCompleteness['percentage'] }}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Expandable Checklist -->
-                    <div id="completenessDetails" class="hidden mt-3 animate-slideDown">
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            @foreach($profileCompleteness['fields'] as $field)
-                                <div class="flex items-center gap-1.5 text-xs {{ $field['completed'] ? 'text-green-600' : 'text-gray-400' }}">
-                                    <i class="fas {{ $field['completed'] ? 'fa-check-circle' : 'fa-circle' }} text-[10px]"></i>
-                                    <span>{{ $field['label'] }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                        <p class="text-xs text-gray-400 mt-2">
-                            <i class="fas fa-lightbulb text-yellow-400 mr-1"></i>
-                            Complete your profile to help administrators identify you.
-                        </p>
+                        @endforeach
                     </div>
                 </div>
-            @else
-                <div class="mt-5 pt-4 border-t border-gray-100">
-                    <div class="flex items-center gap-2">
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="h-2 rounded-full bg-green-500 completeness-bar" style="width: 100%"></div>
-                        </div>
-                        <span class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-green-600">
-                            <i class="fas fa-check-circle"></i> Complete
-                        </span>
-                    </div>
-                </div>
-            @endif
+            </div>
         </div>
 
-        <!-- Two Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            <!-- Left: Information -->
-            <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column (Information) -->
+            <div class="lg:col-span-2 space-y-6">
                 <!-- Personal Information -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-4">Personal Information</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6">Personal Information</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
                         <div>
-                            <label class="text-xs text-gray-400 block mb-0.5">Employee ID</label>
-                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->employee_id ?? 'Not assigned' }}</p>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Employee ID</label>
+                            <div class="text-gray-900 font-medium">
+                                {{ auth()->user()->employee_id ?? 'Not assigned' }}
+                            </div>
                         </div>
                         <div>
-                            <label class="text-xs text-gray-400 block mb-0.5">Username</label>
-                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->username }}</p>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Username</label>
+                            <div class="text-gray-900 font-medium">
+                                {{ auth()->user()->username }}
+                            </div>
                         </div>
                         <div>
-                            <label class="text-xs text-gray-400 block mb-0.5">Email Address</label>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email Address</label>
                             <div class="flex items-center gap-2">
-                                <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->email }}</p>
+                                <div class="text-gray-900 font-medium">{{ auth()->user()->email }}</div>
                                 @if(auth()->user()->email_verified_at)
-                                    <span class="text-[10px] text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-full"><i class="fas fa-check-circle mr-0.5"></i>Verified</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">Verified</span>
                                 @endif
                             </div>
                         </div>
                         <div>
-                            <label class="text-xs text-gray-400 block mb-0.5">Phone Number</label>
-                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->phone ?? 'Not provided' }}</p>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Phone Number</label>
+                            <div class="text-gray-900 font-medium">
+                                {{ auth()->user()->phone ?? 'Not provided' }}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Work Information -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h2 class="text-base sm:text-lg font-bold text-gray-900 mb-4">Work Information</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6">Work Information</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
                         <div>
-                            <label class="text-xs text-gray-400 block mb-0.5">Department</label>
-                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->department->name ?? 'Not assigned' }}</p>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Department</label>
+                            <div class="text-gray-900 font-medium">
+                                {{ auth()->user()->department->name ?? 'Not assigned' }}
+                            </div>
                         </div>
                         <div>
-                            <label class="text-xs text-gray-400 block mb-0.5">Designation</label>
-                            <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->designation->title ?? 'Not assigned' }}</p>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Designation</label>
+                            <div class="text-gray-900 font-medium">
+                                {{ auth()->user()->designation->title ?? 'Not assigned' }}
+                            </div>
+                        </div>
+                         <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Employment Status</label>
+                            <div class="text-gray-900 font-medium">
+                                Permanent
+                            </div>
+                        </div>
+                         <div>
+                            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Campus</label>
+                            <div class="text-gray-900 font-medium">
+                                Binangonan Campus
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right: Account & Security -->
-            <div class="lg:col-span-1 space-y-4 sm:space-y-6">
+            <!-- Right Column (Settings & Help) -->
+            <div class="lg:col-span-1 space-y-6">
                 <!-- Account & Security -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3">Account & Security</h3>
-                    
-                    <div class="space-y-2">
-                        <!-- Edit Profile -->
-                        <button onclick="openEditProfileModal()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-user-edit text-blue-600 text-xs"></i>
-                                </div>
-                                <span class="text-sm font-medium text-gray-700">Edit Profile</span>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6">Account & Security</h2>
+                    <div class="space-y-1">
+                        <button onclick="openEditProfileModal()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition text-left group">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:shadow-sm transition">
+                                <i class="fas fa-pen text-xs"></i>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500 transition"></i>
+                            <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Edit Profile</span>
                         </button>
 
-                        <!-- Change Password -->
-                        <button onclick="openChangePasswordModal()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-key text-amber-600 text-xs"></i>
-                                </div>
-                                <span class="text-sm font-medium text-gray-700">Change Password</span>
+                         <button onclick="openChangePasswordModal()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition text-left group">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:shadow-sm transition">
+                                <i class="fas fa-lock text-xs"></i>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500 transition"></i>
+                            <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Change Password</span>
                         </button>
 
-                        <!-- Manage Photos -->
-                        <button onclick="openPhotoGalleryModal()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-images text-purple-600 text-xs"></i>
+                        <button onclick="openPhotoGalleryModal()" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition text-left group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:shadow-sm transition">
+                                    <i class="fas fa-image text-xs"></i>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-medium text-gray-700">Manage Photos</span>
-                                    <span class="text-[10px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-full font-medium" id="sidebarPhotoCount">{{ $photoCount }}</span>
-                                </div>
+                                <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Manage Photos</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500 transition"></i>
+                            <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-semibold group-hover:bg-white">{{ $photoCount }}</span>
                         </button>
-
-                        <!-- Divider -->
-                        <div class="border-t border-gray-100 my-1"></div>
-
-                        <!-- Email Verification -->
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 {{ auth()->user()->email_verified_at ? 'bg-green-100' : 'bg-orange-100' }} rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-envelope {{ auth()->user()->email_verified_at ? 'text-green-600' : 'text-orange-500' }} text-xs"></i>
+                        
+                        <div class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">
+                             <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:shadow-sm transition">
+                                    <i class="fas fa-envelope text-xs"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-700">Email Verification</span>
+                                <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Email Verification</span>
                             </div>
                             @if(auth()->user()->email_verified_at)
-                                <span class="text-[10px] text-green-600 font-semibold bg-green-50 px-2 py-1 rounded-full">
-                                    <i class="fas fa-check-circle mr-0.5"></i> Verified
-                                </span>
+                                <span class="text-green-600 text-xs font-semibold">Verified</span>
                             @else
-                                <button onclick="openEmailVerificationModal()" class="text-[10px] text-orange-600 hover:text-orange-700 font-semibold bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded-full transition">
-                                    <i class="fas fa-exclamation-triangle mr-0.5"></i> Verify
-                                </button>
+                                <button onclick="openEmailVerificationModal()" class="text-blue-600 hover:text-blue-700 text-xs font-semibold hover:underline">Verify</button>
                             @endif
                         </div>
 
-                        <!-- Roles -->
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-user-tag text-indigo-600 text-xs"></i>
+                        <div class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">
+                             <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:shadow-sm transition">
+                                    <i class="fas fa-user-tag text-xs"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-700">Roles</span>
+                                <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Roles</span>
                             </div>
-                            <span class="text-[10px] text-gray-500 font-semibold bg-gray-200 px-2 py-1 rounded-full">
-                                {{ count(auth()->user()->roles()) }} assigned
-                            </span>
+                            <span class="text-gray-500 text-xs">{{ count(auth()->user()->roles()) }} assigned</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Need Help -->
-                <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-2">Need Help?</h3>
-                    <p class="text-xs text-gray-500 mb-3">Contact the administrator for restricted information updates.</p>
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <p class="text-[10px] text-gray-400 mb-0.5">Administrator</p>
-                        <p class="text-sm font-medium text-gray-800"><i class="fas fa-envelope mr-1.5 text-gray-400"></i>admin@urs.edu.ph</p>
+                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600">
+                             <i class="fas fa-life-ring"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 mb-1">Need Help?</h3>
+                            <p class="text-sm text-gray-600 mb-3">If you have questions about your IPCR or profile, please contact support.</p>
+                            <a href="mailto:admin@urs.edu.ph" class="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                                admin@urs.edu.ph
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Photo Gallery Modal -->
@@ -742,9 +723,19 @@
         </div>
     </div>
 
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
     <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full animate-scale-in my-8">
+    <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full animate-scale-in max-h-[90vh] overflow-y-auto scrollbar-hide">
             <div class="bg-blue-50 border-b border-blue-200 px-6 py-4 flex items-center gap-3">
                 <div class="bg-blue-100 rounded-full p-3">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -971,5 +962,6 @@
         </div>
     </div>
 
+<script>document.body.style.visibility = 'visible';</script>
 </body>
 </html>

@@ -7,6 +7,29 @@
     <title>@yield('title', 'Admin Panel') - IPCR/OPCR Module</title>
     <link rel="icon" type="image/jpeg" href="{{ asset('images/urs_logo.jpg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script>
+        // Check local storage and system preference on page load
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,16 +39,16 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50">
-    <div class="flex min-h-screen bg-gray-50">
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" style="visibility: hidden;">
+    <div class="flex min-h-screen bg-gray-50 dark:bg-gray-900">
         <!-- Mobile Overlay -->
         <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden" onclick="toggleSidebar()"></div>
 
         <!-- Sidebar Navigation -->
-        <div id="sidebar" class="sidebar-hidden fixed xl:sticky xl:top-0 xl:h-screen inset-y-0 left-0 w-64 bg-white shadow-lg z-40 overflow-y-auto">
-            <div class="p-6 border-b">
-                <h1 class="text-xl font-bold text-gray-900">Admin Panel</h1>
-                <p class="text-sm text-gray-600">IPCR/OPCR Module</p>
+        <div id="sidebar" class="sidebar-hidden fixed xl:sticky xl:top-0 xl:h-screen inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-lg z-40 overflow-y-auto border-r dark:border-gray-700 transition-colors duration-200">
+            <div class="p-6 border-b dark:border-gray-700">
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">IPCR/OPCR Module</p>
             </div>
 
             <nav class="p-6 space-y-2">
@@ -33,37 +56,52 @@
 
                 <a href="{{ route('admin.dashboard') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition
-                   {{ $currentRoute === 'admin.dashboard' ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                   {{ $currentRoute === 'admin.dashboard' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400' }}">
                     <i class="fas fa-home w-5"></i>
                     <span>Dashboard</span>
                 </a>
 
                 <a href="{{ route('admin.users.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition
-                   {{ str_starts_with($currentRoute, 'admin.users') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                   {{ str_starts_with($currentRoute, 'admin.users') ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400' }}">
                     <i class="fas fa-users w-5"></i>
                     <span>User Management</span>
                 </a>
 
+                <a href="{{ route('admin.role-management.index') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-lg transition
+                   {{ str_starts_with($currentRoute, 'admin.role-management') ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400' }}">
+                    <i class="fas fa-sitemap w-5"></i>
+                    <span>Role & Dept Mgmt</span>
+                </a>
+
                 <a href="{{ route('admin.database.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition
-                   {{ str_starts_with($currentRoute, 'admin.database') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                   {{ str_starts_with($currentRoute, 'admin.database') ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400' }}">
                     <i class="fas fa-database w-5"></i>
                     <span>Database Management</span>
                 </a>
 
                 <a href="{{ route('admin.activity-logs.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition
-                   {{ str_starts_with($currentRoute, 'admin.activity-logs') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }}">
+                   {{ str_starts_with($currentRoute, 'admin.activity-logs') ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400' }}">
                     <i class="fas fa-clock-rotate-left w-5"></i>
                     <span>Activity Logs</span>
                 </a>
 
-                <hr class="my-4 border-gray-200">
+                <hr class="my-4 border-gray-200 dark:border-gray-700">
+
+                <button onclick="toggleDarkMode()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition text-left">
+                    <div class="w-5 flex justify-center">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block text-yellow-500"></i>
+                    </div>
+                    <span>Dark Mode</span>
+                </button>
 
                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                     @csrf
-                    <button type="submit" class="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition w-full">
+                    <button type="submit" class="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition w-full">
                         <i class="fas fa-sign-out-alt w-5"></i>
                         <span>Logout</span>
                     </button>
@@ -72,14 +110,18 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
             <!-- Top Header -->
-            <div class="bg-white border-b border-gray-200">
-                <div class="px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center gap-4">
-                    <button id="hamburgerBtn" onclick="toggleSidebar()" class="xl:hidden p-2 rounded-lg hover:bg-gray-100 transition">
-                        <i class="fas fa-bars text-gray-700 text-xl"></i>
-                    </button>
-                    @yield('header')
+            <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30 transition-colors duration-200">
+                <div class="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center gap-4">
+                    <div class="flex-1 flex items-center gap-4">
+                        <button id="hamburgerBtn" onclick="toggleSidebar()" class="xl:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-200">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <div class="flex-1 flex items-center justify-between gap-4">
+                             @yield('header')
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -106,5 +148,6 @@
 
     @stack('modals')
     @stack('scripts')
+<script>document.body.style.visibility = 'visible';</script>
 </body>
 </html>

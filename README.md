@@ -20,7 +20,101 @@ A comprehensive Individual Performance Commitment and Review (IPCR) management s
 - 🎨 **Tailwind CSS v4.0** for modern styling
 - 📸 **Cloudinary Photo Management** with crop, resize, and CDN delivery
 
-## ✨ Latest Updates (February 14, 2026)
+## ✨ Latest Changes (February 27, 2026)
+
+### 🆕 New Files Added
+
+#### 🔐 Role & Permission Management System
+A brand-new Role & Permission management module has been added to the admin panel.
+
+| File | Description |
+|------|-------------|
+| `app/Http/Controllers/Admin/RoleDesignationController.php` | New controller handling CRUD for roles and designations |
+| `app/Models/Permission.php` | New Eloquent model for the `permissions` table |
+| `app/Models/Role.php` | New Eloquent model for the `roles` table |
+| `app/Http/Middleware/PermissionMiddleware.php` | New middleware for granular, permission-based route protection |
+
+#### 🗄️ New Database Migrations
+
+| Migration File | Description |
+|------|-------------|
+| `database/migrations/2026_02_25_000001_create_roles_table.php` | Creates the `roles` table |
+| `database/migrations/2026_02_25_000002_change_user_roles_role_to_string.php` | Alters the `user_roles` table to store role as a string reference |
+| `database/migrations/2026_02_25_100001_create_permissions_table.php` | Creates the `permissions` table |
+| `database/migrations/2026_02_25_100002_create_role_permissions_table.php` | Creates the `role_permissions` pivot table |
+
+#### 🎨 New Views – Role Management
+- `resources/views/admin/role-management/` — New directory containing all Blade views for the Role & Designation management section
+
+---
+
+### 🔄 Modified Files
+
+#### 🧩 Backend – Controllers & Models
+
+| File | What Changed |
+|------|-------------|
+| `app/Http/Controllers/Admin/ActivityLogController.php` | Added export-to-text-file feature with date-range, user, and action filters |
+| `app/Http/Controllers/Admin/UserManagementController.php` | Refactored to support inline modal data APIs (view & edit) via AJAX |
+| `app/Models/User.php` | Extended with role/permission relationship methods for the new RBAC system |
+| `app/Services/EmployeeIdService.php` | Updated employee ID generation logic to align with new role/department structure |
+
+#### ⚙️ Application Bootstrap & Routing
+
+| File | What Changed |
+|------|-------------|
+| `bootstrap/app.php` | Registered `PermissionMiddleware` in the application middleware stack |
+| `routes/web.php` | Added new routes for role management, permission checks, and activity log export |
+
+#### 🎨 CSS Stylesheets
+
+| File | What Changed |
+|------|-------------|
+| `resources/css/admin_layout.css` | Polish updates: glassmorphic tab navigation, updated header typography, standardized table containers |
+| `resources/css/dashboard_faculty_index.css` | Refined faculty dashboard metric cards, progress bar, and section styles |
+
+#### 📜 JavaScript
+
+| File | What Changed |
+|------|-------------|
+| `resources/js/admin_layout.js` | Added AJAX modal handlers for viewing and editing users inline (no page reload) |
+| `resources/js/admin_users_index.js` | Updated to open/populate view & edit modals dynamically with fetched user data |
+
+#### 🖼️ Blade Views – Admin
+
+| File | What Changed |
+|------|-------------|
+| `resources/views/admin/activity-logs/index.blade.php` | Added export modal UI with date range, user, and action filters |
+| `resources/views/admin/database/index.blade.php` | UI refinements for consistency with updated admin layout |
+| `resources/views/admin/users/edit.blade.php` | Retained as standalone page; updated for modal compatibility |
+| `resources/views/admin/users/index.blade.php` | Added inline view & edit modal markup; removed standalone page redirects |
+| `resources/views/admin/users/show.blade.php` | Updated to serve as both standalone page and modal content source |
+
+#### 🖼️ Blade Views – Dashboards
+
+| File | What Changed |
+|------|-------------|
+| `resources/views/dashboard/admin/index.blade.php` | Updated dashboard metrics and UI polish |
+| `resources/views/dashboard/director/Index.blade.php` | Minor layout and styling updates |
+| `resources/views/dashboard/faculty/index.blade.php` | Redesigned metric cards, IPCR progress bar, performance overview, and notification sections |
+| `resources/views/dashboard/faculty/my-ipcrs.blade.php` | UI and interaction improvements to the My IPCRs listing page |
+| `resources/views/dashboard/faculty/profile.blade.php` | Profile page styling and section refinements |
+
+#### 🏗️ Shared Layout
+
+| File | What Changed |
+|------|-------------|
+| `resources/views/layouts/admin.blade.php` | Updated sidebar navigation to include the new Role Management link and section |
+
+#### 📦 Build Manifest
+
+| File | What Changed |
+|------|-------------|
+| `public/build/manifest.json` | Regenerated after new assets were added and existing assets were modified |
+
+---
+
+## ✨ Previous Updates (February 14, 2026)
 
 ### 🚀 Modular Admin Layout & SPA Navigation (February 14, 2026)
 

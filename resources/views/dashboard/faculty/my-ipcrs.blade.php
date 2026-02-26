@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @vite(['resources/css/dashboard_faculty_my-ipcrs.css', 'resources/js/dashboard_faculty_my-ipcrs.js'])
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" style="visibility: hidden;">
     <!-- Navigation Header -->
     <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
@@ -270,7 +270,7 @@
                             <div id="savedCopiesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 @foreach($savedIpcrs as $savedIpcr)
                                     <div class="group relative bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                                        <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div class="absolute top-4 right-4 transition-opacity">
                                             <button onclick="deleteSavedCopy({{ $savedIpcr->id }})" 
                                                     class="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors"
                                                     title="Delete Draft">
@@ -329,7 +329,7 @@
                             <div id="opcrSavedCopiesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 @foreach($savedOpcrs as $savedOpcr)
                                     <div class="group relative bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                                        <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div class="absolute top-4 right-4 transition-opacity">
                                             <button onclick="deleteOpcrSavedCopy({{ $savedOpcr->id }})" 
                                                     class="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors"
                                                     title="Delete Draft">
@@ -5604,5 +5604,6 @@
 
         @endif
     </script>
+<script>document.body.style.visibility = 'visible';</script>
 </body>
 </html>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Department;
+use App\Models\Role;
 
 class EmployeeIdService
 {
@@ -46,13 +47,31 @@ class EmployeeIdService
 
     /**
      * Generate a unique employee ID for HR or Director roles (no department code)
-     * Format: URS<YY>-<ROLE_CODE><5_DIGIT_RANDOM>
+     * Format: URS<YY>-<ROLE_ACRONYM><5_DIGIT_RANDOM>
      * Example: URS26-HRD12345 (HR), URS26-DIR12345 (Director)
      */
     public static function generateForHrOrDirector(array $roles): string
     {
-        // Determine role code based on priority (Director > HR)
-        $roleCode = in_array('director', $roles) ? 'DIR' : 'HRD';
+        // Determine role code from DB, with priority: Director > HR > first role
+        $roleCode = null;
+        $priorityRoles = ['director', 'hr'];
+        
+        foreach ($priorityRoles as $pRole) {
+            if (in_array($pRole, $roles)) {
+                $roleCode = Role::getAcronym($pRole);
+                break;
+            }
+        }
+        
+        // Fallback: use the acronym of the first role
+        if (!$roleCode && !empty($roles)) {
+            $roleCode = Role::getAcronym($roles[0]);
+        }
+        
+        // Final fallback if role not found in DB
+        if (!$roleCode) {
+            $roleCode = 'USR';
+        }
         
         $year = date('y'); // Last 2 digits of current year
         

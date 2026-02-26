@@ -1,40 +1,81 @@
 /* Admin Layout — Sidebar & Overlay */
-.sidebar-hidden {
-    display: none;
+
+/* Default: Sidebar is hidden off-screen on small screens */
+@media (max-width: 1279px) {
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 50; /* Higher than overlay's 30/40 */
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    }
+
+    #sidebar.sidebar-open { /* Use a positive class 'sidebar-open' instead of removing 'sidebar-hidden' for clarity, or invert logic */
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    /* We'll stick to 'sidebar-hidden' logic to match existing JS, but invert the CSS transforms */
+    /* If the class 'sidebar-hidden' REMOVED, it shows? NO, the JS toggles 'sidebar-hidden'. */
+    
+    /* Let's redefine based on the CURRENT JS logic: 
+       JS adds 'sidebar-hidden' to HIDE. Removes it to SHOW.
+    */
+    
+    #sidebar {
+        /* When NOT hidden (shown) */
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    #sidebar.sidebar-hidden {
+        /* When hidden */
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
+    }
 }
+
+/* Desktop: Sidebar is always visible */
 @media (min-width: 1280px) {
     .sidebar-hidden {
-        display: block !important;
+        /* On desktop, we ignore sidebar-hidden for the main layout, OR we use it to collapse? 
+           The blade file has it 'fixed xl:sticky'. 
+           Let's ensure it's visible. */
+        display: block !important; 
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
     }
     #sidebarOverlay {
         display: none !important;
     }
 }
 
-#sidebar {
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-@media (max-width: 1023px) {
-    #sidebar.sidebar-hidden {
-        transform: translateX(-100%);
-        opacity: 0;
-        pointer-events: none;
-    }
-    #sidebar:not(.sidebar-hidden) {
-        transform: translateX(0);
-        opacity: 1;
-        pointer-events: auto;
-    }
-}
 
 /* Overlay */
 #sidebarOverlay {
     transition: opacity 0.3s ease-in-out;
+    /* Ensure it's not display: none if we want to animate opacity. 
+       Tailwind 'hidden' sets display: none. We need to override or avoid it.
+       Since JS toggles 'hidden', we'll override it here for this specific ID.
+    */
+    display: block !important; /* Force block to allow opacity transition */
 }
 #sidebarOverlay.hidden {
     opacity: 0;
     pointer-events: none;
+    /* display: none;  <-- We DO NOT want this if we want to fade out. 
+       But wait, if we don't display:none, it might block clicks if z-index is high? 
+       pointer-events: none handles clicks. 
+       z-index is managed.
+    */
 }
 #sidebarOverlay:not(.hidden) {
     opacity: 1;

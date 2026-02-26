@@ -94,6 +94,25 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has a specific permission through any of their roles.
+     * Admin role bypasses all permission checks.
+     */
+    public function hasPermission(string $permissionKey): bool
+    {
+        // Admin bypasses all permission checks
+        if ($this->hasRole('admin')) {
+            return true;
+        }
+
+        $userRoleNames = $this->roles();
+        return Role::whereIn('name', $userRoleNames)
+            ->whereHas('permissions', function ($q) use ($permissionKey) {
+                $q->where('key', $permissionKey);
+            })
+            ->exists();
+    }
+
+    /**
      * Assign a role to user
      */
     public function assignRole($role)

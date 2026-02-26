@@ -7,7 +7,7 @@
     <link rel="icon" type="image/jpeg" href="{{ asset('images/urs_logo.jpg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" style="visibility: hidden;">
     <nav class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold text-gray-900">Director Dashboard</h1>
@@ -24,5 +24,6 @@
             <p class="text-gray-500 text-sm mt-2">Director Dashboard - Content coming soon</p>
         </div>
     </div>
+<script>document.body.style.visibility = 'visible';</script>
 </body>
 </html>

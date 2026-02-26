@@ -1,6 +1,6 @@
 {
   "resources/css/admin_layout.css": {
-    "file": "assets/admin_layout-CMBjNTH_.css",
+    "file": "assets/admin_layout-Cx2tAoPo.css",
     "src": "resources/css/admin_layout.css",
     "isEntry": true,
     "name": "admin_layout",
@@ -63,7 +63,7 @@
     ]
   },
   "resources/css/dashboard_faculty_index.css": {
-    "file": "assets/dashboard_faculty_index-VbUmN1Cs.css",
+    "file": "assets/dashboard_faculty_index-BoecXjVO.css",
     "src": "resources/css/dashboard_faculty_index.css",
     "isEntry": true,
     "name": "dashboard_faculty_index",
@@ -90,7 +90,7 @@
     ]
   },
   "resources/js/admin_layout.js": {
-    "file": "assets/admin_layout-BCJPn_JP.js",
+    "file": "assets/admin_layout-C3nIUowC.js",
     "name": "admin_layout",
     "src": "resources/js/admin_layout.js",
     "isEntry": true

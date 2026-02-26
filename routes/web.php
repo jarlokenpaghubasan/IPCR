@@ -10,6 +10,7 @@ use App\Http\Controllers\Dashboard\AdminDashboardController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\PhotoController;
 use App\Http\Controllers\Admin\DatabaseManagementController;
+use App\Http\Controllers\Admin\RoleDesignationController;
 use App\Http\Controllers\Faculty\IpcrTemplateController;
 use App\Http\Controllers\Faculty\IpcrSubmissionController;
 use App\Http\Controllers\Faculty\IpcrSavedCopyController;
@@ -352,6 +353,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/panel')->name('admin.')
     
     Route::patch('users/{user}/toggle-active', [UserManagementController::class, 'toggleActive'])
         ->name('users.toggleActive');
+
+    Route::get('users/{user}/json', [UserManagementController::class, 'showJson'])
+        ->name('users.showJson');
     
     // Photo Management
     Route::post('users/{user}/photo/upload', [PhotoController::class, 'upload'])
@@ -377,4 +381,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/panel')->name('admin.')
 
     // Activity Logs
     Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('activity-logs/export', [\App\Http\Controllers\Admin\ActivityLogController::class, 'export'])->name('activity-logs.export');
+
+    // Role & Department Management
+    Route::get('role-management', [RoleDesignationController::class, 'index'])->name('role-management.index');
+    // Roles
+    Route::post('role-management/roles', [RoleDesignationController::class, 'storeRole'])->name('role-management.roles.store');
+    Route::put('role-management/roles/{role}', [RoleDesignationController::class, 'updateRole'])->name('role-management.roles.update');
+    Route::delete('role-management/roles/{role}', [RoleDesignationController::class, 'destroyRole'])->name('role-management.roles.destroy');
+    // Departments
+    Route::post('role-management/departments', [RoleDesignationController::class, 'storeDepartment'])->name('role-management.departments.store');
+    Route::put('role-management/departments/{department}', [RoleDesignationController::class, 'updateDepartment'])->name('role-management.departments.update');
+    Route::delete('role-management/departments/{department}', [RoleDesignationController::class, 'destroyDepartment'])->name('role-management.departments.destroy');
+    // Designations
+    Route::post('role-management/designations', [RoleDesignationController::class, 'storeDesignation'])->name('role-management.designations.store');
+    Route::put('role-management/designations/{designation}', [RoleDesignationController::class, 'updateDesignation'])->name('role-management.designations.update');
+    Route::delete('role-management/designations/{designation}', [RoleDesignationController::class, 'destroyDesignation'])->name('role-management.designations.destroy');
 });
