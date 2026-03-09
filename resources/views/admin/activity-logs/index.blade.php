@@ -52,77 +52,91 @@
         </div>
     </div>
 
-    {{-- Filters --}}
-    <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 sm:p-5 mb-6 transition-all duration-300">
-        <form method="GET" action="{{ route('admin.activity-logs.index') }}" class="flex flex-col xl:flex-row xl:items-end gap-5">
-            {{-- Search --}}
-            <div class="flex-1 min-w-[200px]">
-                <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Search</label>
-                <div class="relative group">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm group-focus-within:text-blue-500 transition-colors"></i>
+    {{-- Filters Section --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm mb-6 overflow-hidden transition-all duration-300">
+        <form id="filterForm" method="GET" action="{{ route('admin.activity-logs.index') }}">
+            {{-- Main Search Bar --}}
+            <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex flex-col md:flex-row gap-4 items-center">
+                {{-- Search Input --}}
+                <div class="relative flex-1 w-full group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors"></i>
+                    </div>
                     <input type="text" name="search" value="{{ request('search') }}"
-                           placeholder="Search logs..."
-                           class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all">
+                           placeholder="Search by action, description, or user..."
+                           class="block w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 transition-all shadow-sm">
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 w-full md:w-auto shrink-0 mt-1 md:mt-0">
+                    <button type="submit" class="flex-1 sm:flex-none px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm focus:ring-2 focus:ring-blue-500/50 hover:shadow">
+                        <i class="fas fa-filter"></i> <span>Filter</span>
+                    </button>
+                    
+                    @if(request()->anyFilled(['search', 'action', 'user_id', 'date_from', 'date_to']))
+                        <a href="{{ route('admin.activity-logs.index') }}" class="flex-1 sm:flex-none px-5 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fas fa-undo"></i> <span class="hidden sm:inline">Reset</span>
+                        </a>
+                    @endif
+
+                    <button type="button" onclick="openExportModal()" class="flex-1 sm:flex-none px-5 py-3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20 dark:hover:bg-emerald-500/20 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                        <i class="fas fa-file-export"></i> 
+                        <span>Export</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="flex flex-wrap md:flex-nowrap gap-5 w-full xl:w-auto">
-                {{-- Action --}}
-                <div class="flex-1 md:w-44 xl:w-36">
-                    <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Action</label>
-                    <div class="relative group">
-                        <select name="action" class="w-full pl-4 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all appearance-none cursor-pointer">
+            {{-- Advanced Filters (Grid) --}}
+            <div class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 bg-white dark:bg-gray-800">
+                {{-- Action Filter --}}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Action Type</label>
+                    <div class="relative">
+                        <select name="action" class="block w-full pl-4 pr-10 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
                             <option value="">All Actions</option>
                             @foreach($actions as $a)
                                 <option value="{{ $a }}" {{ request('action') === $a ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $a)) }}</option>
                             @endforeach
                         </select>
-                        <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-[10px] pointer-events-none transition-transform group-hover:translate-y-0.5"></i>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 dark:text-gray-500">
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </div>
                     </div>
                 </div>
 
-                {{-- User --}}
-                <div class="flex-1 md:w-48 xl:w-44">
-                    <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">User</label>
-                    <div class="relative group">
-                        <select name="user_id" class="w-full pl-4 pr-10 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all appearance-none cursor-pointer">
+                {{-- User Filter --}}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">User</label>
+                    <div class="relative">
+                        <select name="user_id" class="block w-full pl-4 pr-10 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all appearance-none cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
                             <option value="">All Users</option>
                             @foreach($users as $u)
                                 <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                             @endforeach
                         </select>
-                        <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-[10px] pointer-events-none transition-transform group-hover:translate-y-0.5"></i>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 dark:text-gray-500">
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Dates --}}
-                <div class="flex gap-3 w-full md:w-auto">
-                    <div class="flex-1 md:w-36">
-                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">From</label>
+                {{-- Date From --}}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">From Date</label>
+                    <div class="relative">
                         <input type="date" name="date_from" value="{{ request('date_from') }}"
-                               class="w-full px-4 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all cursor-pointer">
-                    </div>
-                    <div class="flex-1 md:w-36">
-                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">To</label>
-                        <input type="date" name="date_to" value="{{ request('date_to') }}"
-                               class="w-full px-4 py-2.5 bg-gray-50/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all cursor-pointer">
+                               class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
                     </div>
                 </div>
-            </div>
 
-            {{-- Buttons --}}
-            <div class="flex flex-wrap md:flex-nowrap gap-3 w-full xl:w-auto mt-2 xl:mt-0">
-                <button type="submit" class="flex-1 xl:flex-none px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-95">
-                    <i class="fas fa-filter"></i> Filter
-                </button>
-                @if(request()->anyFilled(['search', 'action', 'user_id', 'date_from', 'date_to']))
-                    <a href="{{ route('admin.activity-logs.index') }}" class="flex-1 xl:flex-none px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                        <i class="fas fa-undo"></i> Reset
-                    </a>
-                @endif
-                <button type="button" onclick="openExportModal()" class="flex-1 xl:flex-none px-6 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400 dark:hover:border-emerald-800/30 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm active:scale-95 whitespace-nowrap min-w-[110px]">
-                    <i class="fas fa-file-export"></i> Export
-                </button>
+                {{-- Date To --}}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">To Date</label>
+                    <div class="relative">
+                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                               class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900 dark:text-white transition-all cursor-pointer hover:border-gray-300 dark:hover:border-gray-500">
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -400,5 +414,28 @@
     document.getElementById('exportModal').addEventListener('click', function(e) {
         if (e.target === this) closeExportModal();
     });
+
+    // Real-time filter auto-submit
+    (function () {
+        const form = document.getElementById('filterForm');
+        if (!form) return;
+
+        // Debounced submit for the search text input
+        const searchInput = form.querySelector('input[name="search"]');
+        let searchTimer;
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => form.submit(), 500);
+            });
+        }
+
+        // Instant submit for selects and date inputs
+        form.querySelectorAll('select, input[type="date"]').forEach(function (el) {
+            el.addEventListener('change', function () {
+                form.submit();
+            });
+        });
+    })();
 </script>
 @endpush

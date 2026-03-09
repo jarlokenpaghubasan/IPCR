@@ -6,6 +6,7 @@ use App\Notifications\EmailVerificationNotification;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 class EmailVerificationController extends Controller
@@ -41,11 +42,11 @@ class EmailVerificationController extends Controller
         // Generate 6-digit code
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Store code in database
+        // Store hashed code in database
         DB::table('email_verifications')->updateOrInsert(
             ['user_id' => $user->id],
             [
-                'code' => $code,
+                'code' => Hash::make($code),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]
@@ -110,8 +111,8 @@ class EmailVerificationController extends Controller
             ], 400);
         }
 
-        // Verify code
-        if ($verification->code !== $request->code) {
+        // Verify code using hash comparison
+        if (!Hash::check($request->code, $verification->code)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid verification code. Please check and try again.'

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\HtmlSanitizer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,6 +14,8 @@ class OpcrSubmission extends Model
         'school_year',
         'semester',
         'table_body_html',
+        'noted_by',
+        'approved_by',
         'so_count_json',
         'status',
         'is_active',
@@ -24,6 +27,14 @@ class OpcrSubmission extends Model
         'so_count_json' => 'array',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Sanitize table_body_html before saving to prevent XSS.
+     */
+    public function setTableBodyHtmlAttribute($value)
+    {
+        $this->attributes['table_body_html'] = HtmlSanitizer::sanitize($value);
+    }
 
     public function user(): BelongsTo
     {

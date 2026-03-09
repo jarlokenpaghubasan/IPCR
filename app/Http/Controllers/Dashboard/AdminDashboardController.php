@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\IpcrSubmission;
+use App\Models\AdminNotification;
+use App\Models\UpcomingDeadline;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -24,10 +26,23 @@ class AdminDashboardController extends Controller
             ->orderByDesc('submitted_at')
             ->get();
 
+        $notifications = AdminNotification::active()
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
+        $deadlines = UpcomingDeadline::active()
+            ->upcoming()
+            ->orderBy('deadline_date')
+            ->limit(5)
+            ->get();
+
         return view('dashboard.admin.index', [
             'departments' => $departments,
             'submissions' => $submissions,
             'selectedDepartmentId' => $departmentId,
+            'notifications' => $notifications,
+            'deadlines' => $deadlines,
         ]);
     }
 }

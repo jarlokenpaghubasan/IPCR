@@ -12,126 +12,87 @@ use App\Services\ActivityLogService;
 class LoginController extends Controller
 {
     /**
-     * Show login selection page
+     * Show the unified login form.
      */
-    public function showLoginSelection()
+    public function showLoginForm()
     {
-        return view('auth.login-selection');
+        return view('auth.login');
     }
 
     /**
-     * Show login form for specific role
-     */
-    public function showLoginForm($role)
-    {
-        $validRoles = ['admin', 'director', 'faculty'];
-        
-        if (!in_array($role, $validRoles)) {
-            return redirect()->route('login.selection')->with('error', 'Invalid role selected');
-        }
-
-        return view('auth.login', compact('role'));
-    }
-
-    /**
-     * Handle login
+     * Handle login — auto-detect the user's primary role.
      */
     public function login(Request $request)
     {
         $credentials = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
-            'role' => 'required|in:admin,director,faculty',
         ]);
 
-        // Find user by username
         $user = User::where('username', $credentials['username'])->first();
 
-        // Check if user exists and password is correct
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return back()->withErrors([
                 'username' => 'Invalid username or password',
             ]);
         }
 
-        // Check if user is active
         if (!$user->is_active) {
             return back()->withErrors([
                 'username' => 'Your account is inactive',
             ]);
         }
 
-        // Check if user has the selected role
-        if (!$this->userHasSelectedRole($user, $credentials['role'])) {
+        $primaryRole = $user->getPrimaryRole();
+
+        if (!$primaryRole) {
             return back()->withErrors([
-                'username' => 'You do not have the ' . ucfirst($credentials['role']) . ' role',
+                'username' => 'No role assigned to your account. Please contact an administrator.',
             ]);
         }
 
-        // Check if the role has dashboard access permission (admin always bypasses)
+        // Check dashboard permission (admin always bypasses)
         if (!$user->hasRole('admin')) {
             $dashboardPermissionMap = [
                 'faculty'  => 'faculty.dashboard',
-                'dean'     => 'dean.dashboard',
+                'dean'     => 'faculty.dashboard',
                 'director' => 'director.dashboard',
-                'admin'    => 'admin.dashboard',
             ];
 
-            $permissionKey = $dashboardPermissionMap[$credentials['role']] ?? null;
+            $permissionKey = $dashboardPermissionMap[$primaryRole] ?? null;
             if ($permissionKey && !$user->hasPermission($permissionKey)) {
                 return back()->withErrors([
-                    'username' => 'Your ' . ucfirst($credentials['role']) . ' role does not have dashboard access. Please contact an administrator.',
+                    'username' => 'Your account does not have dashboard access. Please contact an administrator.',
                 ]);
             }
         }
 
-        // Update last login timestamp
-        $user->update([
-            'last_login_at' => now(),
-        ]);
+        $user->update(['last_login_at' => now()]);
 
-        // Log user in
         Auth::login($user);
         $request->session()->regenerate();
 
-        // Log activity
-        ActivityLogService::log('login', 'Logged in as ' . $credentials['role'], $user);
+        ActivityLogService::log('login', 'Logged in as ' . $primaryRole, $user);
 
-        // Redirect to appropriate dashboard
-        return $this->redirectToDashboard($credentials['role']);
+        return $this->redirectToDashboard($primaryRole);
     }
 
     /**
-     * Redirect to appropriate dashboard based on role
+     * Redirect to appropriate dashboard based on role.
      */
-    private function redirectToDashboard($role)
+    private function redirectToDashboard(string $role)
     {
-        switch ($role) {
-            case 'admin':
-                return redirect()->route('admin.dashboard')->header('Turbo-Visit-Control', 'reload');
-            case 'director':
-                return redirect()->route('director.dashboard')->header('Turbo-Visit-Control', 'reload');
-            case 'faculty':
-                return redirect()->route('faculty.dashboard')->header('Turbo-Visit-Control', 'reload');
-            default:
-                return redirect()->route('login.selection')->header('Turbo-Visit-Control', 'reload');
-        }
+        $route = match ($role) {
+            'admin'    => 'admin.dashboard',
+            'director' => 'director.dashboard',
+            default    => 'faculty.dashboard',
+        };
+
+        return redirect()->route($route)->header('Turbo-Visit-Control', 'reload');
     }
 
     /**
-     * Allow dean accounts to authenticate via faculty login.
-     */
-    private function userHasSelectedRole(User $user, string $role): bool
-    {
-        if ($role === 'faculty') {
-            return $user->hasAnyRole(['faculty', 'dean']);
-        }
-
-        return $user->hasRole($role);
-    }
-
-    /**
-     * Logout user
+     * Logout user.
      */
     public function logout(Request $request)
     {
@@ -142,6 +103,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect()->route('login.selection')->with('success', 'Logged out successfully');
+        return redirect()->route('login')->with('success', 'Logged out successfully');
     }
 }

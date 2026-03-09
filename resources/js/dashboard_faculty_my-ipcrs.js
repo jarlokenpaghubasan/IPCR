@@ -78,6 +78,10 @@ window.switchTab = function (tab) {
     const submitIpcrSection = document.getElementById('submitIpcrSection');
     const submitOpcrSection = document.getElementById('submitOpcrSection');
     
+    // Header Create Button (single dynamic button)
+    const headerCreateDraftBtn = document.getElementById('headerCreateDraftBtn');
+    const headerCreateDraftBtnLabel = document.getElementById('headerCreateDraftBtnLabel');
+    
     // Update URL hash to remember tab state
     window.location.hash = tab;
 
@@ -95,6 +99,14 @@ window.switchTab = function (tab) {
             opcrTab.classList.remove('border-blue-600', 'text-blue-600');
             opcrTab.classList.add('border-transparent', 'text-gray-500');
         }
+
+        // Update Header Create Button for IPCR
+        if (headerCreateDraftBtn) {
+            headerCreateDraftBtn.onclick = openCreateIpcrModal;
+            headerCreateDraftBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+            headerCreateDraftBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        }
+        if (headerCreateDraftBtnLabel) headerCreateDraftBtnLabel.textContent = 'Create IPCR';
 
         // Show IPCR button area (includes saved copies), hide OPCR
         if (ipcrButtonArea) {
@@ -133,6 +145,12 @@ window.switchTab = function (tab) {
         // Deactivate IPCR tab
         ipcrTab.classList.remove('border-blue-600', 'text-blue-600');
         ipcrTab.classList.add('border-transparent', 'text-gray-500');
+
+        // Update Header Create Button for OPCR
+        if (headerCreateDraftBtn) {
+            headerCreateDraftBtn.onclick = openCreateOpcrModal;
+        }
+        if (headerCreateDraftBtnLabel) headerCreateDraftBtnLabel.textContent = 'Create OPCR';
 
         // Show OPCR button area (includes saved copies), hide IPCR
         if (ipcrButtonArea) {

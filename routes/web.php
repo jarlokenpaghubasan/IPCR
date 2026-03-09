@@ -11,12 +11,15 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\PhotoController;
 use App\Http\Controllers\Admin\DatabaseManagementController;
 use App\Http\Controllers\Admin\RoleDesignationController;
+use App\Http\Controllers\Admin\NotificationDeadlineController;
 use App\Http\Controllers\Faculty\IpcrTemplateController;
 use App\Http\Controllers\Faculty\IpcrSubmissionController;
+use App\Http\Controllers\Faculty\IpcrExportController;
 use App\Http\Controllers\Faculty\IpcrSavedCopyController;
 use App\Http\Controllers\Faculty\OpcrTemplateController;
 use App\Http\Controllers\Faculty\OpcrSubmissionController;
 use App\Http\Controllers\Faculty\OpcrSavedCopyController;
+use App\Http\Controllers\Faculty\OpcrExportController;
 use App\Http\Controllers\Dean\DeanReviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,20 +29,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', [LoginController::class, 'showLoginSelection'])
-    ->name('login.selection')
-    ->middleware('guest');
-
-Route::get('/login', function () {
-    return redirect()->route('login.selection');
-})->middleware('guest');
-
-Route::get('/login/{role}', [LoginController::class, 'showLoginForm'])
-    ->name('login.form')
+Route::get('/', [LoginController::class, 'showLoginForm'])
+    ->name('login')
     ->middleware('guest');
 
 Route::post('/login', [LoginController::class, 'login'])
-    ->name('login')
+    ->name('login.post')
     ->middleware('guest');
 
 Route::post('/logout', [LoginController::class, 'logout'])
@@ -53,7 +48,7 @@ Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPassw
 
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetCode'])
     ->name('password.email')
-    ->middleware('guest');
+    ->middleware(['guest', 'throttle:3,15']);
 
 Route::get('/verify-code', [PasswordResetController::class, 'showVerifyCodeForm'])
     ->name('password.verify.form')
@@ -61,7 +56,7 @@ Route::get('/verify-code', [PasswordResetController::class, 'showVerifyCodeForm'
 
 Route::post('/verify-code', [PasswordResetController::class, 'verifyCode'])
     ->name('password.verify')
-    ->middleware('guest');
+    ->middleware(['guest', 'throttle:5,15']);
 
 Route::get('/reset-password', [PasswordResetController::class, 'showResetPasswordForm'])
     ->name('password.reset.form')
@@ -175,6 +170,19 @@ Route::post('/faculty/ipcr/submissions/{id}/unsubmit', [IpcrSubmissionController
 Route::delete('/faculty/ipcr/submissions/{id}', [IpcrSubmissionController::class, 'destroy'])
     ->middleware(['auth', 'role:faculty,admin', 'permission:faculty.ipcr.submissions']);
 
+// IPCR Export Routes
+Route::get('/faculty/ipcr/submissions/{id}/export', [IpcrExportController::class, 'export'])
+    ->name('faculty.ipcr.submissions.export')
+    ->middleware(['auth', 'role:faculty', 'permission:faculty.ipcr.submissions']);
+
+Route::get('/faculty/ipcr/saved-copies/{id}/export', [IpcrExportController::class, 'exportSavedCopy'])
+    ->name('faculty.ipcr.saved-copies.export')
+    ->middleware(['auth', 'role:faculty', 'permission:faculty.ipcr.saved-copies']);
+
+Route::get('/faculty/ipcr/templates/{id}/export', [IpcrExportController::class, 'exportTemplate'])
+    ->name('faculty.ipcr.templates.export')
+    ->middleware(['auth', 'role:faculty', 'permission:faculty.ipcr.templates']);
+
 // IPCR Saved Copy Routes
 Route::get('/faculty/ipcr/saved-copies', [IpcrSavedCopyController::class, 'index'])
     ->name('faculty.ipcr.saved-copies.index')
@@ -247,6 +255,18 @@ Route::post('/faculty/opcr/submissions/{id}/unsubmit', [OpcrSubmissionController
 
 Route::delete('/faculty/opcr/submissions/{id}', [OpcrSubmissionController::class, 'destroy'])
     ->middleware(['auth', 'role:faculty,admin', 'permission:dean.opcr.submissions']);
+
+Route::get('/faculty/opcr/submissions/{id}/export', [OpcrExportController::class, 'export'])
+    ->name('faculty.opcr.submissions.export')
+    ->middleware(['auth', 'role:faculty', 'permission:dean.opcr.submissions']);
+
+Route::get('/faculty/opcr/saved-copies/{id}/export', [OpcrExportController::class, 'exportSavedCopy'])
+    ->name('faculty.opcr.saved-copies.export')
+    ->middleware(['auth', 'role:faculty', 'permission:dean.opcr.saved-copies']);
+
+Route::get('/faculty/opcr/templates/{id}/export', [OpcrExportController::class, 'exportTemplate'])
+    ->name('faculty.opcr.templates.export')
+    ->middleware(['auth', 'role:faculty', 'permission:dean.opcr.templates']);
 
 // OPCR Saved Copy Routes (Dean only)
 Route::get('/faculty/opcr/saved-copies', [OpcrSavedCopyController::class, 'index'])
@@ -407,4 +427,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/panel')->name('admin.')
         Route::put('role-management/designations/{designation}', [RoleDesignationController::class, 'updateDesignation'])->name('role-management.designations.update');
         Route::delete('role-management/designations/{designation}', [RoleDesignationController::class, 'destroyDesignation'])->name('role-management.designations.destroy');
     });
+
+    // Notifications & Deadlines Management
+    Route::get('notifications', [NotificationDeadlineController::class, 'index'])->name('notifications.index');
+    // Notification CRUD
+    Route::post('notifications', [NotificationDeadlineController::class, 'storeNotification'])->name('notifications.store');
+    Route::put('notifications/{notification}', [NotificationDeadlineController::class, 'updateNotification'])->name('notifications.update');
+    Route::patch('notifications/{notification}/toggle', [NotificationDeadlineController::class, 'toggleNotification'])->name('notifications.toggle');
+    Route::delete('notifications/{notification}', [NotificationDeadlineController::class, 'destroyNotification'])->name('notifications.destroy');
+    // Deadline CRUD
+    Route::post('deadlines', [NotificationDeadlineController::class, 'storeDeadline'])->name('deadlines.store');
+    Route::put('deadlines/{deadline}', [NotificationDeadlineController::class, 'updateDeadline'])->name('deadlines.update');
+    Route::patch('deadlines/{deadline}/toggle', [NotificationDeadlineController::class, 'toggleDeadline'])->name('deadlines.toggle');
+    Route::delete('deadlines/{deadline}', [NotificationDeadlineController::class, 'destroyDeadline'])->name('deadlines.destroy');
+    // API endpoints for dashboard widgets
+    Route::get('api/notifications', [NotificationDeadlineController::class, 'apiNotifications'])->name('api.notifications');
+    Route::get('api/deadlines', [NotificationDeadlineController::class, 'apiDeadlines'])->name('api.deadlines');
 });

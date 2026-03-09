@@ -43,6 +43,8 @@ class OpcrSavedCopyController extends Controller
                 'school_year' => 'required|string|max:255',
                 'semester' => 'required|string|max:255',
                 'table_body_html' => 'required|string',
+                'noted_by' => 'nullable|string|max:255',
+                'approved_by' => 'nullable|string|max:255',
             ]);
 
             $savedCopy = OpcrSavedCopy::create([
@@ -51,6 +53,8 @@ class OpcrSavedCopyController extends Controller
                 'school_year' => $request->school_year,
                 'semester' => $request->semester,
                 'table_body_html' => $request->table_body_html,
+                'noted_by' => $request->noted_by,
+                'approved_by' => $request->approved_by,
                 'saved_at' => now(),
             ]);
 
@@ -107,6 +111,8 @@ class OpcrSavedCopyController extends Controller
                 'school_year' => 'required|string|max:255',
                 'semester' => 'required|string|max:255',
                 'table_body_html' => 'required|string',
+                'noted_by' => 'nullable|string|max:255',
+                'approved_by' => 'nullable|string|max:255',
             ]);
 
             $savedCopy->update([
@@ -114,6 +120,8 @@ class OpcrSavedCopyController extends Controller
                 'school_year' => $request->school_year,
                 'semester' => $request->semester,
                 'table_body_html' => $request->table_body_html,
+                'noted_by' => $request->noted_by,
+                'approved_by' => $request->approved_by,
                 'saved_at' => now(),
             ]);
 

@@ -20,6 +20,8 @@ class OpcrSubmissionController extends Controller
             'table_body_html' => ['required', 'string'],
             'so_count_json' => ['nullable'],
             'template_id' => ['nullable', 'integer'],
+            'noted_by' => ['nullable', 'string', 'max:255'],
+            'approved_by' => ['nullable', 'string', 'max:255'],
         ]);
 
         $soCountJson = $validated['so_count_json'] ?? null;
@@ -36,6 +38,8 @@ class OpcrSubmissionController extends Controller
             'school_year' => $validated['school_year'],
             'semester' => $validated['semester'],
             'table_body_html' => $validated['table_body_html'],
+            'noted_by' => $validated['noted_by'] ?? null,
+            'approved_by' => $validated['approved_by'] ?? null,
             'so_count_json' => $soCountJson,
             'status' => 'submitted',
             'is_active' => true,
@@ -117,6 +121,8 @@ class OpcrSubmissionController extends Controller
                 'semester' => ['nullable', 'string', 'max:50'],
                 'table_body_html' => ['nullable', 'string'],
                 'so_count_json' => ['nullable'],
+                'noted_by' => ['nullable', 'string', 'max:255'],
+                'approved_by' => ['nullable', 'string', 'max:255'],
             ]);
 
             $submission = OpcrSubmission::where('id', $id)
@@ -143,6 +149,12 @@ class OpcrSubmissionController extends Controller
                     $soCount = json_decode($soCount, true);
                 }
                 $updateData['so_count_json'] = $soCount;
+            }
+            if (array_key_exists('noted_by', $validated)) {
+                $updateData['noted_by'] = $validated['noted_by'];
+            }
+            if (array_key_exists('approved_by', $validated)) {
+                $updateData['approved_by'] = $validated['approved_by'];
             }
 
             $submission->update($updateData);
@@ -218,6 +230,7 @@ class OpcrSubmissionController extends Controller
         $submission->update([
             'status' => 'draft',
             'submitted_at' => null,
+            'is_active' => false,
         ]);
 
         ActivityLogService::log('opcr_unsubmitted', 'Unsubmitted OPCR: ' . $submission->title, $submission);

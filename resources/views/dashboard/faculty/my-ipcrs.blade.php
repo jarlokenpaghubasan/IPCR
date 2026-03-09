@@ -240,30 +240,35 @@
 
                 <!-- Create IPCR Section -->
                 <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
-                    <!-- Tab Header -->
+                    <!-- Tab Header & Quick Actions -->
                     <div class="border-b border-gray-200 mb-4 sm:mb-6">
-                        <div class="flex space-x-4 sm:space-x-8 overflow-x-auto">
-                            <button id="ipcrTab" class="pb-3 sm:pb-4 px-1 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm sm:text-base whitespace-nowrap" onclick="switchTab('ipcr')">
-                                Create IPCR
-                            </button>
-                            @if(auth()->user()->hasRole('dean'))
-                            <button id="opcrTab" class="pb-3 sm:pb-4 px-1 border-b-2 border-transparent font-semibold text-gray-500 text-sm sm:text-base whitespace-nowrap hover:text-gray-700" onclick="switchTab('opcr')">
-                                Create OPCR
-                            </button>
-                            @endif
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <!-- Tabs -->
+                            <div class="flex space-x-4 sm:space-x-8 overflow-x-auto">
+                                <button id="ipcrTab" class="pb-3 sm:pb-4 px-1 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm sm:text-base whitespace-nowrap" onclick="switchTab('ipcr')">
+                                    IPCR Drafts
+                                </button>
+                                @if(auth()->user()->hasRole('dean'))
+                                <button id="opcrTab" class="pb-3 sm:pb-4 px-1 border-b-2 border-transparent font-semibold text-gray-500 text-sm sm:text-base whitespace-nowrap hover:text-gray-700" onclick="switchTab('opcr')">
+                                    OPCR Drafts
+                                </button>
+                                @endif
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex items-center gap-3 pb-3 sm:pb-4 mt-2 sm:mt-0">
+                                <button id="headerCreateDraftBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm" onclick="openCreateIpcrModal()">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    <span id="headerCreateDraftBtnLabel">Create IPCR</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Create IPCR Button Area + Saved Copies -->
+                    <!-- IPCR Content Area -->
                     <div id="createIpcrButtonArea">
-                        <div class="py-6 sm:py-8 flex justify-center">
-                            <button class="create-ipcr-button" onclick="openCreateIpcrModal()">
-                                Create IPCR
-                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                            </button>
-                        </div>
                         <!-- IPCR Saved Copies (rendered via Blade) -->
                         <div id="ipcrSavedCopiesSection" class="@if($savedIpcrs->isEmpty()) hidden @endif">
                             <h3 class="text-sm font-semibold text-gray-700 mb-3">Saved Copies (Drafts)</h3>
@@ -312,17 +317,8 @@
                     </div>
 
                     @if(auth()->user()->hasRole('dean'))
-                    <!-- Create OPCR Button Area + Saved Copies -->
+                    <!-- OPCR Content Area -->
                     <div id="createOpcrButtonArea" class="hidden">
-                        <div class="py-6 sm:py-8 flex justify-center">
-                            <button class="create-ipcr-button" onclick="openCreateOpcrModal()">
-                                Create OPCR
-                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                            </button>
-                        </div>
-                        
                         <!-- OPCR Saved Copies (rendered via Blade) -->
                         <div id="opcrSavedCopiesSection" class="@if($savedOpcrs->isEmpty()) hidden @endif">
                             <h3 class="text-sm font-semibold text-gray-700 mb-3">Saved Copies (Drafts)</h3>
@@ -424,12 +420,12 @@
                                             <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-semibold text-gray-500">Approved By:</label>
-                                            <p class="text-sm font-semibold text-gray-900">{{ $directorUser ? $directorUser->name : 'N/A' }}</p>
+                                            <label class="block text-xs font-semibold text-gray-500 mb-1">Approved By:</label>
+                                            <input type="text" id="ipcrCreateApprovedBy" class="w-full text-sm font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ $directorUser ? $directorUser->name : '' }}" placeholder="Enter name" />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-semibold text-gray-500">Noted By:</label>
-                                            <p class="text-sm font-semibold text-gray-900">{{ $deanUser ? $deanUser->name : 'N/A' }}</p>
+                                            <label class="block text-xs font-semibold text-gray-500 mb-1">Noted By:</label>
+                                            <input type="text" id="ipcrCreateNotedBy" class="w-full text-sm font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ $deanUser ? $deanUser->name : '' }}" placeholder="Enter name" />
                                         </div>
                                     </div>
                                 </div>
@@ -495,12 +491,12 @@
                                             <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-semibold text-gray-500">Approved By:</label>
-                                            <p class="text-sm font-semibold text-gray-900">{{ $directorUser ? $directorUser->name : 'N/A' }}</p>
+                                            <label class="block text-xs font-semibold text-gray-500 mb-1">Approved By:</label>
+                                            <input type="text" id="opcrCreateApprovedBy" class="w-full text-sm font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ $directorUser ? $directorUser->name : '' }}" placeholder="Enter name" />
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-semibold text-gray-500">Noted By:</label>
-                                            <p class="text-sm font-semibold text-gray-900">{{ $deanUser ? $deanUser->name : 'N/A' }}</p>
+                                            <label class="block text-xs font-semibold text-gray-500 mb-1">Noted By:</label>
+                                            <input type="text" id="opcrCreateNotedBy" class="w-full text-sm font-semibold text-gray-900 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="{{ $deanUser ? $deanUser->name : '' }}" placeholder="Enter name" />
                                         </div>
                                     </div>
                                 </div>
@@ -546,11 +542,11 @@
                                     </div>
                                     <div class="flex flex-col sm:block">
                                         <span class="text-gray-600">Approved By:</span>
-                                        <span class="font-semibold text-gray-900 truncate">{{ $directorUser ? $directorUser->name : 'N/A' }}</span>
+                                        <input type="text" id="opcrDocApprovedBy" class="text-sm font-semibold text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-0 bg-transparent px-1 py-0 w-full" value="{{ $directorUser ? $directorUser->name : '' }}" placeholder="Enter name" />
                                     </div>
                                     <div class="flex flex-col sm:block">
                                         <span class="text-gray-600">Noted By:</span>
-                                        <span class="font-semibold text-gray-900 truncate">{{ $deanUser ? $deanUser->name : 'N/A' }}</span>
+                                        <input type="text" id="opcrDocNotedBy" class="text-sm font-semibold text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-0 bg-transparent px-1 py-0 w-full" value="{{ $deanUser ? $deanUser->name : '' }}" placeholder="Enter name" />
                                     </div>
                                 </div>
                             </div>
@@ -618,7 +614,10 @@
                                         </button>
                                     </div>
                                     <div class="flex gap-2 sm:gap-3">
-                                        <button type="button" onclick="saveOpcrAsTemplate()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-300 hover:bg-orange-100 whitespace-nowrap">
+                                        <button id="opcrExportBtn" type="button" onclick="exportOpcrDocument()" class="hidden flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 whitespace-nowrap flex items-center justify-center gap-1">
+                                            <i class="fas fa-file-excel"></i> Export
+                                        </button>
+                                        <button id="opcrSaveAsTemplateBtn" type="button" onclick="saveOpcrAsTemplate()" class="hidden flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-300 hover:bg-orange-100 whitespace-nowrap">
                                             <span class="hidden sm:inline">📋</span> Save as Template
                                         </button>
                                         <button type="button" onclick="closeOpcrDocument()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Close</button>
@@ -662,11 +661,11 @@
                                     </div>
                                     <div class="flex flex-col sm:block">
                                         <span class="text-gray-600">Approved By:</span>
-                                        <span class="font-semibold text-gray-900 truncate">{{ $directorUser ? $directorUser->name : 'N/A' }}</span>
+                                        <input type="text" id="ipcrDocApprovedBy" class="text-sm font-semibold text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-0 bg-transparent px-1 py-0 w-full" value="{{ $directorUser ? $directorUser->name : '' }}" placeholder="Enter name" />
                                     </div>
                                     <div class="flex flex-col sm:block">
                                         <span class="text-gray-600">Noted By:</span>
-                                        <span class="font-semibold text-gray-900 truncate">{{ $deanUser ? $deanUser->name : 'N/A' }}</span>
+                                        <input type="text" id="ipcrDocNotedBy" class="text-sm font-semibold text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-0 bg-transparent px-1 py-0 w-full" value="{{ $deanUser ? $deanUser->name : '' }}" placeholder="Enter name" />
                                     </div>
                                 </div>
                             </div>
@@ -735,7 +734,10 @@
                                         </button>
                                     </div>
                                     <div class="flex gap-2 sm:gap-3">
-                                        <button type="button" onclick="saveAsTemplate()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-300 hover:bg-orange-100 whitespace-nowrap">
+                                        <button id="ipcrExportBtn" type="button" onclick="exportIpcrDocument()" class="hidden flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 whitespace-nowrap flex items-center justify-center gap-1">
+                                            <i class="fas fa-file-excel"></i> Export
+                                        </button>
+                                        <button id="ipcrSaveAsTemplateBtn" type="button" onclick="saveAsTemplate()" class="hidden flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-300 hover:bg-orange-100 whitespace-nowrap">
                                             <span class="hidden sm:inline">📋</span> Save as Template
                                         </button>
                                         <button type="button" onclick="closeIpcrDocument()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Close</button>
@@ -771,11 +773,11 @@
                                     </div>
                                     <div class="flex flex-col sm:block">
                                         <span class="text-gray-600">Approved By:</span>
-                                        <span class="font-semibold text-gray-900 truncate">{{ $directorUser ? $directorUser->name : 'N/A' }}</span>
+                                        <input type="text" id="templatePreviewApprovedBy" class="text-sm font-semibold text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-0 bg-transparent px-1 py-0 w-full" value="{{ $directorUser ? $directorUser->name : '' }}" placeholder="Enter name" />
                                     </div>
                                     <div class="flex flex-col sm:block">
                                         <span class="text-gray-600">Noted By:</span>
-                                        <span class="font-semibold text-gray-900 truncate">{{ $deanUser ? $deanUser->name : 'N/A' }}</span>
+                                        <input type="text" id="templatePreviewNotedBy" class="text-sm font-semibold text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-0 bg-transparent px-1 py-0 w-full" value="{{ $deanUser ? $deanUser->name : '' }}" placeholder="Enter name" />
                                     </div>
                                 </div>
                             </div>
@@ -807,6 +809,9 @@
                             <!-- Action Buttons -->
                             <div class="px-2 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-300 sticky bottom-0 z-10">
                                 <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-2 sm:gap-3">
+                                    <button type="button" onclick="exportFromPreview()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 flex items-center justify-center gap-1">
+                                        <i class="fas fa-file-excel"></i> Export
+                                    </button>
                                     <button type="button" id="updateSubmissionBtn" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-green-600 hover:bg-green-700 hidden">Update Submission</button>
                                     <button type="button" id="saveCopyBtn" onclick="saveCopyFromPreview()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700">Edit IPCR</button>
                                     <button type="button" onclick="closeTemplatePreview()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Close</button>
@@ -1571,6 +1576,14 @@
             document.getElementById('displaySchoolYear').textContent = schoolYear;
             document.getElementById('displaySemester').textContent = semester === 'jan-jun' ? 'January - June' : 'July - December';
             
+            // Transfer noted/approved from create modal to document inputs
+            const approvedBy = document.getElementById('ipcrCreateApprovedBy')?.value || '';
+            const notedBy = document.getElementById('ipcrCreateNotedBy')?.value || '';
+            const docApproved = document.getElementById('ipcrDocApprovedBy');
+            const docNoted = document.getElementById('ipcrDocNotedBy');
+            if (docApproved) docApproved.value = approvedBy;
+            if (docNoted) docNoted.value = notedBy;
+            
             // Clear table body and reset title
             const tableBody = document.getElementById('ipcrTableBody');
             if (tableBody) {
@@ -1590,6 +1603,10 @@
             // Re-hide the rating/accomplishment/remarks columns for fresh creation
             hideIpcrTableColumns();
             
+            // Hide Export + Save as Template for fresh creation
+            document.getElementById('ipcrExportBtn')?.classList.add('hidden');
+            document.getElementById('ipcrSaveAsTemplateBtn')?.classList.add('hidden');
+
             // Hide modal and show IPCR document
             closeCreateIpcrModal();
             
@@ -1726,6 +1743,8 @@
                 formData.append('table_body_html', item.table_body_html || '');
                 formData.append('so_count_json', JSON.stringify(soCounts));
                 formData.append('template_id', selectedId); // Include template_id for document copying
+                formData.append('noted_by', item.noted_by || '');
+                formData.append('approved_by', item.approved_by || '');
                 
                 console.log('FormData entries:');
                 for (let pair of formData.entries()) {
@@ -1769,12 +1788,16 @@
             const title = titleInput ? titleInput.value.trim() : `IPCR for ${ipcrRoleLabel}`;
             const tableBody = document.getElementById('ipcrTableBody');
             const tableBodyHtml = tableBody ? buildTableBodySnapshot(tableBody) : '';
+            const notedBy = document.getElementById('ipcrDocNotedBy')?.value?.trim() || '';
+            const approvedBy = document.getElementById('ipcrDocApprovedBy')?.value?.trim() || '';
 
             const payload = {
                 title: title,
                 school_year: schoolYear || 'N/A',
                 semester: semester || 'N/A',
-                table_body_html: tableBodyHtml
+                table_body_html: tableBodyHtml,
+                noted_by: notedBy,
+                approved_by: approvedBy
             };
 
             const url = currentSavedCopyId 
@@ -1884,6 +1907,15 @@
             return counts;
         }
 
+        // ── Export IPCR saved copy from document container ──────────
+        window.exportIpcrDocument = function() {
+            if (!currentSavedCopyId) {
+                showAlertModal('info', 'Save First', 'Please save the document first before exporting.');
+                return;
+            }
+            window.location.href = `/faculty/ipcr/saved-copies/${currentSavedCopyId}/export`;
+        };
+
         window.saveAsTemplate = function() {
             const schoolYear = document.getElementById('displaySchoolYear')?.textContent?.trim();
             const semester = document.getElementById('displaySemester')?.textContent?.trim();
@@ -1891,6 +1923,8 @@
             const title = titleInput ? titleInput.value.trim() : `IPCR Template`;
             const tableBody = document.getElementById('ipcrTableBody');
             const tableBodyHtml = tableBody ? buildTableBodySnapshot(tableBody) : '';
+            const notedBy = document.getElementById('ipcrDocNotedBy')?.value?.trim() || '';
+            const approvedBy = document.getElementById('ipcrDocApprovedBy')?.value?.trim() || '';
 
             if (!tableBodyHtml || tableBodyHtml.trim() === '') {
                 showAlertModal('warning', 'Empty Template', 'Please add some content before saving as a template.');
@@ -1905,7 +1939,9 @@
                 school_year: schoolYear || 'N/A',
                 semester: semester || 'N/A',
                 table_body_html: tableBodyHtml,
-                so_count_json: soCounts
+                so_count_json: soCounts,
+                noted_by: notedBy,
+                approved_by: approvedBy
             };
 
             console.log('Saving template with counts:', soCounts);
@@ -2126,8 +2162,19 @@
                         if (displaySemester) displaySemester.textContent = item.semester;
                     }
 
+                    // Load noted/approved by
+                    const docNotedBy = document.getElementById('ipcrDocNotedBy');
+                    if (docNotedBy && item.noted_by) docNotedBy.value = item.noted_by;
+                    const docApprovedBy = document.getElementById('ipcrDocApprovedBy');
+                    if (docApprovedBy && item.approved_by) docApprovedBy.value = item.approved_by;
+
                     updateSoHeaderCountFromTable();
                     currentSavedCopyId = item.id;
+
+                    // Show Export + Save as Template when editing an existing saved copy
+                    document.getElementById('ipcrExportBtn')?.classList.remove('hidden');
+                    document.getElementById('ipcrSaveAsTemplateBtn')?.classList.remove('hidden');
+
                     document.getElementById('ipcrDocumentContainer').classList.remove('hidden');
                 } else {
                     showAlertModal('error', 'Not Found', 'Saved copy could not be found.');
@@ -2830,6 +2877,12 @@
                             if (displaySemester) displaySemester.textContent = template.semester;
                         }
 
+                        // Load noted/approved by
+                        const tpNotedBy = document.getElementById('templatePreviewNotedBy');
+                        if (tpNotedBy) tpNotedBy.value = template.noted_by || '';
+                        const tpApprovedBy = document.getElementById('templatePreviewApprovedBy');
+                        if (tpApprovedBy) tpApprovedBy.value = template.approved_by || '';
+
                         // Store template ID for save copy functionality
                         const templateIdField = document.getElementById('currentPreviewTemplateId');
                         if (templateIdField) {
@@ -2873,6 +2926,26 @@
                 showAlertModal('error', 'Error', 'An error occurred while loading the template.');
             });
         }
+
+        // ── Export from template preview modal (handles submissions + templates, IPCR + OPCR) ──
+        window.exportFromPreview = function() {
+            const submissionId = document.getElementById('currentSubmissionIdToUpdate')?.value;
+            const templateId = document.getElementById('currentPreviewTemplateId')?.value;
+            const docType = document.getElementById('currentSubmissionType')?.value || 'ipcr';
+
+            let url = '';
+            if (submissionId) {
+                // Exporting a submission
+                url = `/faculty/${docType}/submissions/${submissionId}/export`;
+            } else if (templateId) {
+                // Exporting a template
+                url = `/faculty/${docType}/templates/${templateId}/export`;
+            } else {
+                showAlertModal('info', 'Nothing to Export', 'No document is loaded to export.');
+                return;
+            }
+            window.location.href = url;
+        };
         
         function doCloseTemplatePreview() {
             // Clear submission tracking fields
@@ -3389,6 +3462,12 @@
             formData.append('table_body_html', tableBodyHtml);
             formData.append('_method', 'PUT');
 
+            // Include noted/approved by from templatePreview inputs
+            const tpNotedBy = document.getElementById('templatePreviewNotedBy');
+            if (tpNotedBy) formData.append('noted_by', tpNotedBy.value);
+            const tpApprovedBy = document.getElementById('templatePreviewApprovedBy');
+            if (tpApprovedBy) formData.append('approved_by', tpApprovedBy.value);
+
             // Determine which endpoint to use based on submission type
             const submissionType = document.getElementById('currentSubmissionType')?.value || 'ipcr';
             const baseUrl = submissionType === 'opcr' ? '/faculty/opcr/submissions' : '{{ url('faculty/ipcr/submissions') }}';
@@ -3812,6 +3891,12 @@
                             if (displaySemester) displaySemester.textContent = submission.semester;
                         }
 
+                        // Load noted/approved by
+                        const tpNotedBy = document.getElementById('templatePreviewNotedBy');
+                        if (tpNotedBy) tpNotedBy.value = submission.noted_by || '';
+                        const tpApprovedBy = document.getElementById('templatePreviewApprovedBy');
+                        if (tpApprovedBy) tpApprovedBy.value = submission.approved_by || '';
+
                         // Unhide QETA, Remarks, and Ratings columns
                         const previewModal = document.getElementById('templatePreviewModal');
                         if (previewModal) {
@@ -4046,6 +4131,14 @@
             document.getElementById('opcrDisplaySchoolYear').textContent = schoolYear;
             document.getElementById('opcrDisplaySemester').textContent = semester === 'jan-jun' ? 'January - June' : 'July - December';
 
+            // Transfer noted/approved from create modal to document inputs
+            const approvedBy = document.getElementById('opcrCreateApprovedBy')?.value || '';
+            const notedBy = document.getElementById('opcrCreateNotedBy')?.value || '';
+            const docApproved = document.getElementById('opcrDocApprovedBy');
+            const docNoted = document.getElementById('opcrDocNotedBy');
+            if (docApproved) docApproved.value = approvedBy;
+            if (docNoted) docNoted.value = notedBy;
+
             const tableBody = document.getElementById('opcrTableBody');
             if (tableBody) tableBody.innerHTML = '';
 
@@ -4057,6 +4150,10 @@
 
             // Re-hide rating/accomplishment/remarks columns for fresh creation
             hideOpcrTableColumns();
+
+            // Hide Export + Save as Template for fresh creation
+            document.getElementById('opcrExportBtn')?.classList.add('hidden');
+            document.getElementById('opcrSaveAsTemplateBtn')?.classList.add('hidden');
 
             closeCreateOpcrModal();
 
@@ -4248,12 +4345,16 @@
             const title = titleInput ? titleInput.value.trim() : `OPCR for ${ipcrRoleLabel}`;
             const tableBody = document.getElementById('opcrTableBody');
             const tableBodyHtml = tableBody ? buildTableBodySnapshot(tableBody) : '';
+            const notedBy = document.getElementById('opcrDocNotedBy')?.value?.trim() || '';
+            const approvedBy = document.getElementById('opcrDocApprovedBy')?.value?.trim() || '';
 
             const payload = {
                 title: title,
                 school_year: schoolYear || 'N/A',
                 semester: semester || 'N/A',
-                table_body_html: tableBodyHtml
+                table_body_html: tableBodyHtml,
+                noted_by: notedBy,
+                approved_by: approvedBy
             };
 
             const url = currentOpcrSavedCopyId
@@ -4274,8 +4375,11 @@
             .then(data => {
                 if (data.success) {
                     currentOpcrSavedCopyId = data.savedCopy.id;
-                    renderOpcrSavedCopies();
                     showAlertModal('success', 'Saved', data.message);
+                    // Reload page to ensure UI reflects database state
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } else {
                     showAlertModal('error', 'Error', data.message || 'Failed to save OPCR draft');
                 }
@@ -4286,6 +4390,15 @@
             });
         }
 
+        // ── Export OPCR saved copy from document container ──────────
+        window.exportOpcrDocument = function() {
+            if (!currentOpcrSavedCopyId) {
+                showAlertModal('info', 'Save First', 'Please save the document first before exporting.');
+                return;
+            }
+            window.location.href = `/faculty/opcr/saved-copies/${currentOpcrSavedCopyId}/export`;
+        };
+
         window.saveOpcrAsTemplate = function() {
             const schoolYear = document.getElementById('opcrDisplaySchoolYear')?.textContent?.trim();
             const semester = document.getElementById('opcrDisplaySemester')?.textContent?.trim();
@@ -4293,6 +4406,8 @@
             const title = titleInput ? titleInput.value.trim() : `OPCR Template`;
             const tableBody = document.getElementById('opcrTableBody');
             const tableBodyHtml = tableBody ? buildTableBodySnapshot(tableBody) : '';
+            const notedBy = document.getElementById('opcrDocNotedBy')?.value?.trim() || '';
+            const approvedBy = document.getElementById('opcrDocApprovedBy')?.value?.trim() || '';
 
             if (!tableBodyHtml || tableBodyHtml.trim() === '') {
                 showAlertModal('warning', 'Empty Template', 'Please add some content before saving as a template.');
@@ -4306,7 +4421,9 @@
                 school_year: schoolYear || 'N/A',
                 semester: semester || 'N/A',
                 table_body_html: tableBodyHtml,
-                so_count_json: soCounts
+                so_count_json: soCounts,
+                noted_by: notedBy,
+                approved_by: approvedBy
             };
 
             fetch('/faculty/opcr/templates/from-saved-copy', {
@@ -4464,6 +4581,12 @@
                     document.getElementById('opcrDisplaySemester').textContent = copy.semester;
                     document.getElementById('opcrDocumentTitle').value = copy.title;
                     
+                    // Load noted/approved by
+                    const docNotedBy = document.getElementById('opcrDocNotedBy');
+                    if (docNotedBy) docNotedBy.value = copy.noted_by || '';
+                    const docApprovedBy = document.getElementById('opcrDocApprovedBy');
+                    if (docApprovedBy) docApprovedBy.value = copy.approved_by || '';
+                    
                     const tableBody = document.getElementById('opcrTableBody');
                     if (tableBody && copy.table_body_html) {
                         tableBody.innerHTML = copy.table_body_html;
@@ -4474,6 +4597,10 @@
                         labelQetaInputs(tableBody);
                     }
                     
+                    // Show Export + Save as Template when editing an existing saved copy
+                    document.getElementById('opcrExportBtn')?.classList.remove('hidden');
+                    document.getElementById('opcrSaveAsTemplateBtn')?.classList.remove('hidden');
+
                     document.getElementById('opcrDocumentContainer').classList.remove('hidden');
                 } else {
                     showAlertModal('error', 'Not Found', 'OPCR saved copy could not be found.');
@@ -4520,38 +4647,40 @@
 
                 if (!soLabel) return;
 
-                // Add visual click indicator
-                row.style.cursor = 'pointer';
-                row.title = 'Click to view/attach supporting documents';
-
-                // Add a small document icon indicator
-                const existingBadge = row.querySelector('.so-doc-badge');
-                if (!existingBadge) {
-                    const td = row.querySelector('td');
-                    if (td) {
-                        const badge = document.createElement('span');
-                        badge.className = 'so-doc-badge ml-2 inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full';
-                        badge.innerHTML = '<i class="fas fa-paperclip text-[10px]"></i> <span class="so-doc-count">...</span>';
-                        badge.style.fontSize = '11px';
-                        
-                        const innerDiv = td.querySelector('div.flex') || td;
-                        innerDiv.appendChild(badge);
-
-                        // Fetch count async
-                        fetchSoDocCount(soLabel, badge.querySelector('.so-doc-count'));
-                    }
-                }
-
-                // Remove any old listeners by cloning
+                // Remove any old listeners by cloning (must happen BEFORE DOM manipulation below)
                 const newRow = row.cloneNode(true);
                 newRow.style.cursor = 'pointer';
                 newRow.title = 'Click to view/attach supporting documents';
                 newRow.addEventListener('click', function(e) {
-                    // Don't open modal if clicking on input fields
-                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
                     openSoDocumentsModal(soLabel, soDescription);
                 });
                 row.parentNode.replaceChild(newRow, row);
+
+                // Disable pointer events on inputs inside the SO row so clicks pass through to the TR handler
+                // (cells.forEach in viewSubmission sets pointerEvents=auto on all inputs, which blocks TR clicks)
+                newRow.querySelectorAll('input, textarea').forEach(function(el) {
+                    el.style.pointerEvents = 'none';
+                    el.style.cursor = 'pointer';
+                });
+
+                // Ensure the badge exists in the newRow and refresh its count
+                let badge = newRow.querySelector('.so-doc-badge');
+                if (!badge) {
+                    const td = newRow.querySelector('td');
+                    if (td) {
+                        badge = document.createElement('span');
+                        badge.className = 'so-doc-badge ml-2 inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full';
+                        badge.innerHTML = '<i class="fas fa-paperclip text-[10px]"></i> <span class="so-doc-count">...</span>';
+                        badge.style.fontSize = '11px';
+                        const innerDiv = td.querySelector('div.flex') || td;
+                        innerDiv.appendChild(badge);
+                    }
+                }
+                // Always refresh the count (covers existing badges baked into saved HTML)
+                if (badge) {
+                    const countEl = badge.querySelector('.so-doc-count');
+                    if (countEl) fetchSoDocCount(soLabel, countEl);
+                }
             });
         }
 
@@ -5121,6 +5250,12 @@
                     document.getElementById('opcrDisplaySchoolYear').textContent = template.school_year || 'N/A';
                     document.getElementById('opcrDisplaySemester').textContent = template.semester || 'N/A';
                     document.getElementById('opcrDocumentTitle').value = template.title;
+
+                    // Load noted/approved by
+                    const docNotedBy = document.getElementById('opcrDocNotedBy');
+                    if (docNotedBy && template.noted_by) docNotedBy.value = template.noted_by;
+                    const docApprovedBy = document.getElementById('opcrDocApprovedBy');
+                    if (docApprovedBy && template.approved_by) docApprovedBy.value = template.approved_by;
                     
                     const tableBody = document.getElementById('opcrTableBody');
                     if (tableBody && template.table_body_html) {
@@ -5176,6 +5311,12 @@
                             const displaySemester = document.getElementById('templatePreviewSemester');
                             if (displaySemester) displaySemester.textContent = template.semester;
                         }
+
+                        // Load noted/approved by
+                        const tpNotedBy = document.getElementById('templatePreviewNotedBy');
+                        if (tpNotedBy) tpNotedBy.value = template.noted_by || '';
+                        const tpApprovedBy = document.getElementById('templatePreviewApprovedBy');
+                        if (tpApprovedBy) tpApprovedBy.value = template.approved_by || '';
 
                         // Unhide all columns in the preview modal
                         const previewModal = document.getElementById('templatePreviewModal');
@@ -5292,6 +5433,8 @@
                 formData.append('table_body_html', item.table_body_html || '');
                 formData.append('so_count_json', JSON.stringify(soCounts));
                 formData.append('template_id', selectedId); // Include template_id for document copying
+                formData.append('noted_by', item.noted_by || '');
+                formData.append('approved_by', item.approved_by || '');
 
                 var submitResponse = await fetch('/faculty/opcr/submissions', {
                     method: 'POST',
@@ -5389,6 +5532,12 @@
                         var displaySemester = document.getElementById('templatePreviewSemester');
                         if (displaySemester) displaySemester.textContent = submission.semester;
                     }
+
+                    // Load noted/approved by
+                    var tpNotedBy = document.getElementById('templatePreviewNotedBy');
+                    if (tpNotedBy) tpNotedBy.value = submission.noted_by || '';
+                    var tpApprovedBy = document.getElementById('templatePreviewApprovedBy');
+                    if (tpApprovedBy) tpApprovedBy.value = submission.approved_by || '';
 
                     // Unhide all columns in the preview modal
                     var previewModal = document.getElementById('templatePreviewModal');

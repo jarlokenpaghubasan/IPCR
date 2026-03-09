@@ -16,7 +16,7 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, string $role): Response
     {
         if (!auth()->guard('web')->check()) {
-            return redirect()->route('login.selection');
+            return redirect()->route('login');
         }
 
         // Allow multiple roles separated by comma (e.g., 'role:faculty,admin')
@@ -28,6 +28,11 @@ class RoleMiddleware
         }
 
         $user = auth()->guard('web')->user();
+
+        // Admin users bypass all role checks (superuser)
+        if ($user->hasRole('admin')) {
+            return $next($request);
+        }
 
         if (!$user->hasAnyRole($allowedRoles)) {
             abort(403, 'You do not have permission to access this resource');

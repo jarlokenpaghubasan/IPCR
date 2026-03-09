@@ -17,7 +17,7 @@ class PermissionMiddleware
     public function handle(Request $request, Closure $next, ...$permissions): Response
     {
         if (!auth()->check()) {
-            return redirect()->route('login.selection');
+            return redirect()->route('login');
         }
 
         $user = auth()->user();

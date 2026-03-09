@@ -12,9 +12,9 @@ class PhotoService
 
     public function __construct()
     {
-        $cloudName = env('CLOUDINARY_CLOUD_NAME');
-        $apiKey = env('CLOUDINARY_API_KEY');
-        $apiSecret = env('CLOUDINARY_API_SECRET');
+        $cloudName = config('cloudinary.cloud_name');
+        $apiKey = config('cloudinary.api_key');
+        $apiSecret = config('cloudinary.api_secret');
 
         if ($cloudName && $apiKey && $apiSecret) {
             $this->cloudinary = new Cloudinary([

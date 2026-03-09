@@ -199,6 +199,8 @@ class OpcrTemplateController extends Controller
                 'semester' => 'nullable|string|max:255',
                 'table_body_html' => 'required|string',
                 'so_count_json' => 'nullable|array',
+                'noted_by' => 'nullable|string|max:255',
+                'approved_by' => 'nullable|string|max:255',
             ]);
 
             $existingTemplate = OpcrTemplate::where('user_id', Auth::id())
@@ -212,6 +214,8 @@ class OpcrTemplateController extends Controller
                     'period' => $request->school_year ? $request->school_year : 'N/A',
                     'table_body_html' => $request->table_body_html,
                     'so_count_json' => $request->so_count_json,
+                    'noted_by' => $request->noted_by,
+                    'approved_by' => $request->approved_by,
                 ]);
 
                 ActivityLogService::log('opcr_template_updated', 'Updated OPCR template from saved copy: ' . $existingTemplate->title, $existingTemplate);
@@ -233,6 +237,8 @@ class OpcrTemplateController extends Controller
                 'content' => json_encode([]),
                 'table_body_html' => $request->table_body_html,
                 'so_count_json' => $request->so_count_json,
+                'noted_by' => $request->noted_by,
+                'approved_by' => $request->approved_by,
             ]);
 
             ActivityLogService::log('opcr_template_created', 'Created OPCR template from saved copy: ' . $template->title, $template);
@@ -298,6 +304,8 @@ class OpcrTemplateController extends Controller
                 'school_year' => $template->school_year,
                 'semester' => $template->semester,
                 'table_body_html' => $template->table_body_html,
+                'noted_by' => $template->noted_by,
+                'approved_by' => $template->approved_by,
                 'saved_at' => now(),
             ]);
 

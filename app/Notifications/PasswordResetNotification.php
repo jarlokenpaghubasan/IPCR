@@ -38,15 +38,13 @@ class PasswordResetNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Password Reset Code - URS Binangonan')
-            ->greeting('Hello ' . $notifiable->first_name . ' ' . $notifiable->last_name . '!')
+            ->greeting('Hello ' . $notifiable->name . '!')
             ->line('We received a request to reset your password for your IPCR System account.')
             ->line('Please use the following verification code to reset your password:')
             ->line('# **' . $this->code . '**')
             ->line('This code will expire in **15 minutes**.')
             ->line('If you did not request a password reset, please ignore this email. Your password will remain unchanged.')
-            ->salutation('Best regards,')
-            ->salutation('University of Rizal System - Binangonan Campus')
-            ->salutation('The John James');
+            ->salutation("Best regards,\nUniversity of Rizal System - Binangonan Campus\nIPCR System Team");
     }
 
     /**

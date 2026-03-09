@@ -20,6 +20,8 @@ class IpcrSubmissionController extends Controller
             'table_body_html' => ['required', 'string'],
             'so_count_json' => ['nullable'],
             'template_id' => ['nullable', 'integer'],
+            'noted_by' => ['nullable', 'string', 'max:255'],
+            'approved_by' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Decode so_count_json if it's a string
@@ -37,6 +39,8 @@ class IpcrSubmissionController extends Controller
             'school_year' => $validated['school_year'],
             'semester' => $validated['semester'],
             'table_body_html' => $validated['table_body_html'],
+            'noted_by' => $validated['noted_by'] ?? null,
+            'approved_by' => $validated['approved_by'] ?? null,
             'so_count_json' => $soCountJson,
             'status' => 'submitted',
             'is_active' => true,
@@ -118,6 +122,8 @@ class IpcrSubmissionController extends Controller
                 'semester' => ['nullable', 'string', 'max:50'],
                 'table_body_html' => ['nullable', 'string'],
                 'so_count_json' => ['nullable'],
+                'noted_by' => ['nullable', 'string', 'max:255'],
+                'approved_by' => ['nullable', 'string', 'max:255'],
             ]);
 
             $submission = IpcrSubmission::where('id', $id)
@@ -154,6 +160,16 @@ class IpcrSubmissionController extends Controller
                     $soCount = json_decode($soCount, true);
                 }
                 $updateData['so_count_json'] = $soCount;
+            }
+
+            // Noted By
+            if (array_key_exists('noted_by', $validated)) {
+                $updateData['noted_by'] = $validated['noted_by'];
+            }
+
+            // Approved By
+            if (array_key_exists('approved_by', $validated)) {
+                $updateData['approved_by'] = $validated['approved_by'];
             }
 
             \Log::info('Updating submission', [
@@ -251,6 +267,7 @@ class IpcrSubmissionController extends Controller
         $submission->update([
             'status' => 'draft',
             'submitted_at' => null,
+            'is_active' => false,
         ]);
 
         ActivityLogService::log('ipcr_unsubmitted', 'Unsubmitted IPCR: ' . $submission->title, $submission);

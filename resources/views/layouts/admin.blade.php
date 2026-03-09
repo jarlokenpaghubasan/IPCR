@@ -89,6 +89,21 @@
                     <span>Activity Logs</span>
                 </a>
 
+                <a href="{{ route('admin.notifications.index') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-lg transition
+                   {{ str_starts_with($currentRoute, 'admin.notifications') || str_starts_with($currentRoute, 'admin.deadlines') ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400' }}">
+                    <i class="fas fa-bell w-5"></i>
+                    <span>Notifications & Deadlines</span>
+                </a>
+
+                @if(auth()->user()->hasAnyRole(['faculty', 'dean']))
+                <a href="{{ route('faculty.dashboard') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                    <i class="fas fa-arrow-left w-5"></i>
+                    <span>Back to Faculty</span>
+                </a>
+                @endif
+
                 <hr class="my-4 border-gray-200 dark:border-gray-700">
 
                 <button onclick="toggleDarkMode()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition text-left">

@@ -8,6 +8,9 @@ use App\Models\IpcrSubmission;
 use App\Models\IpcrSavedCopy;
 use App\Models\OpcrSavedCopy;
 use App\Models\UserPhoto;
+use App\Models\SupportingDocument;
+use App\Models\AdminNotification;
+use App\Models\UpcomingDeadline;
 use App\Services\PhotoService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -23,11 +26,13 @@ class FacultyDashboardController extends Controller
         // Get the active submission for the user (fallback to latest submission)
         $activeSubmission = IpcrSubmission::where('user_id', auth()->id())
             ->where('is_active', true)
+            ->whereNotNull('submitted_at')
             ->orderBy('submitted_at', 'desc')
             ->first();
 
         if (!$activeSubmission) {
             $activeSubmission = IpcrSubmission::where('user_id', auth()->id())
+                ->whereNotNull('submitted_at')
                 ->orderBy('submitted_at', 'desc')
                 ->first();
         }
@@ -36,8 +41,11 @@ class FacultyDashboardController extends Controller
         $strategicObjectivesCount = 0;
         $coreFunctionsCount = 0;
         $supportFunctionsCount = 0;
+        $strategicObjectivesAccomplished = 0;
+        $coreFunctionsAccomplished = 0;
+        $supportFunctionsAccomplished = 0;
 
-        // Use JSON data from active submission if available
+        // Use JSON data from active submission for SO counts
         if ($activeSubmission && $activeSubmission->so_count_json) {
             \Log::info('Active submission found with SO counts', [
                 'submission_id' => $activeSubmission->id,
@@ -48,59 +56,270 @@ class FacultyDashboardController extends Controller
             $strategicObjectivesCount = $counts['strategic_objectives'] ?? 0;
             $coreFunctionsCount = $counts['core_functions'] ?? 0;
             $supportFunctionsCount = $counts['support_functions'] ?? 0;
-        } elseif ($activeSubmission && $activeSubmission->table_body_html) {
+        }
+
+        // Extract per-SO performance data (names, average ratings, accomplishment tracking)
+        $soPerformanceData = [];
+        if ($activeSubmission && $activeSubmission->table_body_html) {
             try {
                 $html = $activeSubmission->table_body_html;
                 $dom = new \DOMDocument();
                 libxml_use_internal_errors(true);
-                $dom->loadHTML('<table><tbody>' . $html . '</tbody></table>');
+                $dom->loadHTML('<meta charset="utf-8"><table><tbody>' . $html . '</tbody></table>');
                 libxml_clear_errors();
 
                 $rows = $dom->getElementsByTagName('tr');
                 $currentSection = null;
+                $currentSoLabel = null;
+                $currentSoName = null;
+                $currentRatings = [];
+                $currentRowCount = 0;
+                $currentFilledCount = 0;
+                $currentRows = [];
+                $pendingSubHeader = null; // Label from a gray sub-header row, stamped onto next data row
+
+                // Also count SOs from HTML if so_count_json was empty
+                $countFromHtml = !($activeSubmission->so_count_json);
+
+                $sectionMap = [
+                    'green' => 'strategic_objectives',
+                    'purple' => 'core_functions',
+                    'orange' => 'support_functions',
+                ];
+
+                $saveSo = function () use (&$soPerformanceData, &$currentSoLabel, &$currentSoName, &$currentRatings, &$currentSection, &$currentRowCount, &$currentFilledCount, &$currentRows, &$strategicObjectivesAccomplished, &$coreFunctionsAccomplished, &$supportFunctionsAccomplished) {
+                    if (!$currentSoLabel) return;
+
+                    $avg = count($currentRatings) > 0
+                        ? round(array_sum($currentRatings) / count($currentRatings), 2)
+                        : 0;
+
+                    // An SO is accomplished only when ALL its data rows have actual accomplishment filled
+                    $isAccomplished = ($currentRowCount > 0 && $currentFilledCount === $currentRowCount);
+
+                    $soPerformanceData[] = [
+                        'label'     => $currentSoLabel,
+                        'name'      => $currentSoName,
+                        'average'   => $avg,
+                        'section'   => $currentSection,
+                        'rows'      => $currentRows,
+                        'documents' => [],
+                    ];
+
+                    if ($isAccomplished) {
+                        if ($currentSection === 'strategic_objectives') $strategicObjectivesAccomplished++;
+                        elseif ($currentSection === 'core_functions') $coreFunctionsAccomplished++;
+                        elseif ($currentSection === 'support_functions') $supportFunctionsAccomplished++;
+                    }
+
+                    $currentSoLabel = null;
+                    $currentSoName = null;
+                    $currentRatings = [];
+                    $currentRowCount = 0;
+                    $currentFilledCount = 0;
+                    $currentRows = [];
+                };
 
                 foreach ($rows as $row) {
                     $classAttr = $row->attributes->getNamedItem('class');
                     $className = $classAttr ? $classAttr->nodeValue : '';
 
-                    if (str_contains($className, 'bg-green-100')) {
-                        $currentSection = 'strategic_objectives';
-                    } elseif (str_contains($className, 'bg-purple-100')) {
-                        $currentSection = 'core_functions';
-                    } elseif (str_contains($className, 'bg-orange-100')) {
-                        $currentSection = 'support_functions';
-                    } elseif (str_contains($className, 'bg-gray-100')) {
-                        $currentSection = null;
+                    // Detect section header
+                    $isSectionHeader = false;
+                    foreach ($sectionMap as $color => $sectionKey) {
+                        if (str_contains($className, "bg-{$color}-100")) {
+                            $saveSo();
+                            $currentSection = $sectionKey;
+                            $isSectionHeader = true;
+                            break;
+                        }
+                    }
+                    if ($isSectionHeader) continue;
+
+                    // Gray header (sub-section like "Preparation and Submission of:")
+                    // Store its label to be stamped onto the next data row as a visual divider
+                    if (str_contains($className, 'bg-gray-100')) {
+                        $grayInputs = $row->getElementsByTagName('input');
+                        $grayLabel = '';
+                        foreach ($grayInputs as $gi) {
+                            if ($gi->getAttribute('type') === 'text') {
+                                $grayLabel = trim($gi->getAttribute('value'));
+                                break;
+                            }
+                        }
+                        if (!$grayLabel) {
+                            $grayLabel = trim($row->textContent);
+                        }
+                        $pendingSubHeader = $grayLabel ?: null;
+                        continue;
                     }
 
-                    if ($currentSection && str_contains($className, 'bg-blue-100')) {
-                        if ($currentSection === 'strategic_objectives') {
-                            $strategicObjectivesCount++;
-                        } elseif ($currentSection === 'core_functions') {
-                            $coreFunctionsCount++;
-                        } elseif ($currentSection === 'support_functions') {
-                            $supportFunctionsCount++;
+                    $isSoHeader = str_contains($className, 'bg-blue-100');
+
+                    if ($isSoHeader) {
+                        $saveSo();
+
+                        // Count SOs from HTML fallback
+                        if ($countFromHtml && $currentSection) {
+                            if ($currentSection === 'strategic_objectives') $strategicObjectivesCount++;
+                            elseif ($currentSection === 'core_functions') $coreFunctionsCount++;
+                            elseif ($currentSection === 'support_functions') $supportFunctionsCount++;
+                        }
+
+                        // Extract SO label and description
+                        $spans = $row->getElementsByTagName('span');
+                        $inputs = $row->getElementsByTagName('input');
+                        $soLabel = '';
+                        $soDesc = '';
+
+                        foreach ($spans as $span) {
+                            if (str_contains($span->getAttribute('class') ?: '', 'font-semibold')) {
+                                $soLabel = rtrim(trim($span->textContent), ':');
+                            }
+                        }
+
+                        foreach ($inputs as $input) {
+                            if ($input->getAttribute('type') === 'text') {
+                                $soDesc = trim($input->getAttribute('value'));
+                            }
+                        }
+
+                        $currentSoLabel = $soLabel ?: 'SO';
+                        $currentSoName = $soDesc
+                            ? strtoupper("$currentSoLabel. $soDesc")
+                            : strtoupper($currentSoLabel);
+                        continue;
+                    }
+
+                    // Data row — extract all columns
+                    if ($currentSoLabel) {
+                        $cells = $row->getElementsByTagName('td');
+                        if ($cells->length >= 3) {
+                            $currentRowCount++;
+
+                            $getCellText = function (\DOMElement $cell): string {
+                                $tas = $cell->getElementsByTagName('textarea');
+                                if ($tas->length > 0) return trim($tas->item(0)->textContent);
+                                $ins = $cell->getElementsByTagName('input');
+                                if ($ins->length > 0) return trim($ins->item(0)->getAttribute('value'));
+                                return trim($cell->textContent);
+                            };
+
+                            $mfo            = $cells->length > 0 ? $getCellText($cells->item(0)) : '';
+                            $successInd     = $cells->length > 1 ? $getCellText($cells->item(1)) : '';
+                            $accomplishment = $cells->length > 2 ? $getCellText($cells->item(2)) : '';
+                            $q = $e = $t = $a = '';
+
+                            if ($cells->length >= 7) {
+                                $q = $getCellText($cells->item(3));
+                                $e = $getCellText($cells->item(4));
+                                $t = $getCellText($cells->item(5));
+                                $a = $getCellText($cells->item(6));
+                                if (is_numeric($a) && (float) $a > 0) {
+                                    $currentRatings[] = (float) $a;
+                                }
+                            }
+
+                            if ($accomplishment !== '') $currentFilledCount++;
+
+                            $currentRows[] = [
+                                'mfo'               => $mfo,
+                                'success_indicator' => $successInd,
+                                'accomplishment'    => $accomplishment,
+                                'q' => $q,
+                                'e' => $e,
+                                't' => $t,
+                                'a' => $a,
+                                'sub_header'        => $pendingSubHeader, // null for most rows
+                            ];
+                            $pendingSubHeader = null; // Only stamp on the first row after the header
                         }
                     }
                 }
+
+                // Save the last SO
+                $saveSo();
+
+                // Recount from extracted data (overrides so_count_json which may not include gray sub-sections)
+                $strategicObjectivesCount = 0;
+                $coreFunctionsCount = 0;
+                $supportFunctionsCount = 0;
+                $strategicObjectivesAccomplished = 0;
+                $coreFunctionsAccomplished = 0;
+                $supportFunctionsAccomplished = 0;
+
+                foreach ($soPerformanceData as $soEntry) {
+                    $sec = $soEntry['section'] ?? null;
+                    if ($sec === 'strategic_objectives') {
+                        $strategicObjectivesCount++;
+                        if (!empty($soEntry['rows'])) {
+                            $allFilled = true;
+                            foreach ($soEntry['rows'] as $r) {
+                                if (trim($r['accomplishment'] ?? '') === '') { $allFilled = false; break; }
+                            }
+                            if ($allFilled) $strategicObjectivesAccomplished++;
+                        }
+                    } elseif ($sec === 'core_functions') {
+                        $coreFunctionsCount++;
+                        if (!empty($soEntry['rows'])) {
+                            $allFilled = true;
+                            foreach ($soEntry['rows'] as $r) {
+                                if (trim($r['accomplishment'] ?? '') === '') { $allFilled = false; break; }
+                            }
+                            if ($allFilled) $coreFunctionsAccomplished++;
+                        }
+                    } elseif ($sec === 'support_functions') {
+                        $supportFunctionsCount++;
+                        if (!empty($soEntry['rows'])) {
+                            $allFilled = true;
+                            foreach ($soEntry['rows'] as $r) {
+                                if (trim($r['accomplishment'] ?? '') === '') { $allFilled = false; break; }
+                            }
+                            if ($allFilled) $supportFunctionsAccomplished++;
+                        }
+                    }
+                }
+
+                // Attach supporting documents per SO label
+                // Query across both template and submission types (same logic as SupportingDocumentController::index)
+                // so documents uploaded on a draft or template are visible on the active submission dashboard
+                if (!empty($soPerformanceData)) {
+                    $docsByLabel = SupportingDocument::where('user_id', auth()->id())
+                        ->whereIn('documentable_type', ['ipcr_template', 'ipcr_submission'])
+                        ->orderBy('created_at', 'desc')
+                        ->get(['id', 'so_label', 'original_name', 'path', 'mime_type', 'file_size'])
+                        ->unique('path') // Deduplicate same Cloudinary file copied between template/submission
+                        ->groupBy('so_label');
+
+                    foreach ($soPerformanceData as &$soEntry) {
+                        $lbl = $soEntry['label'];
+                        $soEntry['documents'] = $docsByLabel->has($lbl)
+                            ? $docsByLabel[$lbl]->map(fn ($d) => [
+                                'id'             => $d->id,
+                                'original_name'  => $d->original_name,
+                                'path'           => $d->path,
+                                'mime_type'      => $d->mime_type,
+                                'file_size_human'=> $d->file_size_human,
+                                'download_url'   => route('faculty.supporting-documents.download', $d->id),
+                            ])->values()->toArray()
+                            : [];
+                    }
+                    unset($soEntry);
+                }
+
             } catch (\Throwable $e) {
-                \Log::error('Failed to parse SO counts from submission table_body_html', [
-                    'submission_id' => $activeSubmission->id,
+                \Log::error('Failed to extract SO performance data', [
+                    'submission_id' => $activeSubmission->id ?? null,
                     'error' => $e->getMessage(),
                 ]);
             }
         } else {
-            \Log::info('No active submission or no so_count_json', [
+            \Log::info('No active submission or no table_body_html', [
                 'has_submission' => $activeSubmission ? true : false,
                 'submission_id' => $activeSubmission->id ?? null,
                 'so_count_json' => $activeSubmission->so_count_json ?? null,
             ]);
         }
-
-        // TODO: Replace with actual accomplished counts from database
-        $strategicObjectivesAccomplished = 0;
-        $coreFunctionsAccomplished = 0;
-        $supportFunctionsAccomplished = 0;
 
         // Format the text display (e.g., "0/3" where 0 is accomplished and 3 is total SOs)
         // Show "N/A" when total is 0, otherwise show "accomplished/total"
@@ -130,6 +349,21 @@ class FacultyDashboardController extends Controller
         $ipcrPercentageValue = 0;
         $ipcrPercentageText = "0%";
 
+        // Fetch notifications and deadlines from database
+        $userRole = auth()->user()->getPrimaryRole() ?? 'faculty';
+        $notifications = AdminNotification::active()
+            ->forAudience($userRole)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        $deadlines = UpcomingDeadline::active()
+            ->upcoming()
+            ->forAudience($userRole)
+            ->orderBy('deadline_date')
+            ->limit(5)
+            ->get();
+
         return view('dashboard.faculty.index', compact(
             'strategicObjectivesText',
             'strategicObjectivesPercent',
@@ -139,7 +373,10 @@ class FacultyDashboardController extends Controller
             'supportFunctionsPercent',
             'ipcrAccomplishedText',
             'ipcrPercentageValue',
-            'ipcrPercentageText'
+            'ipcrPercentageText',
+            'soPerformanceData',
+            'notifications',
+            'deadlines'
         ));
     }
 
@@ -310,14 +547,27 @@ class FacultyDashboardController extends Controller
     public function setProfilePhoto(Request $request)
     {
         $request->validate([
-            'photo_id' => 'required|exists:user_photos,id'
+            'photo_id' => 'required|integer'
         ]);
 
         $user = auth()->user();
+
+        // Verify the photo belongs to the authenticated user (prevent IDOR)
+        $photo = UserPhoto::where('id', $request->photo_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$photo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Photo not found or does not belong to you.'
+            ], 403);
+        }
+
         $photoService = app(PhotoService::class);
 
         try {
-            $photoService->setProfilePhoto($user, $request->photo_id);
+            $photoService->setAsProfilePhoto($photo);
 
             return response()->json([
                 'success' => true,

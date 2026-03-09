@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Process\Process;
 
 class DatabaseBackupService
 {
@@ -28,26 +29,42 @@ class DatabaseBackupService
             $filename = $dbName . '_' . date('Y-m-d_His') . '.sql';
             $filePath = $backupDir . '/' . $filename;
 
-            // Build mysqldump command
+            // Build mysqldump command using Process to prevent command injection
             $mysqldumpPath = $this->findMysqldump();
-            $command = "\"{$mysqldumpPath}\" --host={$dbHost} --port={$dbPort} --user={$dbUser}";
+            $command = [
+                $mysqldumpPath,
+                '--host=' . $dbHost,
+                '--port=' . $dbPort,
+                '--user=' . $dbUser,
+                '--single-transaction',
+                '--routines',
+                '--triggers',
+                $dbName,
+            ];
 
-            if (!empty($dbPass)) {
-                $command .= " --password=\"{$dbPass}\"";
+            // Pass password via MYSQL_PWD environment variable (not on command line)
+            $env = !empty($dbPass) ? ['MYSQL_PWD' => $dbPass] : [];
+
+            $process = new Process($command, null, $env);
+            $process->setTimeout(300);
+            $process->run();
+
+            if (!$process->isSuccessful() || empty($process->getOutput())) {
+                return [
+                    'success' => false,
+                    'message' => 'Backup failed. Error: ' . $process->getErrorOutput()
+                ];
             }
 
-            $command .= " --single-transaction --routines --triggers {$dbName} > \"{$filePath}\" 2>&1";
+            file_put_contents($filePath, $process->getOutput());
 
-            exec($command, $output, $returnCode);
-
-            if ($returnCode !== 0 || !file_exists($filePath) || filesize($filePath) === 0) {
-                // Clean up empty file
+            if (!file_exists($filePath) || filesize($filePath) === 0) {
                 if (file_exists($filePath)) {
                     unlink($filePath);
                 }
                 return [
                     'success' => false,
-                    'message' => 'Backup failed. Error: ' . implode("\n", $output)
+                    'message' => 'Backup failed. Output file is empty.'
                 ];
             }
 

@@ -448,6 +448,15 @@
                             </div>
                             <span class="text-gray-500 text-xs">{{ count(auth()->user()->roles()) }} assigned</span>
                         </div>
+
+                        @if(auth()->user()->hasRole('admin'))
+                        <a href="{{ route('admin.dashboard') }}" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 transition text-left group">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500 group-hover:bg-white group-hover:shadow-sm transition">
+                                <i class="fas fa-shield-halved text-xs"></i>
+                            </div>
+                            <span class="text-sm font-medium text-red-600 group-hover:text-red-700">Admin Panel</span>
+                        </a>
+                        @endif
                     </div>
                 </div>
 

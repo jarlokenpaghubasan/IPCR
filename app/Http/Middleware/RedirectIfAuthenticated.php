@@ -23,13 +23,13 @@ class RedirectIfAuthenticated
                 $user = Auth::guard($guard)->user();
                 
                 // Redirect based on user's role
-                if ($user->guard('web')->hasRole('admin')) {
+                if ($user->hasRole('admin')) {
                     return redirect()->route('admin.dashboard');
-                } elseif ($user->guard('web')->hasRole('director')) {
+                } elseif ($user->hasRole('director')) {
                     return redirect()->route('director.dashboard');
-                } elseif ($user->guard('web')->hasRole('faculty')) {
+                } elseif ($user->hasRole('faculty')) {
                     return redirect()->route('faculty.dashboard');
-                } elseif ($user->guard('web')->hasRole('dean')) {
+                } elseif ($user->hasRole('dean')) {
                     return redirect()->route('faculty.dashboard');
                 }
             }

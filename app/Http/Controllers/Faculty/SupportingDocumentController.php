@@ -7,6 +7,7 @@ use App\Models\SupportingDocument;
 use App\Services\ActivityLogService;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary as CloudinaryFacade;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SupportingDocumentController extends Controller
@@ -29,8 +30,12 @@ class SupportingDocumentController extends Controller
         // Determine which user's documents to fetch
         $userId = auth()->id();
         if ($request->filled('owner_id')) {
-            // Dean/admin viewing another user's documents
-            $userId = (int) $request->owner_id;
+            // Only dean/admin users can view another user's documents
+            $user = auth()->user();
+            if ($user->hasRole('dean') || $user->hasRole('admin')) {
+                $userId = (int) $request->owner_id;
+            }
+            // Faculty users: silently ignore owner_id and use their own ID
         }
 
         // Query across both template and submission types for sync
@@ -102,6 +107,9 @@ class SupportingDocumentController extends Controller
 
             Log::info('Cloudinary upload successful', ['url' => $uploadResult->getSecurePath()]);
 
+            // Use the real client MIME type (getFileType() returns Cloudinary resource type like "image"/"raw", not the actual MIME type)
+            $mimeType = $file->getClientMimeType() ?: 'application/octet-stream';
+
             $document = SupportingDocument::create([
                 'user_id' => $user->id,
                 'documentable_type' => $request->documentable_type,
@@ -110,7 +118,7 @@ class SupportingDocumentController extends Controller
                 'filename' => $uploadResult->getPublicId(),
                 'path' => $uploadResult->getSecurePath(),
                 'original_name' => $file->getClientOriginalName(),
-                'mime_type' => $uploadResult->getFileType() ?? $file->getClientMimeType(),
+                'mime_type' => $mimeType,
                 'file_size' => $file->getSize(),
             ]);
 
@@ -266,15 +274,27 @@ class SupportingDocumentController extends Controller
         }
 
         try {
-            // Fetch file content from Cloudinary
-            $fileContent = file_get_contents($document->path);
-            
-            if ($fileContent === false) {
+            // Validate URL points to expected Cloudinary domain (prevent SSRF)
+            $parsedUrl = parse_url($document->path);
+            $allowedHosts = ['res.cloudinary.com', 'cloudinary.com'];
+            if (!$parsedUrl || !isset($parsedUrl['host']) || !in_array($parsedUrl['host'], $allowedHosts)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid document URL.',
+                ], 400);
+            }
+
+            // Fetch file content from Cloudinary with timeout
+            $response = Http::timeout(15)->get($document->path);
+
+            if (!$response->successful()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to fetch file from storage.',
                 ], 500);
             }
+
+            $fileContent = $response->body();
 
             ActivityLogService::log('document_downloaded', 'Downloaded supporting document: ' . $document->original_name, $document);
 

@@ -5,63 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password - University of Rizal System Binangonan</title>
     <link rel="icon" type="image/jpeg" href="{{ asset('images/urs_logo.jpg') }}">
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    @vite(['resources/css/auth_login.css'])
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @vite(['resources/css/auth_login.css', 'resources/js/auth_login.js'])
 </head>
-<body class="gradient-bg">
-    <div class="login-container">
-        <div class="title">
-            <h1>University of Rizal System Binangonan</h1>
-            <p>Performance Commitment and Review Module</p>
+<body>
+    <div class="auth-card">
+        <div class="auth-card__image">
+            <img src="{{ asset('images/login_img.png') }}" alt="Illustration">
         </div>
 
-        <div class="login-box">
-            <div class="login-header">
-                <h2>Forgot Password</h2>
-            </div>
-
-            <div class="login-body">
-                @if (session('success'))
-                    <div class="success-message" style="background-color: #d4edda; color: #155724; padding: 12px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
-                        {{ session('success') }}
+        <div class="auth-card__form">
+            <div class="auth-card__form-inner">
+                <div class="auth-header-brand">
+                    <div class="auth-brand-text-wrapper">
+                        <div class="auth-university-name">
+                            <span class="uni-name">UNIVERSITY OF RIZAL SYSTEM</span>
+                            <span class="uni-campus">BINANGONAN CAMPUS</span>
+                        </div>
                     </div>
-                @endif
+                    <img src="{{ asset('images/urs_logo.jpg') }}" alt="URS Logo" class="auth-logo">
+                </div>
 
-                @if ($errors->any())
-                    <div class="error-message">
-                        @foreach ($errors->all() as $error)
-                            <div>{{ $error }}</div>
-                        @endforeach
-                    </div>
-                @endif
+            <h1>Forgot Password</h1>
+            <p class="subtitle">Enter your email address and we'll send you a verification code.</p>
 
-                <p style="margin-bottom: 20px; color: #666; font-size: 14px;">
-                    Enter your email address and we'll send you a verification code to reset your password.
-                </p>
+            @if (session('success'))
+                <div class="success-message">{{ session('success') }}</div>
+            @endif
 
-                <form method="POST" action="{{ route('password.email') }}">
-                    @csrf
+            @if ($errors->any())
+                <div class="error-message">
+                    @foreach ($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
 
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
+            <form method="POST" action="{{ route('password.email') }}">
+                @csrf
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
                         <input
                             type="email"
                             id="email"
                             name="email"
-                            placeholder="Enter your email address"
+                            placeholder="name@example.com"
                             value="{{ old('email') }}"
                             required
                             autofocus
                         >
                     </div>
-
-                    <button type="submit" class="login-btn">Send Verification Code</button>
-                </form>
-
-                <div class="back-link">
-                    <a href="{{ route('login.selection') }}">← Back to Login</a>
                 </div>
+
+                <button type="submit" class="login-btn">Send Verification Code</button>
+            </form>
+
+            <div class="back-link">
+                <a href="{{ route('login') }}">← Back to Login</a>
+            </div>
             </div>
         </div>
     </div>

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Services\DatabaseBackupService;
 use App\Services\ActivityLogService;
+use Symfony\Component\Process\Process;
 
 class DatabaseManagementController extends Controller
 {
@@ -132,21 +133,27 @@ class DatabaseManagementController extends Controller
             $dbHost = config('database.connections.mysql.host');
             $dbPort = config('database.connections.mysql.port');
 
-            // Build mysql command
+            // Build mysql command using Process to prevent command injection
             $mysqlPath = $this->findMysql();
-            $command = "\"{$mysqlPath}\" --host={$dbHost} --port={$dbPort} --user={$dbUser}";
+            $command = [
+                $mysqlPath,
+                '--host=' . $dbHost,
+                '--port=' . $dbPort,
+                '--user=' . $dbUser,
+                $dbName,
+            ];
 
-            if (!empty($dbPass)) {
-                $command .= " --password=\"{$dbPass}\"";
-            }
+            // Pass password via MYSQL_PWD environment variable (not on command line)
+            $env = !empty($dbPass) ? ['MYSQL_PWD' => $dbPass] : [];
 
-            $command .= " {$dbName} < \"{$filePath}\" 2>&1";
+            $process = new Process($command, null, $env);
+            $process->setTimeout(600);
+            $process->setInput(file_get_contents($filePath));
+            $process->run();
 
-            exec($command, $output, $returnCode);
-
-            if ($returnCode !== 0) {
+            if (!$process->isSuccessful()) {
                 return redirect()->route('admin.database.index')
-                    ->with('error', 'Restore failed. Error: ' . implode("\n", $output));
+                    ->with('error', 'Restore failed. Error: ' . $process->getErrorOutput());
             }
 
             ActivityLogService::log('backup_restored', 'Restored database from backup: ' . $filename);
@@ -198,13 +205,37 @@ class DatabaseManagementController extends Controller
                 ->with('error', 'Only .sql files are allowed.');
         }
 
+        // Validate MIME type (text/plain or application/sql are expected for .sql files)
+        $allowedMimes = ['text/plain', 'application/sql', 'application/x-sql', 'text/x-sql', 'application/octet-stream'];
+        if (!in_array($file->getMimeType(), $allowedMimes)) {
+            return redirect()->route('admin.database.index')
+                ->with('error', 'Invalid file type. Only SQL files are allowed.');
+        }
+
+        // Validate file content: check first bytes for SQL-like content
+        $firstBytes = file_get_contents($file->getRealPath(), false, null, 0, 4096);
+        if ($firstBytes === false) {
+            return redirect()->route('admin.database.index')
+                ->with('error', 'Unable to read uploaded file.');
+        }
+
+        // Check for common SQL markers (mysqldump headers, SQL statements, comments)
+        $hasSqlContent = preg_match('/^\s*(--|\/\*|CREATE|INSERT|DROP|ALTER|SET|USE|BEGIN|START|LOCK|UNLOCK|DELIMITER)/mi', $firstBytes);
+        if (!$hasSqlContent) {
+            return redirect()->route('admin.database.index')
+                ->with('error', 'File does not appear to contain valid SQL content.');
+        }
+
+        // Sanitize filename to prevent path traversal
+        $safeName = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', pathinfo($originalName, PATHINFO_FILENAME));
+
         $backupDir = storage_path('app/backups');
         if (!is_dir($backupDir)) {
             mkdir($backupDir, 0755, true);
         }
 
-        // Avoid filename collision
-        $filename = pathinfo($originalName, PATHINFO_FILENAME) . '_uploaded_' . date('His') . '.sql';
+        // Avoid filename collision (using sanitized name)
+        $filename = $safeName . '_uploaded_' . date('His') . '.sql';
         $file->move($backupDir, $filename);
 
         ActivityLogService::log('backup_uploaded', 'Uploaded backup file: ' . $filename);

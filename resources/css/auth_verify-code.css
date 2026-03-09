@@ -19,16 +19,16 @@
 }
 
 .code-input:focus {
-    border-color: #4CAF50;
+    border-color: #2563eb;
     background: #fff;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
     transform: scale(1.05);
 }
 
 .code-input.filled {
-    border-color: #4CAF50;
-    background: #e8f5e9;
+    border-color: #2563eb;
+    background: #eff6ff;
 }
 
 .code-input.error {
@@ -51,7 +51,7 @@
 }
 
 .email-highlight {
-    color: #4CAF50;
+    color: #2563eb;
     font-weight: 600;
 }
 
@@ -76,7 +76,7 @@
 
 .timer span {
     font-weight: bold;
-    color: #4CAF50;
+    color: #2563eb;
 }
 
 /* Hide the actual hidden input */
@@ -84,4 +84,11 @@
     position: absolute;
     opacity: 0;
     pointer-events: none;
+}
+
+/* Override success message to be blue instead of green */
+.success-message {
+    background: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
 }

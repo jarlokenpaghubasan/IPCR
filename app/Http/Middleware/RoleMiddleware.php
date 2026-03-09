@@ -17,10 +17,15 @@ class RoleMiddleware
     {
         // Check if user is authenticated
         if (!auth()->check()) {
-            return redirect()->route('login.selection');
+            return redirect()->route('login');
         }
 
         $user = auth()->user();
+
+        // Admin users bypass all role checks (superuser)
+        if ($user->hasRole('admin')) {
+            return $next($request);
+        }
 
         // Check if user has any of the required roles
         foreach ($roles as $role) {

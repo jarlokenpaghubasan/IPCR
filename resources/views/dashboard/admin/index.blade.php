@@ -94,6 +94,98 @@
         </a>
     </div>
 
+    <!-- Notifications & Deadlines Widgets -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6">
+        <!-- Upcoming Deadlines Widget -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center">
+                        <i class="fas fa-calendar-alt text-orange-600 dark:text-orange-400 text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">Upcoming Deadlines</h3>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Synced from Notifications & Deadlines module</p>
+                    </div>
+                </div>
+                <a href="{{ route('admin.notifications.index') }}" class="text-xs font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 transition-colors">Manage <i class="fas fa-arrow-right ml-1 text-[10px]"></i></a>
+            </div>
+            <div class="p-4 space-y-2 max-h-72 overflow-y-auto">
+                @forelse($deadlines as $deadline)
+                    @php
+                        $daysLeft = max(0, (int) now()->startOfDay()->diffInDays($deadline->deadline_date, false));
+                    @endphp
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl border border-gray-100 dark:border-gray-600 hover:border-orange-200 dark:hover:border-orange-800 transition-colors">
+                        <div class="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white flex-shrink-0">
+                            <span class="text-[9px] uppercase tracking-wider font-semibold opacity-90">{{ $deadline->deadline_date->format('M') }}</span>
+                            <span class="text-base font-black leading-none">{{ $deadline->deadline_date->format('d') }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $deadline->title }}</p>
+                            @if($deadline->description)
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $deadline->description }}</p>
+                            @endif
+                        </div>
+                        @if($daysLeft <= 3)
+                            <span class="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full flex-shrink-0">{{ $daysLeft }}d</span>
+                        @elseif($daysLeft <= 7)
+                            <span class="text-[10px] font-bold text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 px-2 py-0.5 rounded-full flex-shrink-0">{{ $daysLeft }}d</span>
+                        @else
+                            <span class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 flex-shrink-0">{{ $daysLeft }}d</span>
+                        @endif
+                    </div>
+                @empty
+                    <div class="text-center py-6 text-gray-400 dark:text-gray-500">
+                        <i class="fas fa-calendar-check text-2xl mb-2 block opacity-40"></i>
+                        <p class="text-xs">No upcoming deadlines</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Notifications Widget -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                        <i class="fas fa-bell text-blue-600 dark:text-blue-400 text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-white">Active Notifications</h3>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Currently displayed to users</p>
+                    </div>
+                </div>
+                <a href="{{ route('admin.notifications.index') }}" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors">Manage <i class="fas fa-arrow-right ml-1 text-[10px]"></i></a>
+            </div>
+            <div class="p-4 space-y-2 max-h-72 overflow-y-auto">
+                @php
+                    $notifIcons = [
+                        'info' => ['icon' => 'fa-circle-info', 'color' => 'text-blue-500', 'bg' => 'bg-blue-50 dark:bg-blue-900/30', 'border' => 'border-blue-100 dark:border-blue-800'],
+                        'warning' => ['icon' => 'fa-triangle-exclamation', 'color' => 'text-yellow-600', 'bg' => 'bg-yellow-50 dark:bg-yellow-900/30', 'border' => 'border-yellow-100 dark:border-yellow-800'],
+                        'success' => ['icon' => 'fa-circle-check', 'color' => 'text-green-500', 'bg' => 'bg-green-50 dark:bg-green-900/30', 'border' => 'border-green-100 dark:border-green-800'],
+                        'danger' => ['icon' => 'fa-circle-exclamation', 'color' => 'text-red-500', 'bg' => 'bg-red-50 dark:bg-red-900/30', 'border' => 'border-red-100 dark:border-red-800'],
+                    ];
+                @endphp
+                @forelse($notifications as $notif)
+                    @php $style = $notifIcons[$notif->type] ?? $notifIcons['info']; @endphp
+                    <div class="flex items-start gap-3 p-3 {{ $style['bg'] }} rounded-xl border {{ $style['border'] }} transition-colors">
+                        <i class="fas {{ $style['icon'] }} {{ $style['color'] }} text-sm mt-0.5 flex-shrink-0"></i>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $notif->title }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ Str::limit($notif->message, 80) }}</p>
+                        </div>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">{{ $notif->created_at->diffForHumans(null, true, true) }}</span>
+                    </div>
+                @empty
+                    <div class="text-center py-6 text-gray-400 dark:text-gray-500">
+                        <i class="fas fa-bell-slash text-2xl mb-2 block opacity-40"></i>
+                        <p class="text-xs">No active notifications</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
     <!-- IPCR Submissions Table -->
     <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm mt-6 overflow-hidden transition-colors">
         <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
