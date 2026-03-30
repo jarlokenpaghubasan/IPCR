@@ -27,6 +27,9 @@
                 <div class="hidden lg:flex items-center space-x-6 xl:space-x-8">
                     <a href="{{ route('faculty.dashboard') }}" class="text-gray-600 hover:text-gray-900">Dashboard</a>
                     <a href="{{ route('faculty.my-ipcrs') }}" class="text-gray-600 hover:text-gray-900">My IPCRs</a>
+                    @if(auth()->user()->hasRole('hr'))
+                        <a href="{{ route('faculty.summary-reports') }}" class="text-gray-600 hover:text-gray-900">Summary Reports</a>
+                    @endif
                     <div class="relative">
                         <button onclick="toggleNotificationPopup()" class="text-gray-600 hover:text-gray-900 relative flex items-center gap-1">
                             Notifications
@@ -179,6 +182,9 @@
                 </div>
                 <a href="{{ route('faculty.dashboard') }}" class="block text-gray-600 hover:text-gray-900 py-2">Dashboard</a>
                 <a href="{{ route('faculty.my-ipcrs') }}" class="block text-gray-600 hover:text-gray-900 py-2">My IPCRs</a>
+                @if(auth()->user()->hasRole('hr'))
+                    <a href="{{ route('faculty.summary-reports') }}" class="block text-gray-600 hover:text-gray-900 py-2">Summary Reports</a>
+                @endif
                 <a href="{{ route('faculty.profile') }}" class="block text-blue-600 font-semibold hover:text-blue-700 py-2">Profile</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

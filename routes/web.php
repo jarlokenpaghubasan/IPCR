@@ -98,6 +98,10 @@ Route::get('/faculty/profile', [FacultyDashboardController::class, 'profile'])
     ->name('faculty.profile')
     ->middleware(['auth', 'role:faculty,director', 'permission:faculty.profile.manage,director.dashboard']);
 
+Route::get('/faculty/summary-reports', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'index'])
+    ->name('faculty.summary-reports')
+    ->middleware(['auth', 'role:hr']);
+
 Route::patch('/faculty/password/change', [FacultyDashboardController::class, 'changePassword'])
     ->name('faculty.password.change')
     ->middleware(['auth', 'role:faculty,director', 'permission:faculty.profile.manage,director.dashboard']);

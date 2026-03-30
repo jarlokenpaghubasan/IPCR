@@ -32,6 +32,9 @@
                 <div class="hidden lg:flex items-center space-x-6 xl:space-x-8">
                     <a href="{{ route('faculty.dashboard') }}" class="text-blue-600 font-semibold hover:text-blue-700">Dashboard</a>
                     <a href="{{ route('faculty.my-ipcrs') }}" class="text-gray-600 hover:text-gray-900">My IPCRs</a>
+                    @if(auth()->user()->hasRole('hr'))
+                        <a href="{{ route('faculty.summary-reports') }}" class="text-gray-600 hover:text-gray-900">Summary Reports</a>
+                    @endif
                     <a href="{{ route('faculty.profile') }}" class="text-gray-600 hover:text-gray-900">Profile</a>
                     
                     <!-- Profile Picture -->
@@ -174,6 +177,9 @@
                 </div>
                 <a href="{{ route('faculty.dashboard') }}" class="block text-blue-600 font-semibold hover:text-blue-700 py-2">Dashboard</a>
                 <a href="{{ route('faculty.my-ipcrs') }}" class="block text-gray-600 hover:text-gray-900 py-2">My IPCRs</a>
+                @if(auth()->user()->hasRole('hr'))
+                    <a href="{{ route('faculty.summary-reports') }}" class="block text-gray-600 hover:text-gray-900 py-2">Summary Reports</a>
+                @endif
                 <a href="{{ route('faculty.profile') }}" class="block text-gray-600 hover:text-gray-900 py-2">Profile</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -1158,7 +1164,13 @@
                     <span class="text-gray-600">Overall Calibrated Score:</span>
                     <span class="ml-1 font-bold text-green-700 text-sm sm:text-base">{{ number_format($returnedCalibration->overall_score, 2) }}</span>
                 </div>
-                <button onclick="closeReturnedCalibrationModal()" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Close</button>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button onclick="exportReturnedCalibration()" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-300 hover:bg-blue-100 flex items-center gap-1">
+                        <i class="fas fa-file-excel"></i>
+                        Export
+                    </button>
+                    <button onclick="closeReturnedCalibrationModal()" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2234,6 +2246,12 @@ window.openReturnedCalibrationModal = function() {
 
 window.closeReturnedCalibrationModal = function() {
     document.getElementById('returnedCalibrationModal').classList.add('hidden');
+};
+
+window.exportReturnedCalibration = function() {
+    var submissionId = @json($returnedCalibration->ipcr_submission_id ?? null);
+    if (!submissionId) return;
+    window.location.href = '/faculty/ipcr/submissions/' + submissionId + '/export';
 };
 </script>
 @endif
