@@ -347,7 +347,9 @@
                     </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
-                            openAddUserModal();
+                            if (typeof window.openAddUserModal === 'function') {
+                                window.openAddUserModal();
+                            }
                         });
                     </script>
                 @endif
@@ -431,6 +433,7 @@
                                                 id="role_{{ $role }}" 
                                                 value="{{ $role }}"
                                                 {{ in_array($role, $selectedRoles) ? 'checked' : '' }}
+                                                onchange="window.handleAddRoleSelection && window.handleAddRoleSelection()"
                                                 class="w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-gray-500 focus:ring-blue-500 dark:bg-gray-600 role-checkbox transition-colors"
                                             >
                                             <label for="role_{{ $role }}" class="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
@@ -457,9 +460,9 @@
                     <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Department & Designation</h3>
     
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <!-- Department -->
-                            <div>
+                            <div id="addDeptWrapper">
                                 <label for="department_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
                                 <select name="department_id" id="department_id" class="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                                     <option value="">Select a department</option>
@@ -470,7 +473,7 @@
                             </div>
     
                             <!-- Designation -->
-                            <div>
+                            <div id="addDesigWrapper">
                                 <label for="designation_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Designation</label>
                                 <select name="designation_id" id="designation_id" class="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                                     <option value="">Select a designation</option>
@@ -478,6 +481,20 @@
                                         <option value="{{ $desig->id }}" {{ old('designation_id') == $desig->id ? 'selected' : '' }}>{{ $desig->title }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                            <!-- Employment Status (Staff) -->
+                            <div id="employmentStatusWrapper">
+                                <label for="employment_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Employment Status</label>
+                                <select name="employment_status" id="employment_status" class="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                    <option value="">Select status</option>
+                                    <option value="Permanent" {{ old('employment_status') === 'Permanent' ? 'selected' : '' }}>Permanent</option>
+                                    <option value="Casual" {{ old('employment_status') === 'Casual' ? 'selected' : '' }}>Casual</option>
+                                    <option value="Contractual" {{ old('employment_status') === 'Contractual' ? 'selected' : '' }}>Contractual</option>
+                                    <option value="Emergency Laborer" {{ old('employment_status') === 'Emergency Laborer' ? 'selected' : '' }}>Emergency Laborer</option>
+                                    <option value="Part Time" {{ old('employment_status') === 'Part Time' ? 'selected' : '' }}>Part Time</option>
+                                </select>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Used for staff and part-time faculty records under faculty role.</p>
                             </div>
                         </div>
                     </div>
@@ -550,7 +567,7 @@
                     <!-- Account & Organization -->
                     <div>
                         <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Account & Organization</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Status</p>
                                 <span id="viewUserStatus"></span>
@@ -562,6 +579,10 @@
                             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Designation</p>
                                 <p id="viewUserDesignation" class="text-sm font-medium text-gray-900 dark:text-white"></p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Employment Status</p>
+                                <p id="viewUserEmploymentStatus" class="text-sm font-medium text-gray-900 dark:text-white"></p>
                             </div>
                         </div>
                     </div>
@@ -664,7 +685,7 @@
                                     <div class="space-y-2 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
                                         @foreach($roles as $role)
                                             <div class="flex items-center">
-                                                <input type="checkbox" name="roles[]" id="edit_role_{{ $role }}" value="{{ $role }}" class="w-4 h-4 text-blue-600 rounded edit-role-checkbox" onchange="handleEditRoleSelection()">
+                                                <input type="checkbox" name="roles[]" id="edit_role_{{ $role }}" value="{{ $role }}" class="w-4 h-4 text-blue-600 rounded edit-role-checkbox" onchange="window.handleEditRoleSelection && window.handleEditRoleSelection()">
                                                 <label for="edit_role_{{ $role }}" class="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                                                     {{ $role == 'hr' ? 'Human Resource' : ucfirst($role) }}
                                                 </label>
@@ -688,7 +709,7 @@
                         <!-- Department & Designation -->
                         <div class="border-b dark:border-gray-700 pb-6" id="editDeptSection">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Department & Designation</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div id="editDeptWrapper">
                                     <label for="edit_department_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
                                     <select name="department_id" id="edit_department_id" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
@@ -705,6 +726,17 @@
                                         @foreach($designations as $desig)
                                             <option value="{{ $desig->id }}">{{ $desig->title }}</option>
                                         @endforeach
+                                    </select>
+                                </div>
+                                <div id="editEmploymentStatusWrapper">
+                                    <label for="edit_employment_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Employment Status</label>
+                                    <select name="employment_status" id="edit_employment_status" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                                        <option value="">Select status</option>
+                                        <option value="Permanent">Permanent</option>
+                                        <option value="Casual">Casual</option>
+                                        <option value="Contractual">Contractual</option>
+                                        <option value="Emergency Laborer">Emergency Laborer</option>
+                                        <option value="Part Time">Part Time</option>
                                     </select>
                                 </div>
                             </div>

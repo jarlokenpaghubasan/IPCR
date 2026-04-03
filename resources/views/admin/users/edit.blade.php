@@ -217,7 +217,7 @@
                                 <div class="pt-2">
                                     <h3 class="text-base font-bold text-gray-900 dark:text-white mb-5 uppercase tracking-wide">Department & Designation</h3>
 
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
                                         <!-- Department -->
                                         <div>
                                             <label for="department_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
@@ -240,6 +240,20 @@
                                                 @endforeach
                                             </select>
                                             @error('designation_id')<span class="text-red-500 dark:text-red-400 text-xs mt-1 block">{{ $message }}</span>@enderror
+                                        </div>
+
+                                        <!-- Employment Status (Staff) -->
+                                        <div>
+                                            <label for="employment_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Employment Status</label>
+                                            <select name="employment_status" id="employment_status" class="w-full px-4 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors">
+                                                <option value="">Select status</option>
+                                                <option value="Permanent" {{ old('employment_status', $user->employment_status) === 'Permanent' ? 'selected' : '' }}>Permanent</option>
+                                                <option value="Casual" {{ old('employment_status', $user->employment_status) === 'Casual' ? 'selected' : '' }}>Casual</option>
+                                                <option value="Contractual" {{ old('employment_status', $user->employment_status) === 'Contractual' ? 'selected' : '' }}>Contractual</option>
+                                                <option value="Emergency Laborer" {{ old('employment_status', $user->employment_status) === 'Emergency Laborer' ? 'selected' : '' }}>Emergency Laborer</option>
+                                                <option value="Part Time" {{ old('employment_status', $user->employment_status) === 'Part Time' ? 'selected' : '' }}>Part Time</option>
+                                            </select>
+                                            @error('employment_status')<span class="text-red-500 dark:text-red-400 text-xs mt-1 block">{{ $message }}</span>@enderror
                                         </div>
                                     </div>
                                 </div>

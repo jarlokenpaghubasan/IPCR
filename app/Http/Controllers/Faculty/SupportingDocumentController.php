@@ -21,7 +21,7 @@ class SupportingDocumentController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'documentable_type' => 'required|string|in:ipcr_submission,opcr_submission,ipcr_template,opcr_template',
+            'documentable_type' => 'required|string|in:ipcr_submission,opcr_submission,ipcr_template,opcr_template,ipcr_saved_copy,opcr_saved_copy',
             'documentable_id' => 'required|integer',
             'so_label' => 'required|string',
             'owner_id' => 'nullable|integer',
@@ -41,8 +41,8 @@ class SupportingDocumentController extends Controller
         // Query across both template and submission types for sync
         $isIpcr = str_starts_with($request->documentable_type, 'ipcr');
         $familyTypes = $isIpcr
-            ? ['ipcr_template', 'ipcr_submission']
-            : ['opcr_template', 'opcr_submission'];
+            ? ['ipcr_template', 'ipcr_submission', 'ipcr_saved_copy']
+            : ['opcr_template', 'opcr_submission', 'opcr_saved_copy'];
 
         $documents = SupportingDocument::where('user_id', $userId)
             ->whereIn('documentable_type', $familyTypes)
@@ -75,7 +75,7 @@ class SupportingDocumentController extends Controller
     {
         $request->validate([
             'file' => 'required|file|max:10240', // 10MB max
-            'documentable_type' => 'required|string|in:ipcr_submission,opcr_submission,ipcr_template,opcr_template',
+            'documentable_type' => 'required|string|in:ipcr_submission,opcr_submission,ipcr_template,opcr_template,ipcr_saved_copy,opcr_saved_copy',
             'documentable_id' => 'required|integer',
             'so_label' => 'required|string',
         ]);

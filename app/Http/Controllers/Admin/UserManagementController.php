@@ -15,6 +15,8 @@ use App\Services\ActivityLogService;
 
 class UserManagementController extends Controller
 {
+    private const STAFF_STATUS_OPTIONS = ['Permanent', 'Casual', 'Contractual', 'Emergency Laborer', 'Part Time'];
+
     protected $photoService;
 
     public function __construct(PhotoService $photoService)
@@ -73,6 +75,7 @@ class UserManagementController extends Controller
             'is_active' => 'boolean',
             'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
+            'employment_status' => ['nullable', Rule::in(self::STAFF_STATUS_OPTIONS)],
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
@@ -99,6 +102,12 @@ class UserManagementController extends Controller
         if ($isHrOrDirector) {
             $validated['department_id'] = null;
             $validated['designation_id'] = null;
+            $validated['employment_status'] = null;
+        }
+
+        // Employment status is only applicable when faculty role is selected.
+        if (!in_array('faculty', $roles, true)) {
+            $validated['employment_status'] = null;
         }
 
         // Create user
@@ -143,6 +152,7 @@ class UserManagementController extends Controller
             'department_name' => $user->department?->name,
             'designation_id' => $user->designation_id,
             'designation_name' => $user->designation?->title,
+            'employment_status' => $user->employment_status,
             'profile_photo_url' => $user->profile_photo_url,
             'has_profile_photo' => $user->hasProfilePhoto(),
         ]);
@@ -186,6 +196,7 @@ class UserManagementController extends Controller
             'is_active' => 'boolean',
             'department_id' => 'nullable|exists:departments,id',
             'designation_id' => 'nullable|exists:designations,id',
+            'employment_status' => ['nullable', Rule::in(self::STAFF_STATUS_OPTIONS)],
         ]);
 
         if (!empty($validated['password'])) {
@@ -208,6 +219,7 @@ class UserManagementController extends Controller
             // HR and Director don't need department or designation
             $validated['department_id'] = null;
             $validated['designation_id'] = null;
+            $validated['employment_status'] = null;
             
             // Generate unique employee ID if they don't have one or need role-based update
             if (!$user->employee_id) {
@@ -230,6 +242,10 @@ class UserManagementController extends Controller
                 // Department exists but user has no employee ID, generate one
                 $validated['employee_id'] = EmployeeIdService::generate($validated['department_id']);
             }
+        }
+
+        if (!in_array('faculty', $newRoles, true)) {
+            $validated['employment_status'] = null;
         }
 
         // Update user data

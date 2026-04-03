@@ -102,6 +102,14 @@ Route::get('/faculty/summary-reports', [\App\Http\Controllers\Faculty\SummaryRep
     ->name('faculty.summary-reports')
     ->middleware(['auth', 'role:hr']);
 
+Route::put('/faculty/summary-reports/dean-director/{user}/scores', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'updateDeanDirectorScores'])
+    ->name('faculty.summary-reports.dean-director.update')
+    ->middleware(['auth', 'role:hr']);
+
+Route::get('/faculty/summary-reports/dean-director/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportDeanDirectorXlsx'])
+    ->name('faculty.summary-reports.dean-director.export')
+    ->middleware(['auth', 'role:hr']);
+
 Route::patch('/faculty/password/change', [FacultyDashboardController::class, 'changePassword'])
     ->name('faculty.password.change')
     ->middleware(['auth', 'role:faculty,director', 'permission:faculty.profile.manage,director.dashboard']);

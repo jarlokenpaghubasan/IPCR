@@ -20,6 +20,7 @@ class IpcrSubmissionController extends Controller
             'table_body_html' => ['required', 'string'],
             'so_count_json' => ['nullable'],
             'template_id' => ['nullable', 'integer'],
+            'saved_copy_id' => ['nullable', 'integer'],
             'noted_by' => ['nullable', 'string', 'max:255'],
             'approved_by' => ['nullable', 'string', 'max:255'],
         ]);
@@ -47,11 +48,19 @@ class IpcrSubmissionController extends Controller
             'submitted_at' => now(),
         ]);
 
-        // Copy supporting documents from template to submission
+        // Copy supporting documents from template/draft to submission
         if (!empty($validated['template_id'])) {
             $this->copySupportingDocuments(
                 'ipcr_template',
                 $validated['template_id'],
+                'ipcr_submission',
+                $submission->id,
+                $request->user()->id
+            );
+        } elseif (!empty($validated['saved_copy_id'])) {
+            $this->copySupportingDocuments(
+                'ipcr_saved_copy',
+                $validated['saved_copy_id'],
                 'ipcr_submission',
                 $submission->id,
                 $request->user()->id

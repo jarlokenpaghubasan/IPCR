@@ -1406,6 +1406,20 @@
         const ipcrRoleLabel = @json(auth()->user()->designation->title ?? 'Faculty');
         const csrfToken = @json(csrf_token());
 
+        function resetSupportingDocumentContext(docType) {
+            const templateIdField = document.getElementById('currentPreviewTemplateId');
+            if (templateIdField) templateIdField.value = '';
+
+            const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
+            if (submissionIdField) submissionIdField.value = '';
+
+            const submissionTypeField = document.getElementById('currentSubmissionType');
+            if (submissionTypeField && docType) submissionTypeField.value = docType;
+
+            const ownerIdField = document.getElementById('currentDocumentOwnerId');
+            if (ownerIdField) ownerIdField.value = '';
+        }
+
         // =====================================================
         // QETA Auto-Computation: A = average of Q, E, T
         // =====================================================
@@ -1653,6 +1667,7 @@
             // Reset saved copy ID and SO counter
             currentSavedCopyId = null;
             soHeaderCount = 0;
+            resetSupportingDocumentContext('ipcr');
             
             // Re-hide the rating/accomplishment/remarks columns for fresh creation
             hideIpcrTableColumns();
@@ -1683,6 +1698,7 @@
             
             hideIpcrTableColumns();
             currentSavedCopyId = null;
+            resetSupportingDocumentContext('ipcr');
         };
 
         window.saveDocumentTitle = function() {
@@ -1881,6 +1897,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    if (data.savedCopy && data.savedCopy.id) {
+                        currentSavedCopyId = data.savedCopy.id;
+                    }
+                    resetSupportingDocumentContext('ipcr');
                     showAlertModal('success', 'Saved', data.message);
                     // Reload page to ensure UI reflects database state
                     setTimeout(() => {
@@ -2234,6 +2254,10 @@
 
                     updateSoHeaderCountFromTable();
                     currentSavedCopyId = item.id;
+                    resetSupportingDocumentContext('ipcr');
+
+                    // Enable attach/view documents in draft edit mode while keeping SO text editable.
+                    attachSoDocumentClickHandlers('', 'ipcrTableBody', false);
 
                     // Show Export + Save as Template when editing an existing saved copy
                     document.getElementById('ipcrExportBtn')?.classList.remove('hidden');
@@ -2326,6 +2350,8 @@
             
             // Append to table
             tableBody.appendChild(newRow);
+
+            attachSoDocumentClickHandlers('', 'ipcrTableBody', false);
         }
         
         window.toggleSectionHeaderDropdown = function() {
@@ -3013,8 +3039,12 @@
             // Clear submission tracking fields
             const submissionIdField = document.getElementById('currentSubmissionIdToUpdate');
             if (submissionIdField) submissionIdField.value = '';
+            const templateIdField = document.getElementById('currentPreviewTemplateId');
+            if (templateIdField) templateIdField.value = '';
             const submissionTypeField = document.getElementById('currentSubmissionType');
             if (submissionTypeField) submissionTypeField.value = 'ipcr';
+            const ownerIdField = document.getElementById('currentDocumentOwnerId');
+            if (ownerIdField) ownerIdField.value = '';
 
             // Make table cells non-editable when closing
             const cells = document.getElementById('templatePreviewTableBody')?.querySelectorAll('td');
@@ -4256,6 +4286,7 @@
 
             currentOpcrSavedCopyId = null;
             opcrSoHeaderCount = 0;
+            resetSupportingDocumentContext('opcr');
 
             // Re-hide rating/accomplishment/remarks columns for fresh creation
             hideOpcrTableColumns();
@@ -4284,6 +4315,7 @@
             
             hideOpcrTableColumns();
             currentOpcrSavedCopyId = null;
+            resetSupportingDocumentContext('opcr');
         }
 
         window.saveOpcrDocumentTitle = function() {
@@ -4342,6 +4374,8 @@
             }
 
             tableBody.appendChild(newRow);
+
+            attachSoDocumentClickHandlers('', 'opcrTableBody', false);
         }
 
         window.addOpcrSOHeader = function() {
@@ -4494,6 +4528,7 @@
             .then(data => {
                 if (data.success) {
                     currentOpcrSavedCopyId = data.savedCopy.id;
+                    resetSupportingDocumentContext('opcr');
                     showAlertModal('success', 'Saved', data.message);
                     // Reload page to ensure UI reflects database state
                     setTimeout(() => {
@@ -4695,6 +4730,7 @@
                 if (data.savedCopy) {
                     const copy = data.savedCopy;
                     currentOpcrSavedCopyId = copy.id;
+                    resetSupportingDocumentContext('opcr');
                     
                     document.getElementById('opcrDisplaySchoolYear').textContent = copy.school_year;
                     document.getElementById('opcrDisplaySemester').textContent = copy.semester;
@@ -4715,6 +4751,9 @@
                         // Label QETA inputs and set up auto-computation
                         labelQetaInputs(tableBody);
                     }
+
+                    // Enable attach/view documents in draft edit mode while keeping SO text editable.
+                    attachSoDocumentClickHandlers('', 'opcrTableBody', false);
                     
                     // Show Export + Save as Template when editing an existing saved copy
                     document.getElementById('opcrExportBtn')?.classList.remove('hidden');
@@ -4734,19 +4773,19 @@
         // SO Supporting Documents Functions
         // ========================================
         
-        let soDocCurrentContext = { type: '', id: 0, label: '', ownerId: '' };
+        let soDocCurrentContext = { type: '', id: 0, label: '', ownerId: '', tableBodyId: 'templatePreviewTableBody' };
 
         /**
          * After rendering table body in preview modal, make SO rows clickable.
          * Called after loading template/submission/saved copy into preview.
          * @param {string} ownerId - Optional user_id of document owner (for dean viewing faculty docs)
          */
-        function attachSoDocumentClickHandlers(ownerId) {
+        function attachSoDocumentClickHandlers(ownerId, tableBodyId = 'templatePreviewTableBody', disableRowInputs = true) {
             // Track document owner - empty means current auth user, set means viewing someone else's
             const ownerIdField = document.getElementById('currentDocumentOwnerId');
             if (ownerIdField) ownerIdField.value = ownerId || '';
 
-            const tableBody = document.getElementById('templatePreviewTableBody');
+            const tableBody = document.getElementById(tableBodyId);
             if (!tableBody) return;
 
             const rows = tableBody.querySelectorAll('tr.bg-blue-100');
@@ -4771,16 +4810,21 @@
                 newRow.style.cursor = 'pointer';
                 newRow.title = 'Click to view/attach supporting documents';
                 newRow.addEventListener('click', function(e) {
-                    openSoDocumentsModal(soLabel, soDescription);
+                    if (!disableRowInputs && e.target.closest('input, textarea')) {
+                        return;
+                    }
+                    openSoDocumentsModal(soLabel, soDescription, tableBodyId);
                 });
                 row.parentNode.replaceChild(newRow, row);
 
                 // Disable pointer events on inputs inside the SO row so clicks pass through to the TR handler
                 // (cells.forEach in viewSubmission sets pointerEvents=auto on all inputs, which blocks TR clicks)
-                newRow.querySelectorAll('input, textarea').forEach(function(el) {
-                    el.style.pointerEvents = 'none';
-                    el.style.cursor = 'pointer';
-                });
+                if (disableRowInputs) {
+                    newRow.querySelectorAll('input, textarea').forEach(function(el) {
+                        el.style.pointerEvents = 'none';
+                        el.style.cursor = 'pointer';
+                    });
+                }
 
                 // Ensure the badge exists in the newRow and refresh its count
                 let badge = newRow.querySelector('.so-doc-badge');
@@ -4836,22 +4880,54 @@
             if (templateId) {
                 return submissionType === 'opcr' ? 'opcr_template' : 'ipcr_template';
             }
-            return 'ipcr_template';
+
+            if (submissionType === 'opcr' && currentOpcrSavedCopyId) {
+                return 'opcr_saved_copy';
+            }
+            if (submissionType !== 'opcr' && currentSavedCopyId) {
+                return 'ipcr_saved_copy';
+            }
+
+            if (currentSavedCopyId) {
+                return 'ipcr_saved_copy';
+            }
+            if (currentOpcrSavedCopyId) {
+                return 'opcr_saved_copy';
+            }
+
+            return submissionType === 'opcr' ? 'opcr_template' : 'ipcr_template';
         }
 
         function getCurrentDocumentableId() {
+            const submissionType = document.getElementById('currentSubmissionType')?.value || 'ipcr';
             const submissionId = document.getElementById('currentSubmissionIdToUpdate')?.value;
             const templateId = document.getElementById('currentPreviewTemplateId')?.value;
 
-            return submissionId || templateId || 0;
+            if (submissionId) return submissionId;
+            if (templateId) return templateId;
+
+            if (submissionType === 'opcr' && currentOpcrSavedCopyId) {
+                return currentOpcrSavedCopyId;
+            }
+            if (submissionType !== 'opcr' && currentSavedCopyId) {
+                return currentSavedCopyId;
+            }
+
+            return currentSavedCopyId || currentOpcrSavedCopyId || 0;
         }
 
-        function openSoDocumentsModal(soLabel, soDescription) {
+        function openSoDocumentsModal(soLabel, soDescription, tableBodyId = 'templatePreviewTableBody') {
             soDocCurrentContext.type = getCurrentDocumentableType();
             soDocCurrentContext.id = getCurrentDocumentableId();
             soDocCurrentContext.label = soLabel;
+            soDocCurrentContext.tableBodyId = tableBodyId;
             // Read owner_id from hidden field (set by dean view functions)
             soDocCurrentContext.ownerId = document.getElementById('currentDocumentOwnerId')?.value || '';
+
+            if (!soDocCurrentContext.id) {
+                showAlertModal('info', 'Save Draft First', 'Please save this draft first before attaching supporting documents.');
+                return;
+            }
 
             document.getElementById('soDocType').value = soDocCurrentContext.type;
             document.getElementById('soDocId').value = soDocCurrentContext.id;
@@ -4878,11 +4954,17 @@
             loadSoDocuments();
         }
 
+        function refreshSoDocumentBadges() {
+            const ownerId = document.getElementById('currentDocumentOwnerId')?.value || '';
+            const tableBodyId = soDocCurrentContext.tableBodyId || 'templatePreviewTableBody';
+            const disableRowInputs = tableBodyId === 'templatePreviewTableBody';
+            attachSoDocumentClickHandlers(ownerId, tableBodyId, disableRowInputs);
+        }
+
         window.closeSoDocumentsModal = function() {
             document.getElementById('soDocumentsModal').classList.add('hidden');
-            // Refresh badge counts in the preview (preserve owner_id context)
-            const ownerId = document.getElementById('currentDocumentOwnerId')?.value || '';
-            attachSoDocumentClickHandlers(ownerId);
+            // Refresh badge counts in the current table context.
+            refreshSoDocumentBadges();
         };
 
         // File input change handler
@@ -5209,7 +5291,7 @@
                 if (data.success) {
                     closeRenameModal();
                     loadSoDocuments();
-                    attachSoDocumentClickHandlers();
+                    refreshSoDocumentBadges();
                 } else {
                     showAlertModal('error', 'Rename Failed', data.message || 'Failed to rename document.');
                 }
@@ -5250,7 +5332,7 @@
                     .then(data => {
                         if (data.success) {
                             loadSoDocuments();
-                            attachSoDocumentClickHandlers();
+                            refreshSoDocumentBadges();
                         } else {
                             showAlertModal('error', 'Error', data.message || 'Failed to delete document.');
                         }

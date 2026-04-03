@@ -127,6 +127,9 @@ window.confirmDelete = function () {
 window.openAddUserModal = function () {
     document.getElementById('addUserModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    if (window.handleAddRoleSelection) {
+        window.handleAddRoleSelection();
+    }
 };
 window.closeAddUserModal = function () {
     document.getElementById('addUserModal').classList.add('hidden');
@@ -147,6 +150,46 @@ window.togglePasswordVisibility = function (fieldId) {
         passwordInput.type = 'password';
         eyeOpen?.classList.remove('hidden');
         eyeClosed?.classList.add('hidden');
+    }
+};
+
+// Handle add-user role selection to show/hide staff-related fields.
+window.handleAddRoleSelection = function () {
+    const roleCheckboxes = Array.from(document.querySelectorAll('#addUserModal input[name="roles[]"]:checked'));
+    const selectedRoles = roleCheckboxes.map(cb => cb.value);
+
+    const isHrOrDirector = selectedRoles.includes('hr') || selectedRoles.includes('director');
+    const hasFacultyRole = selectedRoles.includes('faculty');
+
+    const deptWrapper = document.getElementById('addDeptWrapper');
+    const desigWrapper = document.getElementById('addDesigWrapper');
+    const employmentWrapper = document.getElementById('employmentStatusWrapper');
+
+    const deptSelect = document.getElementById('department_id');
+    const desigSelect = document.getElementById('designation_id');
+    const employmentSelect = document.getElementById('employment_status');
+
+    if (!deptWrapper || !desigWrapper || !employmentWrapper || !deptSelect || !desigSelect || !employmentSelect) {
+        return;
+    }
+
+    if (isHrOrDirector) {
+        deptWrapper.style.display = 'none';
+        desigWrapper.style.display = 'none';
+        employmentWrapper.style.display = 'none';
+
+        deptSelect.value = '';
+        desigSelect.value = '';
+        employmentSelect.value = '';
+        return;
+    }
+
+    deptWrapper.style.display = '';
+    desigWrapper.style.display = '';
+    employmentWrapper.style.display = hasFacultyRole ? '' : 'none';
+
+    if (!hasFacultyRole) {
+        employmentSelect.value = '';
     }
 };
 
@@ -277,6 +320,10 @@ window.openViewUserModal = function (userId) {
             }
             document.getElementById('viewUserDepartment').textContent = user.department_name || 'N/A';
             document.getElementById('viewUserDesignation').textContent = user.designation_name || 'N/A';
+            const viewEmployment = document.getElementById('viewUserEmploymentStatus');
+            if (viewEmployment) {
+                viewEmployment.textContent = user.employment_status || 'N/A';
+            }
 
             // Show/hide Edit button based on whether this is the protected admin
             const editBtn = document.getElementById('viewToEditBtn');
@@ -317,6 +364,10 @@ document.addEventListener('turbo:load', () => {
                 openEditUserModal(userId);
             }
         });
+    }
+
+    if (window.handleAddRoleSelection) {
+        window.handleAddRoleSelection();
     }
 });
 
@@ -365,6 +416,10 @@ window.openEditUserModal = function (userId) {
             // Department & Designation
             document.getElementById('edit_department_id').value = user.department_id || '';
             document.getElementById('edit_designation_id').value = user.designation_id || '';
+            const editEmployment = document.getElementById('edit_employment_status');
+            if (editEmployment) {
+                editEmployment.value = user.employment_status || '';
+            }
 
             // Handle role-based dept/desig visibility
             handleEditRoleSelection();
@@ -390,11 +445,15 @@ window.closeEditUserModal = function () {
 window.handleEditRoleSelection = function () {
     const hrCheckbox = document.getElementById('edit_role_hr');
     const directorCheckbox = document.getElementById('edit_role_director');
+    const facultyCheckbox = document.getElementById('edit_role_faculty');
     const deptSection = document.getElementById('editDeptSection');
+    const employmentWrapper = document.getElementById('editEmploymentStatusWrapper');
 
     if (!deptSection) return;
 
     const isHrOrDirector = (hrCheckbox && hrCheckbox.checked) || (directorCheckbox && directorCheckbox.checked);
+    const hasFacultyRole = facultyCheckbox && facultyCheckbox.checked;
+    const employmentSelect = document.getElementById('edit_employment_status');
 
     if (isHrOrDirector) {
         deptSection.style.display = 'none';
@@ -402,8 +461,17 @@ window.handleEditRoleSelection = function () {
         const desigSelect = document.getElementById('edit_designation_id');
         if (deptSelect) deptSelect.value = '';
         if (desigSelect) desigSelect.value = '';
+        if (employmentSelect) employmentSelect.value = '';
     } else {
         deptSection.style.display = '';
+
+        if (employmentWrapper) {
+            employmentWrapper.style.display = hasFacultyRole ? '' : 'none';
+        }
+
+        if (!hasFacultyRole && employmentSelect) {
+            employmentSelect.value = '';
+        }
     }
 };
 
