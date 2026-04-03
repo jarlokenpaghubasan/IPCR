@@ -88,7 +88,7 @@ Route::get('/faculty/dashboard', [FacultyDashboardController::class, 'index'])
 
 Route::post('/faculty/notifications/mark-read', [FacultyDashboardController::class, 'markAllRead'])
     ->name('faculty.notifications.mark-read')
-    ->middleware(['auth', 'role:faculty,director']);
+    ->middleware(['auth', 'role:faculty,director,hr']);
 
 Route::get('/faculty/my-ipcrs', [FacultyDashboardController::class, 'myIpcrs'])
     ->name('faculty.my-ipcrs')
@@ -102,12 +102,32 @@ Route::get('/faculty/summary-reports', [\App\Http\Controllers\Faculty\SummaryRep
     ->name('faculty.summary-reports')
     ->middleware(['auth', 'role:hr']);
 
+Route::get('/faculty/summary-reports/faculty/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportFacultyXlsx'])
+    ->name('faculty.summary-reports.faculty.export')
+    ->middleware(['auth', 'role:hr']);
+
+Route::get('/faculty/summary-reports/staff/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportStaffXlsx'])
+    ->name('faculty.summary-reports.staff.export')
+    ->middleware(['auth', 'role:hr']);
+
+Route::get('/faculty/summary-reports/export-all', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportAllXlsx'])
+    ->name('faculty.summary-reports.export-all')
+    ->middleware(['auth', 'role:hr']);
+
 Route::put('/faculty/summary-reports/dean-director/{user}/scores', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'updateDeanDirectorScores'])
     ->name('faculty.summary-reports.dean-director.update')
     ->middleware(['auth', 'role:hr']);
 
 Route::get('/faculty/summary-reports/dean-director/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportDeanDirectorXlsx'])
     ->name('faculty.summary-reports.dean-director.export')
+    ->middleware(['auth', 'role:hr']);
+
+Route::get('/faculty/summary-reports/dean-ipcrs/{submission}', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'showDeanIpcrSubmission'])
+    ->name('faculty.summary-reports.dean-ipcrs.show')
+    ->middleware(['auth', 'role:hr']);
+
+Route::get('/faculty/summary-reports/dean-ipcrs/{submission}/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportDeanIpcrSubmission'])
+    ->name('faculty.summary-reports.dean-ipcrs.export')
     ->middleware(['auth', 'role:hr']);
 
 Route::patch('/faculty/password/change', [FacultyDashboardController::class, 'changePassword'])
@@ -385,7 +405,21 @@ Route::get('/director/dashboard', function () {
 
 Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])
     ->name('admin.dashboard')
-    ->middleware(['auth', 'role:admin', 'permission:admin.dashboard']);
+    ->middleware(['auth', 'role:admin,hr', 'permission:admin.dashboard']);
+
+// User Management (Admin + HR)
+Route::middleware(['auth', 'role:admin,hr', 'permission:admin.users.manage'])
+    ->prefix('admin/panel')
+    ->name('admin.')
+    ->group(function () {
+        Route::resource('users', UserManagementController::class);
+
+        Route::patch('users/{user}/toggle-active', [UserManagementController::class, 'toggleActive'])
+            ->name('users.toggleActive');
+
+        Route::get('users/{user}/json', [UserManagementController::class, 'showJson'])
+            ->name('users.showJson');
+    });
 
 
 /*
@@ -395,17 +429,6 @@ Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])
 */
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin/panel')->name('admin.')->group(function () {
-    // User Management
-    Route::middleware(['permission:admin.users.manage'])->group(function () {
-        Route::resource('users', UserManagementController::class);
-        
-        Route::patch('users/{user}/toggle-active', [UserManagementController::class, 'toggleActive'])
-            ->name('users.toggleActive');
-
-        Route::get('users/{user}/json', [UserManagementController::class, 'showJson'])
-            ->name('users.showJson');
-    });
-    
     // Photo Management
     Route::middleware(['permission:admin.photos.manage'])->group(function () {
         Route::post('users/{user}/photo/upload', [PhotoController::class, 'upload'])

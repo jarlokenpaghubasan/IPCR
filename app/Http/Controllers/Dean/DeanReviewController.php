@@ -40,9 +40,16 @@ class DeanReviewController extends Controller
             ->orderBy('submitted_at', 'desc')
             ->get()
             ->map(function ($submission) use ($user) {
-                $calibration = DeanCalibration::where('dean_id', $user->id)
-                    ->where('ipcr_submission_id', $submission->id)
-                    ->first();
+                $myCalibration = $this->getDeanCalibration($user->id, $submission->id);
+                $latestCalibrated = $this->getLatestCalibratedCalibration($submission->id);
+
+                $displayStatus = $latestCalibrated
+                    ? 'calibrated'
+                    : ($myCalibration?->status ?? null);
+
+                $displayScore = $latestCalibrated?->overall_score
+                    ?? $myCalibration?->overall_score;
+
                 return [
                     'id' => $submission->id,
                     'title' => $submission->title,
@@ -52,8 +59,9 @@ class DeanReviewController extends Controller
                     'submitted_at' => $submission->submitted_at?->format('M d, Y'),
                     'user_name' => $submission->user?->name ?? 'Unknown',
                     'employee_id' => $submission->user?->employee_id ?? 'N/A',
-                    'calibration_status' => $calibration?->status,
-                    'calibration_score' => $calibration?->overall_score,
+                    'calibration_status' => $displayStatus,
+                    'calibration_score' => $displayScore,
+                    'calibrated_by' => $latestCalibrated?->dean?->name,
                 ];
             });
 
@@ -86,10 +94,10 @@ class DeanReviewController extends Controller
 
         ActivityLogService::log('dean_reviewed_faculty_submission', 'Reviewed faculty IPCR submission: ' . $submission->title . ' by ' . ($submission->user->name ?? 'Unknown'), $submission);
 
-        // Load existing calibration by this dean
-        $calibration = DeanCalibration::where('dean_id', $user->id)
-            ->where('ipcr_submission_id', $submission->id)
-            ->first();
+        // Load this dean's calibration first; otherwise load latest finalized calibration for recalibration.
+        $myCalibration = $this->getDeanCalibration($user->id, $submission->id);
+        $latestCalibrated = $this->getLatestCalibratedCalibration($submission->id);
+        $calibrationToLoad = $myCalibration ?: $latestCalibrated;
 
         return response()->json([
             'success' => true,
@@ -106,11 +114,19 @@ class DeanReviewController extends Controller
                 'employee_id' => $submission->user?->employee_id ?? 'N/A',
                 'approved_by' => $submission->approved_by ?? '',
                 'noted_by' => $submission->noted_by ?? '',
-                'calibration' => $calibration ? [
-                    'id' => $calibration->id,
-                    'calibration_data' => $calibration->calibration_data,
-                    'overall_score' => $calibration->overall_score,
-                    'status' => $calibration->status,
+                'calibration' => $calibrationToLoad ? [
+                    'id' => $calibrationToLoad->id,
+                    'calibration_data' => $calibrationToLoad->calibration_data,
+                    'overall_score' => $calibrationToLoad->overall_score,
+                    'status' => $calibrationToLoad->status,
+                    'dean_name' => $calibrationToLoad->dean?->name,
+                    'is_current_dean' => (int) $calibrationToLoad->dean_id === (int) $user->id,
+                ] : null,
+                'latest_calibration' => $latestCalibrated ? [
+                    'overall_score' => $latestCalibrated->overall_score,
+                    'status' => $latestCalibrated->status,
+                    'dean_name' => $latestCalibrated->dean?->name,
+                    'updated_at' => $latestCalibrated->updated_at?->format('M d, Y h:i A'),
                 ] : null,
             ],
         ]);
@@ -135,9 +151,16 @@ class DeanReviewController extends Controller
             ->orderBy('submitted_at', 'desc')
             ->get()
             ->map(function ($submission) use ($user) {
-                $calibration = DeanCalibration::where('dean_id', $user->id)
-                    ->where('ipcr_submission_id', $submission->id)
-                    ->first();
+                $myCalibration = $this->getDeanCalibration($user->id, $submission->id);
+                $latestCalibrated = $this->getLatestCalibratedCalibration($submission->id);
+
+                $displayStatus = $latestCalibrated
+                    ? 'calibrated'
+                    : ($myCalibration?->status ?? null);
+
+                $displayScore = $latestCalibrated?->overall_score
+                    ?? $myCalibration?->overall_score;
+
                 return [
                     'id' => $submission->id,
                     'title' => $submission->title,
@@ -148,8 +171,9 @@ class DeanReviewController extends Controller
                     'user_name' => $submission->user?->name ?? 'Unknown',
                     'employee_id' => $submission->user?->employee_id ?? 'N/A',
                     'department' => $submission->user?->department?->code ?? $submission->user?->department?->name ?? 'N/A',
-                    'calibration_status' => $calibration?->status,
-                    'calibration_score' => $calibration?->overall_score,
+                    'calibration_status' => $displayStatus,
+                    'calibration_score' => $displayScore,
+                    'calibrated_by' => $latestCalibrated?->dean?->name,
                 ];
             });
 
@@ -180,10 +204,10 @@ class DeanReviewController extends Controller
 
         ActivityLogService::log('dean_reviewed_dean_submission', 'Reviewed dean IPCR submission: ' . $submission->title . ' by ' . ($submission->user->name ?? 'Unknown'), $submission);
 
-        // Load existing calibration by this dean
-        $calibration = DeanCalibration::where('dean_id', $user->id)
-            ->where('ipcr_submission_id', $submission->id)
-            ->first();
+        // Load this dean's calibration first; otherwise load latest finalized calibration for recalibration.
+        $myCalibration = $this->getDeanCalibration($user->id, $submission->id);
+        $latestCalibrated = $this->getLatestCalibratedCalibration($submission->id);
+        $calibrationToLoad = $myCalibration ?: $latestCalibrated;
 
         return response()->json([
             'success' => true,
@@ -201,11 +225,19 @@ class DeanReviewController extends Controller
                 'department' => $submission->user?->department?->code ?? $submission->user?->department?->name ?? 'N/A',
                 'approved_by' => $submission->approved_by ?? '',
                 'noted_by' => $submission->noted_by ?? '',
-                'calibration' => $calibration ? [
-                    'id' => $calibration->id,
-                    'calibration_data' => $calibration->calibration_data,
-                    'overall_score' => $calibration->overall_score,
-                    'status' => $calibration->status,
+                'calibration' => $calibrationToLoad ? [
+                    'id' => $calibrationToLoad->id,
+                    'calibration_data' => $calibrationToLoad->calibration_data,
+                    'overall_score' => $calibrationToLoad->overall_score,
+                    'status' => $calibrationToLoad->status,
+                    'dean_name' => $calibrationToLoad->dean?->name,
+                    'is_current_dean' => (int) $calibrationToLoad->dean_id === (int) $user->id,
+                ] : null,
+                'latest_calibration' => $latestCalibrated ? [
+                    'overall_score' => $latestCalibrated->overall_score,
+                    'status' => $latestCalibrated->status,
+                    'dean_name' => $latestCalibrated->dean?->name,
+                    'updated_at' => $latestCalibrated->updated_at?->format('M d, Y h:i A'),
                 ] : null,
             ],
         ]);
@@ -269,6 +301,14 @@ class DeanReviewController extends Controller
             }
         }
 
+        $latestCalibrated = $this->getLatestCalibratedCalibration($submissionId);
+        $displayStatus = $latestCalibrated
+            ? 'calibrated'
+            : $calibration->status;
+        $displayScore = $latestCalibrated?->overall_score
+            ?? $calibration->overall_score;
+        $displayCalibratedBy = $latestCalibrated?->dean?->name;
+
         return response()->json([
             'success' => true,
             'message' => $request->status === 'calibrated'
@@ -278,8 +318,35 @@ class DeanReviewController extends Controller
                 'id' => $calibration->id,
                 'status' => $calibration->status,
                 'overall_score' => $calibration->overall_score,
+                'dean_name' => $dean->name,
+                'display_status' => $displayStatus,
+                'display_score' => $displayScore,
+                'display_calibrated_by' => $displayCalibratedBy,
             ],
         ]);
+    }
+
+    /**
+     * Get calibration saved by the current dean for a submission.
+     */
+    private function getDeanCalibration(int $deanId, int $submissionId): ?DeanCalibration
+    {
+        return DeanCalibration::with('dean:id,name')
+            ->where('dean_id', $deanId)
+            ->where('ipcr_submission_id', $submissionId)
+            ->first();
+    }
+
+    /**
+     * Get the latest finalized calibration for a submission across all deans.
+     */
+    private function getLatestCalibratedCalibration(int $submissionId): ?DeanCalibration
+    {
+        return DeanCalibration::with('dean:id,name')
+            ->where('ipcr_submission_id', $submissionId)
+            ->where('status', 'calibrated')
+            ->orderByDesc('updated_at')
+            ->first();
     }
 
     /**

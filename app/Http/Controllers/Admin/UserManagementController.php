@@ -120,7 +120,8 @@ class UserManagementController extends Controller
 
         ActivityLogService::log('created', 'Created user ' . $user->name, $user);
 
-        return redirect()->route('admin.users.index')->with('success', 'User created successfully');
+        return $this->redirectAfterAction($request)
+            ->with('success', 'User created successfully');
     }
 
     /**
@@ -182,7 +183,8 @@ class UserManagementController extends Controller
     {
         // Prevent updating the main admin account
         if ($user->employee_id === 'URS26-ADM00001') {
-            return redirect()->route('admin.users.index')->with('error', 'The administrator account cannot be modified');
+            return $this->redirectAfterAction($request)
+                ->with('error', 'The administrator account cannot be modified');
         }
 
         $validated = $request->validate([
@@ -270,22 +272,25 @@ class UserManagementController extends Controller
 
         ActivityLogService::log('updated', 'Updated user ' . $user->name, $user);
 
-        return redirect()->route('admin.users.index')->with('success', 'User updated successfully');
+        return $this->redirectAfterAction($request)
+            ->with('success', 'User updated successfully');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
         // Prevent deleting the main admin account
         if ($user->employee_id === 'URS26-ADM00001') {
-            return redirect()->route('admin.users.index')->with('error', 'The administrator account cannot be deleted');
+            return $this->redirectAfterAction($request)
+                ->with('error', 'The administrator account cannot be deleted');
         }
 
         // Prevent deleting self
         if (auth()->user()->id === $user->id) {
-            return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account');
+            return $this->redirectAfterAction($request)
+                ->with('error', 'You cannot delete your own account');
         }
 
         // Delete photos
@@ -296,21 +301,24 @@ class UserManagementController extends Controller
 
         ActivityLogService::log('deleted', 'Deleted user ' . $userName);
 
-        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
+        return $this->redirectAfterAction($request)
+            ->with('success', 'User deleted successfully');
     }
 
     /**
      * Toggle user active status.
      */
-    public function toggleActive(User $user)
+    public function toggleActive(Request $request, User $user)
     {
         // Prevent toggling the main admin account
         if ($user->employee_id === 'URS26-ADM00001') {
-            return redirect()->route('admin.users.index')->with('error', 'The administrator account status cannot be changed');
+            return $this->redirectAfterAction($request)
+                ->with('error', 'The administrator account status cannot be changed');
         }
 
         if (auth()->user()->id === $user->id) {
-            return redirect()->route('admin.users.index')->with('error', 'You cannot toggle your own status');
+            return $this->redirectAfterAction($request)
+                ->with('error', 'You cannot toggle your own status');
         }
 
         $user->update(['is_active' => !$user->is_active]);
@@ -318,6 +326,21 @@ class UserManagementController extends Controller
         $status = $user->is_active ? 'activated' : 'deactivated';
         ActivityLogService::log('toggled_active', ucfirst($status) . ' user ' . $user->name, $user);
 
-        return redirect()->route('admin.users.index')->with('success', "User {$status} successfully");
+        return $this->redirectAfterAction($request)
+            ->with('success', "User {$status} successfully");
+    }
+
+    /**
+     * Redirect to admin users index by default, or back to the Summary Reports module.
+     */
+    private function redirectAfterAction(Request $request)
+    {
+        $redirectTo = (string) $request->input('redirect_to', '');
+
+        if ($redirectTo !== '' && str_starts_with($redirectTo, url('/faculty/summary-reports'))) {
+            return redirect()->to($redirectTo);
+        }
+
+        return redirect()->route('admin.users.index');
     }
 }

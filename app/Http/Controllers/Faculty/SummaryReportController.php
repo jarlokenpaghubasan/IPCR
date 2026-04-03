@@ -4,17 +4,27 @@ namespace App\Http\Controllers\Faculty;
 
 use App\Models\User;
 use App\Models\Department;
+use App\Models\Designation;
 use App\Models\DeanCalibration;
 use App\Models\DeanDirectorSummaryOverride;
+use App\Models\AdminNotification;
 use App\Models\IpcrSubmission;
 use App\Models\OpcrSubmission;
+use App\Models\Role;
+use App\Models\SupportingDocument;
 use App\Services\ActivityLogService;
 use App\Services\DeanDirectorSummaryExportService;
+use App\Services\FacultySummaryExportService;
+use App\Services\IpcrExportService;
+use App\Services\StaffSummaryExportService;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class SummaryReportController extends Controller
 {
@@ -25,13 +35,28 @@ class SummaryReportController extends Controller
     {
         $activeDepartment = $request->query('department', 'all');
         $requestedCategory = $request->query('category', 'faculty');
-        $activeCategory = in_array($requestedCategory, ['faculty', 'staff', 'dean-director'], true) ? $requestedCategory : 'faculty';
+        $activeCategory = in_array($requestedCategory, ['faculty', 'staff', 'dean-director', 'dean-ipcrs', 'user-management'], true) ? $requestedCategory : 'faculty';
         $regularStaffStatusOptions = ['Permanent', 'Casual', 'Contractual'];
         $emergencyStaffStatus = 'Emergency Laborer';
         $partTimeStatus = 'Part Time';
 
-        // Staff and dean/director views are always campus-wide.
-        if (in_array($activeCategory, ['staff', 'dean-director'], true)) {
+        $userRole = auth()->user()->getPrimaryRole() ?? 'faculty';
+        $notifications = AdminNotification::active()
+            ->forAudience($userRole)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        $readNotifIds = DB::table('notification_reads')
+            ->where('user_id', auth()->id())
+            ->whereIn('notification_id', $notifications->pluck('id'))
+            ->pluck('notification_id')
+            ->toArray();
+
+        $unreadCount = $notifications->whereNotIn('id', $readNotifIds)->count();
+
+        // Staff and dean-focused views are always campus-wide.
+        if (in_array($activeCategory, ['staff', 'dean-director', 'dean-ipcrs', 'user-management'], true)) {
             $activeDepartment = 'all';
         }
 
@@ -42,6 +67,50 @@ class SummaryReportController extends Controller
         $emergencyUsers = collect();
         $partTimeUsers = collect();
         $deanDirectorRows = collect();
+        $deanIpcrRows = collect();
+        $deanIpcrFilters = [];
+        $deanIpcrDeans = collect();
+        $deanIpcrDepartments = collect();
+        $deanIpcrSchoolYears = collect();
+        $deanIpcrSemesters = collect();
+        $userManagementUsers = null;
+        $userManagementSearch = '';
+        $userManagementDepartment = '';
+        $userManagementTotalUsers = 0;
+        $userManagementActiveUsers = 0;
+        $userManagementInactiveUsers = 0;
+        $userManagementRoles = [];
+        $userManagementDesignations = collect();
+
+        if ($activeCategory === 'dean-ipcrs') {
+            [
+                $deanIpcrRows,
+                $deanIpcrFilters,
+                $deanIpcrDeans,
+                $deanIpcrDepartments,
+                $deanIpcrSchoolYears,
+                $deanIpcrSemesters,
+            ] = $this->buildDeanIpcrDataset($request);
+
+            return view('dashboard.faculty.summary-reports', compact(
+                'users',
+                'emergencyUsers',
+                'partTimeUsers',
+                'deanDirectorRows',
+                'deanIpcrRows',
+                'deanIpcrFilters',
+                'deanIpcrDeans',
+                'deanIpcrDepartments',
+                'deanIpcrSchoolYears',
+                'deanIpcrSemesters',
+                'departments',
+                'activeDepartment',
+                'activeCategory',
+                'notifications',
+                'readNotifIds',
+                'unreadCount'
+            ));
+        }
 
         if ($activeCategory === 'dean-director') {
             $deanDirectorRows = $this->buildDeanDirectorRows();
@@ -51,9 +120,77 @@ class SummaryReportController extends Controller
                 'emergencyUsers',
                 'partTimeUsers',
                 'deanDirectorRows',
+                'deanIpcrRows',
+                'deanIpcrFilters',
+                'deanIpcrDeans',
+                'deanIpcrDepartments',
+                'deanIpcrSchoolYears',
+                'deanIpcrSemesters',
                 'departments',
                 'activeDepartment',
-                'activeCategory'
+                'activeCategory',
+                'notifications',
+                'readNotifIds',
+                'unreadCount'
+            ));
+        }
+
+        if ($activeCategory === 'user-management') {
+            $userManagementSearch = trim((string) $request->query('search', ''));
+            $userManagementDepartment = (string) $request->query('user_department', '');
+
+            $userQuery = User::with('department', 'designation', 'userRoles');
+
+            if ($userManagementSearch !== '') {
+                $search = $userManagementSearch;
+                $userQuery->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('username', 'like', "%{$search}%")
+                        ->orWhere('employee_id', 'like', "%{$search}%");
+                });
+            }
+
+            if ($userManagementDepartment !== '') {
+                $userQuery->where('department_id', (int) $userManagementDepartment);
+            }
+
+            $userManagementUsers = $userQuery
+                ->orderBy('name')
+                ->paginate(10)
+                ->withQueryString();
+
+            $userManagementTotalUsers = User::count();
+            $userManagementActiveUsers = User::where('is_active', true)->count();
+            $userManagementInactiveUsers = User::where('is_active', false)->count();
+            $userManagementRoles = Role::getNames();
+            $userManagementDesignations = Designation::orderBy('title')->get();
+
+            return view('dashboard.faculty.summary-reports', compact(
+                'users',
+                'emergencyUsers',
+                'partTimeUsers',
+                'deanDirectorRows',
+                'deanIpcrRows',
+                'deanIpcrFilters',
+                'deanIpcrDeans',
+                'deanIpcrDepartments',
+                'deanIpcrSchoolYears',
+                'deanIpcrSemesters',
+                'departments',
+                'activeDepartment',
+                'activeCategory',
+                'notifications',
+                'readNotifIds',
+                'unreadCount',
+                'userManagementUsers',
+                'userManagementSearch',
+                'userManagementDepartment',
+                'userManagementTotalUsers',
+                'userManagementActiveUsers',
+                'userManagementInactiveUsers',
+                'userManagementRoles',
+                'userManagementDesignations'
             ));
         }
 
@@ -111,10 +248,153 @@ class SummaryReportController extends Controller
             'emergencyUsers',
             'partTimeUsers',
             'deanDirectorRows',
+            'deanIpcrRows',
+            'deanIpcrFilters',
+            'deanIpcrDeans',
+            'deanIpcrDepartments',
+            'deanIpcrSchoolYears',
+            'deanIpcrSemesters',
             'departments',
             'activeDepartment',
-            'activeCategory'
+            'activeCategory',
+            'notifications',
+            'readNotifIds',
+            'unreadCount'
         ));
+    }
+
+    /**
+     * Build dean IPCR calibrated-submission dataset with filter options.
+     */
+    private function buildDeanIpcrDataset(Request $request): array
+    {
+        $filters = [
+            'search' => trim((string) $request->query('search', '')),
+            'dean_id' => (string) $request->query('dean_id', 'all'),
+            'department_id' => (string) $request->query('dean_department_id', 'all'),
+            'school_year' => (string) $request->query('school_year', 'all'),
+            'semester' => (string) $request->query('semester', 'all'),
+            'submitted_from' => (string) $request->query('submitted_from', ''),
+            'submitted_to' => (string) $request->query('submitted_to', ''),
+        ];
+
+        $deanUsers = User::with('department')
+            ->where('is_active', true)
+            ->whereHas('userRoles', function ($query) {
+                $query->where('role', 'dean');
+            })
+            ->orderBy('name')
+            ->get();
+
+        $deanDepartments = Department::whereIn('id', $deanUsers->pluck('department_id')->filter()->unique())
+            ->orderBy('code')
+            ->get();
+
+        $baseQuery = IpcrSubmission::with([
+            'user:id,name,employee_id,department_id',
+            'user.department:id,name,code',
+            'deanCalibrations' => function ($query) {
+                $query->where('status', 'calibrated')
+                    ->with('dean:id,name')
+                    ->orderByDesc('updated_at');
+            },
+        ])
+            ->whereHas('user.userRoles', function ($query) {
+                $query->where('role', 'dean');
+            })
+            ->whereHas('deanCalibrations', function ($query) {
+                $query->where('status', 'calibrated');
+            });
+
+        if ($filters['search'] !== '') {
+            $search = $filters['search'];
+            $baseQuery->where(function ($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('employee_id', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($filters['dean_id'] !== 'all') {
+            $baseQuery->where('user_id', (int) $filters['dean_id']);
+        }
+
+        if ($filters['department_id'] !== 'all') {
+            $baseQuery->whereHas('user', function ($query) use ($filters) {
+                $query->where('department_id', (int) $filters['department_id']);
+            });
+        }
+
+        if ($filters['school_year'] !== 'all') {
+            $baseQuery->where('school_year', $filters['school_year']);
+        }
+
+        if ($filters['semester'] !== 'all') {
+            $baseQuery->where('semester', $filters['semester']);
+        }
+
+        if ($filters['submitted_from'] !== '') {
+            $baseQuery->whereDate('submitted_at', '>=', $filters['submitted_from']);
+        }
+
+        if ($filters['submitted_to'] !== '') {
+            $baseQuery->whereDate('submitted_at', '<=', $filters['submitted_to']);
+        }
+
+        $rows = $baseQuery
+            ->orderByDesc('submitted_at')
+            ->get()
+            ->map(function (IpcrSubmission $submission) {
+                $latestCalibrated = $submission->deanCalibrations->first();
+
+                return [
+                    'id' => $submission->id,
+                    'title' => $submission->title,
+                    'school_year' => $submission->school_year,
+                    'semester' => $submission->semester,
+                    'submitted_at' => $submission->submitted_at,
+                    'dean_name' => $submission->user?->name ?? 'Unknown',
+                    'employee_id' => $submission->user?->employee_id ?? 'N/A',
+                    'department_code' => $submission->user?->department?->code ?? 'N/A',
+                    'calibrated_score' => $latestCalibrated?->overall_score,
+                    'calibrated_by' => $latestCalibrated?->dean?->name,
+                    'calibrated_at' => $latestCalibrated?->updated_at,
+                ];
+            })
+            ->values();
+
+        $schoolYears = IpcrSubmission::whereHas('user.userRoles', function ($query) {
+                $query->where('role', 'dean');
+            })
+            ->whereHas('deanCalibrations', function ($query) {
+                $query->where('status', 'calibrated');
+            })
+            ->whereNotNull('school_year')
+            ->distinct()
+            ->orderByDesc('school_year')
+            ->pluck('school_year');
+
+        $semesters = IpcrSubmission::whereHas('user.userRoles', function ($query) {
+                $query->where('role', 'dean');
+            })
+            ->whereHas('deanCalibrations', function ($query) {
+                $query->where('status', 'calibrated');
+            })
+            ->whereNotNull('semester')
+            ->distinct()
+            ->orderBy('semester')
+            ->pluck('semester');
+
+        return [
+            $rows,
+            $filters,
+            $deanUsers,
+            $deanDepartments,
+            $schoolYears,
+            $semesters,
+        ];
     }
 
     /**
@@ -277,6 +557,576 @@ class SummaryReportController extends Controller
             return redirect()
                 ->route('faculty.summary-reports', ['category' => 'dean-director', 'department' => 'all'])
                 ->withErrors(['export' => 'Failed to export Dean and Director summary report.']);
+        }
+    }
+
+    /**
+     * Export faculty, staff, and dean/director summaries in a single multi-sheet XLSX.
+     */
+    public function exportAllXlsx(
+        Request $request,
+        FacultySummaryExportService $facultyExportService,
+        StaffSummaryExportService $staffExportService,
+        DeanDirectorSummaryExportService $deanDirectorExportService
+    ) {
+        $sourceFiles = [];
+
+        try {
+            $excludedRoles = ['dean', 'admin', 'hr', 'director'];
+            $regularStaffStatusOptions = ['Permanent', 'Casual', 'Contractual'];
+            $emergencyStaffStatus = 'Emergency Laborer';
+
+            $baseQuery = User::with(['department', 'designation', 'userRoles'])
+                ->where('is_active', true)
+                ->whereHas('userRoles', function ($q) {
+                    $q->where('role', 'faculty');
+                })
+                ->whereDoesntHave('userRoles', function ($q) use ($excludedRoles) {
+                    $q->whereIn('role', $excludedRoles);
+                });
+
+            // Faculty dataset (all departments)
+            $departments = Department::orderBy('code')->get();
+            $facultyUsers = (clone $baseQuery)
+                ->whereNull('employment_status')
+                ->orderBy('name')
+                ->get();
+
+            $facultyPartTimeUsers = (clone $baseQuery)
+                ->where('employment_status', 'Part Time')
+                ->orderBy('name')
+                ->get();
+
+            $this->appendRatings($facultyUsers);
+            $this->appendRatings($facultyPartTimeUsers);
+
+            $departmentRows = $departments
+                ->map(function ($department) use ($facultyUsers, $facultyPartTimeUsers) {
+                    return [
+                        'department' => $department,
+                        'permanent' => $facultyUsers->where('department_id', $department->id)->values(),
+                        'part_time' => $facultyPartTimeUsers->where('department_id', $department->id)->values(),
+                    ];
+                })
+                ->filter(function (array $row) {
+                    return $row['permanent']->isNotEmpty() || $row['part_time']->isNotEmpty();
+                })
+                ->values();
+
+            $preparedByUser = $request->user();
+            $directorForFacultyStaff = User::query()
+                ->where('is_active', true)
+                ->whereHas('userRoles', function ($query) {
+                    $query->where('role', 'director');
+                })
+                ->orderByDesc('updated_at')
+                ->orderBy('name')
+                ->first();
+
+            $facultyPreparedBy = [
+                'name' => $preparedByUser?->name ?? '',
+                'position' => 'HRMO',
+            ];
+
+            $facultyApprovedBy = [
+                'name' => $directorForFacultyStaff?->name ?? '',
+                'position' => 'Campus Director',
+            ];
+
+            $facultyMeta = [
+                'campus' => 'BINANGONAN',
+                'generated_at' => now(),
+                'department_code' => 'all',
+            ];
+
+            $facultyFilePath = $facultyExportService->export($departmentRows, $facultyPreparedBy, $facultyApprovedBy, $facultyMeta);
+            $sourceFiles[] = $facultyFilePath;
+
+            // Staff dataset (all)
+            $regularStaffRows = (clone $baseQuery)
+                ->whereIn('employment_status', $regularStaffStatusOptions)
+                ->orderBy('name')
+                ->get();
+
+            $emergencyLaborerRows = (clone $baseQuery)
+                ->where('employment_status', $emergencyStaffStatus)
+                ->orderBy('name')
+                ->get();
+
+            $this->appendRatings($regularStaffRows);
+            $this->appendRatings($emergencyLaborerRows);
+
+            $staffPreparedBy = [
+                'name' => $preparedByUser?->name ?? '',
+                'position' => 'HRMO',
+            ];
+
+            $staffNotedBy = [
+                'name' => $directorForFacultyStaff?->name ?? '',
+                'position' => 'Campus Director',
+            ];
+
+            $staffMeta = [
+                'campus' => 'BINANGONAN',
+            ];
+
+            $staffFilePath = $staffExportService->export($regularStaffRows, $emergencyLaborerRows, $staffPreparedBy, $staffNotedBy, $staffMeta);
+            $sourceFiles[] = $staffFilePath;
+
+            // Dean/Director dataset (all)
+            $deanDirectorRows = $this->buildDeanDirectorRows();
+            $deanPreparedByUser = $request->user()->loadMissing('designation');
+            $directorForDean = User::with(['designation', 'userRoles'])
+                ->where('is_active', true)
+                ->whereHas('userRoles', function ($q) {
+                    $q->where('role', 'director');
+                })
+                ->orderBy('name')
+                ->first();
+
+            $deanPreparedBy = [
+                'name' => $deanPreparedByUser?->name,
+                'position' => 'Campus HRMO',
+            ];
+
+            $deanNotedBy = [
+                'name' => $directorForDean?->name ?? '',
+                'position' => 'Campus Director',
+            ];
+
+            $deanDirectorFilePath = $deanDirectorExportService->export($deanDirectorRows, $deanPreparedBy, $deanNotedBy);
+            $sourceFiles[] = $deanDirectorFilePath;
+
+            $combinedFilePath = $this->mergeSummaryExportFiles($sourceFiles, [
+                'Faculty Summary',
+                'Staff Summary',
+                'Dean Director Summary',
+            ]);
+
+            $this->cleanupExportFiles($sourceFiles);
+
+            ActivityLogService::log(
+                'summary_reports_export_all',
+                'Exported combined summary workbook (Faculty, Staff, Dean and Director).',
+                null,
+                [
+                    'faculty_count' => $facultyUsers->count() + $facultyPartTimeUsers->count(),
+                    'staff_count' => $regularStaffRows->count() + $emergencyLaborerRows->count(),
+                    'dean_director_count' => $deanDirectorRows->count(),
+                ]
+            );
+
+            $downloadName = 'IPCR-Summary-of-Performance-Rating-URSB_' . now()->year . '.xlsx';
+
+            return response()->download($combinedFilePath, $downloadName)->deleteFileAfterSend(true);
+        } catch (\Throwable $e) {
+            $this->cleanupExportFiles($sourceFiles);
+
+            \Log::error('Summary reports export-all error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $fallbackCategory = (string) $request->query('category', 'faculty');
+            if (!in_array($fallbackCategory, ['faculty', 'staff', 'dean-director'], true)) {
+                $fallbackCategory = 'faculty';
+            }
+
+            $fallbackDepartment = $fallbackCategory === 'faculty'
+                ? (string) $request->query('department', 'all')
+                : 'all';
+
+            return redirect()
+                ->route('faculty.summary-reports', ['category' => $fallbackCategory, 'department' => $fallbackDepartment])
+                ->withErrors(['export' => 'Failed to export all summary reports in one workbook.']);
+        }
+    }
+
+    /**
+     * Export the faculty summary report as XLSX with the official matrix layout.
+     */
+    public function exportFacultyXlsx(Request $request, FacultySummaryExportService $exportService)
+    {
+        $activeDepartment = (string) $request->query('department', 'all');
+
+        try {
+            $departments = Department::orderBy('code')->get();
+            $scopeDepartments = $activeDepartment === 'all'
+                ? $departments
+                : $departments->filter(fn($department) => $department->code === $activeDepartment)->values();
+
+            $excludedRoles = ['dean', 'admin', 'hr', 'director'];
+            $baseQuery = User::with(['department', 'designation', 'userRoles'])
+                ->where('is_active', true)
+                ->whereHas('userRoles', function ($q) {
+                    $q->where('role', 'faculty');
+                })
+                ->whereDoesntHave('userRoles', function ($q) use ($excludedRoles) {
+                    $q->whereIn('role', $excludedRoles);
+                });
+
+            if ($activeDepartment !== 'all') {
+                $baseQuery->whereHas('department', function ($q) use ($activeDepartment) {
+                    $q->where('code', $activeDepartment);
+                });
+            }
+
+            $users = (clone $baseQuery)
+                ->whereNull('employment_status')
+                ->orderBy('name')
+                ->get();
+
+            $partTimeUsers = (clone $baseQuery)
+                ->where('employment_status', 'Part Time')
+                ->orderBy('name')
+                ->get();
+
+            $this->appendRatings($users);
+            $this->appendRatings($partTimeUsers);
+
+            $departmentRows = $scopeDepartments->map(function ($department) use ($users, $partTimeUsers) {
+                return [
+                    'department' => $department,
+                    'permanent' => $users->where('department_id', $department->id)->values(),
+                    'part_time' => $partTimeUsers->where('department_id', $department->id)->values(),
+                ];
+            });
+
+            if ($activeDepartment === 'all') {
+                $departmentRows = $departmentRows
+                    ->filter(function (array $row) {
+                        return $row['permanent']->isNotEmpty() || $row['part_time']->isNotEmpty();
+                    });
+            }
+
+            $departmentRows = $departmentRows->values();
+
+            $preparedByUser = $request->user();
+            $director = User::query()
+                ->where('is_active', true)
+                ->whereHas('userRoles', function ($query) {
+                    $query->where('role', 'director');
+                })
+                ->orderByDesc('updated_at')
+                ->orderBy('name')
+                ->first();
+
+            $preparedBy = [
+                'name' => $preparedByUser?->name ?? '',
+                'position' => 'HRMO',
+            ];
+
+            $approvedBy = [
+                'name' => $director?->name ?? '',
+                'position' => 'Campus Director',
+            ];
+
+            $meta = [
+                'campus' => 'BINANGONAN',
+                'generated_at' => now(),
+                'department_code' => $activeDepartment,
+            ];
+
+            $filePath = $exportService->export($departmentRows, $preparedBy, $approvedBy, $meta);
+
+            ActivityLogService::log(
+                'faculty_summary_exported',
+                'Exported faculty summary report to Excel.',
+                null,
+                [
+                    'department' => $activeDepartment,
+                    'record_count' => $users->count() + $partTimeUsers->count(),
+                ]
+            );
+
+            $departmentSuffix = $activeDepartment === 'all' ? 'All_Departments' : strtoupper($activeDepartment);
+            $downloadName = 'Faculty_Summary_' . $departmentSuffix . '_' . now()->format('Ymd_His') . '.xlsx';
+
+            return response()->download($filePath, $downloadName)->deleteFileAfterSend(true);
+        } catch (\Throwable $e) {
+            \Log::error('Faculty summary export error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'department' => $activeDepartment,
+            ]);
+
+            return redirect()
+                ->route('faculty.summary-reports', ['category' => 'faculty', 'department' => $activeDepartment])
+                ->withErrors(['export' => 'Failed to export faculty summary report.']);
+        }
+    }
+
+    /**
+     * Export the staff summary report as XLSX in the official staff matrix layout.
+     */
+    public function exportStaffXlsx(Request $request, StaffSummaryExportService $exportService)
+    {
+        try {
+            $excludedRoles = ['dean', 'admin', 'hr', 'director'];
+            $regularStaffStatusOptions = ['Permanent', 'Casual', 'Contractual'];
+            $emergencyStaffStatus = 'Emergency Laborer';
+
+            $baseQuery = User::with(['department', 'designation', 'userRoles'])
+                ->where('is_active', true)
+                ->whereHas('userRoles', function ($q) {
+                    $q->where('role', 'faculty');
+                })
+                ->whereDoesntHave('userRoles', function ($q) use ($excludedRoles) {
+                    $q->whereIn('role', $excludedRoles);
+                });
+
+            $regularStaffRows = (clone $baseQuery)
+                ->whereIn('employment_status', $regularStaffStatusOptions)
+                ->orderBy('name')
+                ->get();
+
+            $emergencyLaborerRows = (clone $baseQuery)
+                ->where('employment_status', $emergencyStaffStatus)
+                ->orderBy('name')
+                ->get();
+
+            $this->appendRatings($regularStaffRows);
+            $this->appendRatings($emergencyLaborerRows);
+
+            $preparedByUser = $request->user();
+            $director = User::query()
+                ->where('is_active', true)
+                ->whereHas('userRoles', function ($query) {
+                    $query->where('role', 'director');
+                })
+                ->orderByDesc('updated_at')
+                ->orderBy('name')
+                ->first();
+
+            $preparedBy = [
+                'name' => $preparedByUser?->name ?? '',
+                'position' => 'HRMO',
+            ];
+
+            $notedBy = [
+                'name' => $director?->name ?? '',
+                'position' => 'Campus Director',
+            ];
+
+            $meta = [
+                'campus' => 'BINANGONAN',
+            ];
+
+            $filePath = $exportService->export($regularStaffRows, $emergencyLaborerRows, $preparedBy, $notedBy, $meta);
+
+            ActivityLogService::log(
+                'staff_summary_exported',
+                'Exported staff summary report to Excel.',
+                null,
+                [
+                    'regular_count' => $regularStaffRows->count(),
+                    'emergency_count' => $emergencyLaborerRows->count(),
+                ]
+            );
+
+            $downloadName = 'Staff_Summary_' . now()->format('Ymd_His') . '.xlsx';
+
+            return response()->download($filePath, $downloadName)->deleteFileAfterSend(true);
+        } catch (\Throwable $e) {
+            \Log::error('Staff summary export error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->route('faculty.summary-reports', ['category' => 'staff', 'department' => 'all'])
+                ->withErrors(['export' => 'Failed to export staff summary report.']);
+        }
+    }
+
+    /**
+     * View a dean IPCR submission in read-only mode for HR summary module.
+     */
+    public function showDeanIpcrSubmission(Request $request, IpcrSubmission $submission)
+    {
+        $submission->load([
+            'user:id,name,employee_id,department_id,designation_id',
+            'user.department:id,name,code',
+            'user.designation:id,title',
+            'deanCalibrations' => function ($query) {
+                $query->where('status', 'calibrated')
+                    ->with('dean:id,name')
+                    ->orderByDesc('updated_at');
+            },
+        ]);
+
+        $this->ensureDeanCalibratedSubmission($submission);
+
+        $latestCalibration = $submission->deanCalibrations->first();
+        $calibrationHistory = $submission->deanCalibrations->map(function (DeanCalibration $calibration) {
+            return [
+                'dean_name' => $calibration->dean?->name ?? 'Unknown',
+                'overall_score' => $calibration->overall_score,
+                'updated_at' => $calibration->updated_at,
+            ];
+        });
+
+        $supportingDocuments = SupportingDocument::query()
+            ->where('user_id', $submission->user_id)
+            ->where('documentable_type', 'ipcr_submission')
+            ->where('documentable_id', $submission->id)
+            ->orderBy('so_label')
+            ->orderByDesc('created_at')
+            ->get()
+            ->filter(function (SupportingDocument $document) {
+                $parsedUrl = parse_url((string) $document->path);
+                $host = strtolower((string) ($parsedUrl['host'] ?? ''));
+
+                return in_array($host, ['res.cloudinary.com', 'cloudinary.com'], true);
+            })
+            ->unique('path')
+            ->map(function (SupportingDocument $document) {
+                return [
+                    'id' => $document->id,
+                    'so_label' => $document->so_label ?: 'Uncategorized',
+                    'original_name' => $document->original_name,
+                    'mime_type' => $document->mime_type,
+                    'file_size_human' => $document->file_size_human,
+                    'created_at' => $document->created_at,
+                    'created_at_display' => $document->created_at?->format('M d, Y h:i A'),
+                    'path' => $document->path,
+                ];
+            })
+            ->groupBy('so_label')
+            ->sortKeys();
+
+        ActivityLogService::log(
+            'hr_viewed_dean_ipcr_submission',
+            'Viewed calibrated dean IPCR submission: ' . $submission->title,
+            $submission
+        );
+
+        return view('dashboard.faculty.dean-ipcr-submission', [
+            'submission' => $submission,
+            'latestCalibration' => $latestCalibration,
+            'calibrationHistory' => $calibrationHistory,
+            'supportingDocuments' => $supportingDocuments,
+        ]);
+    }
+
+    /**
+     * Export a calibrated dean IPCR submission from HR summary module.
+     */
+    public function exportDeanIpcrSubmission(Request $request, IpcrSubmission $submission, IpcrExportService $exportService)
+    {
+        $submission->load([
+            'user:id,name,employee_id,department_id',
+            'user.userRoles:id,user_id,role',
+            'deanCalibrations' => function ($query) {
+                $query->where('status', 'calibrated');
+            },
+        ]);
+
+        $this->ensureDeanCalibratedSubmission($submission);
+
+        try {
+            $filePath = $exportService->export($submission);
+
+            ActivityLogService::log(
+                'hr_exported_dean_ipcr_submission',
+                'Exported calibrated dean IPCR submission: ' . $submission->title,
+                $submission
+            );
+
+            $safeUser = preg_replace('/[^a-zA-Z0-9_-]/', '_', (string) ($submission->user?->name ?? 'Dean'));
+            $downloadName = 'Dean_IPCR_' . $safeUser . '_' . $submission->school_year . '.xlsx';
+
+            return response()->download($filePath, $downloadName)->deleteFileAfterSend(true);
+        } catch (\Throwable $e) {
+            \Log::error('Dean IPCR export error', [
+                'submission_id' => $submission->id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->route('faculty.summary-reports', ['category' => 'dean-ipcrs', 'department' => 'all'])
+                ->withErrors(['export' => 'Failed to export the selected dean IPCR submission.']);
+        }
+    }
+
+    /**
+     * Ensure the submission belongs to a dean and has at least one calibrated result.
+     */
+    private function ensureDeanCalibratedSubmission(IpcrSubmission $submission): void
+    {
+        $isDeanSubmission = $submission->user && $submission->user->hasRole('dean');
+        $hasCalibratedResult = $submission->deanCalibrations
+            ? $submission->deanCalibrations->isNotEmpty()
+            : DeanCalibration::where('ipcr_submission_id', $submission->id)
+                ->where('status', 'calibrated')
+                ->exists();
+
+        if (!$isDeanSubmission || !$hasCalibratedResult) {
+            abort(404);
+        }
+    }
+
+    /**
+     * Merge single-sheet export files into one workbook with separate tabs.
+     */
+    private function mergeSummaryExportFiles(array $sourceFiles, array $sheetTitles = []): string
+    {
+        $mergedSpreadsheet = null;
+
+        foreach ($sourceFiles as $index => $sourceFile) {
+            if (!is_string($sourceFile) || $sourceFile === '' || !is_file($sourceFile)) {
+                continue;
+            }
+
+            $sourceSpreadsheet = IOFactory::load($sourceFile);
+            $sourceSheet = $sourceSpreadsheet->getSheet(0);
+            $targetTitle = $sheetTitles[$index] ?? $sourceSheet->getTitle();
+
+            // Ensure tab title follows Excel constraints.
+            $targetTitle = substr((string) $targetTitle, 0, 31);
+
+            if ($mergedSpreadsheet === null) {
+                $sourceSheet->setTitle($targetTitle);
+                $mergedSpreadsheet = $sourceSpreadsheet;
+                continue;
+            }
+
+            $sourceSheet->setTitle($targetTitle);
+            $mergedSpreadsheet->addExternalSheet($sourceSheet);
+
+            $sourceSpreadsheet->disconnectWorksheets();
+            unset($sourceSpreadsheet);
+        }
+
+        if ($mergedSpreadsheet === null) {
+            throw new \RuntimeException('No export files were available for merge.');
+        }
+
+        $outputDir = storage_path('app/exports');
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+
+        $outputFilePath = $outputDir . DIRECTORY_SEPARATOR . 'Summary_Reports_All_' . now()->format('Ymd_His') . '.xlsx';
+
+        $writer = new Xlsx($mergedSpreadsheet);
+        $writer->save($outputFilePath);
+
+        $mergedSpreadsheet->disconnectWorksheets();
+
+        return $outputFilePath;
+    }
+
+    /**
+     * Delete temporary export files when they are no longer needed.
+     */
+    private function cleanupExportFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            if (is_string($file) && $file !== '' && is_file($file)) {
+                @unlink($file);
+            }
         }
     }
 
@@ -493,7 +1343,7 @@ class SummaryReportController extends Controller
                 ->whereHas('ipcrSubmission', function ($q) use ($user) {
                     $q->where('user_id', $user->id);
                 })
-                ->latest()
+                ->orderByDesc('updated_at')
                 ->first();
 
             $user->calibrated_rating = $calibration?->overall_score;

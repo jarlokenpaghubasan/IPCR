@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\HtmlSanitizer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class IpcrSubmission extends Model
 {
@@ -39,5 +40,10 @@ class IpcrSubmission extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function deanCalibrations(): HasMany
+    {
+        return $this->hasMany(DeanCalibration::class);
     }
 }

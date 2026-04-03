@@ -1341,7 +1341,10 @@ var currentDeanPreviewType = null;
         var borderClass = 'border-indigo-200';
         var bgClass = 'bg-indigo-50';
         if (sub.calibration_status === 'calibrated') {
-            calBadge = '<div class="flex items-center gap-1.5 mt-1"><span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded"><i class="fas fa-check-circle mr-0.5"></i>Calibrated</span><span class="text-xs font-bold text-green-700">' + (parseFloat(sub.calibration_score) || 0).toFixed(2) + '</span></div>';
+            var calibratedBy = sub.calibrated_by
+                ? '<div class="text-[11px] text-green-700 font-medium">Calibrated by ' + sub.calibrated_by + '</div>'
+                : '';
+            calBadge = '<div class="mt-1 space-y-1"><div class="flex items-center gap-1.5"><span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded"><i class="fas fa-check-circle mr-0.5"></i>Calibrated</span><span class="text-xs font-bold text-green-700">' + (parseFloat(sub.calibration_score) || 0).toFixed(2) + '</span></div>' + calibratedBy + '</div>';
             borderClass = 'border-green-200';
             bgClass = 'bg-green-50';
         } else if (sub.calibration_status === 'draft') {
@@ -1370,7 +1373,10 @@ var currentDeanPreviewType = null;
         var borderClass = 'border-amber-200';
         var bgClass = 'bg-amber-50';
         if (sub.calibration_status === 'calibrated') {
-            calBadge = '<div class="flex items-center gap-1.5 mt-1"><span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded"><i class="fas fa-check-circle mr-0.5"></i>Calibrated</span><span class="text-xs font-bold text-green-700">' + (parseFloat(sub.calibration_score) || 0).toFixed(2) + '</span></div>';
+            var calibratedBy = sub.calibrated_by
+                ? '<div class="text-[11px] text-green-700 font-medium">Calibrated by ' + sub.calibrated_by + '</div>'
+                : '';
+            calBadge = '<div class="mt-1 space-y-1"><div class="flex items-center gap-1.5"><span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded"><i class="fas fa-check-circle mr-0.5"></i>Calibrated</span><span class="text-xs font-bold text-green-700">' + (parseFloat(sub.calibration_score) || 0).toFixed(2) + '</span></div>' + calibratedBy + '</div>';
             borderClass = 'border-green-200';
             bgClass = 'bg-green-50';
         } else if (sub.calibration_status === 'draft') {
@@ -1870,14 +1876,18 @@ function showCalibrationButtons(calibration) {
     if (calibration) {
         statusEl.classList.remove('hidden');
         if (calibration.status === 'calibrated') {
-            statusEl.textContent = 'Calibrated';
+            var calibratedBy = calibration.dean_name ? (' by ' + calibration.dean_name) : '';
+            statusEl.textContent = 'Calibrated' + calibratedBy;
             statusEl.className = 'text-xs font-semibold px-2 py-1 rounded bg-green-100 text-green-700';
+            calibrateBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i>Recalibrate';
         } else {
             statusEl.textContent = 'Draft';
             statusEl.className = 'text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-700';
+            calibrateBtn.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Calibrate';
         }
     } else {
         statusEl.classList.add('hidden');
+        calibrateBtn.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Calibrate';
     }
 }
 
@@ -1943,8 +1953,9 @@ window.saveDeanCalibration = async function(status) {
             var arr = currentDeanPreviewType === 'faculty' ? allFacultySubmissions : allCalibrationSubmissions;
             for (var i = 0; i < arr.length; i++) {
                 if (arr[i].id === currentDeanPreviewSubmissionId) {
-                    arr[i].calibration_status = data.calibration.status;
-                    arr[i].calibration_score = data.calibration.overall_score;
+                    arr[i].calibration_status = data.calibration.display_status || data.calibration.status;
+                    arr[i].calibration_score = data.calibration.display_score || data.calibration.overall_score;
+                    arr[i].calibrated_by = data.calibration.display_calibrated_by || arr[i].calibrated_by;
                     break;
                 }
             }

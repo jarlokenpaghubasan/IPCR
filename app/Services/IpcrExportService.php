@@ -53,7 +53,8 @@ class IpcrExportService
 
         // ── 1.  Update header placeholders ──────────────────────────
         $user = $document->user;
-        $this->fillHeaderData($sheet, $user, $document);
+        $signatories = $this->resolveSignatories($user, $document);
+        $this->fillHeaderData($sheet, $user, $document, $signatories['noted_by'], $signatories['approved_by']);
 
         // ── 2.  Parse the stored HTML table body ────────────────────
         $parsedRows = $this->parseTableBodyHtml($document->table_body_html);
@@ -90,7 +91,13 @@ class IpcrExportService
         $currentRow++;
 
         // ── 6.  Write summary / footer section ─────────────────────
-        $currentRow = $this->writeSummarySection($sheet, $currentRow, $sectionRatings, $document->noted_by, $document->approved_by);
+        $currentRow = $this->writeSummarySection(
+            $sheet,
+            $currentRow,
+            $sectionRatings,
+            $signatories['noted_by'],
+            $signatories['approved_by']
+        );
 
         // ── 7.  Save to temp file ──────────────────────────────────
         $outputDir = storage_path('app/exports');
@@ -142,7 +149,7 @@ class IpcrExportService
      *  HEADER DATA
      * ================================================================ */
 
-    private function fillHeaderData($sheet, $user, Model $document): void
+    private function fillHeaderData($sheet, $user, Model $document, ?string $notedBy = null, ?string $approvedBy = null): void
     {
         $name        = $user->name ?? '';
         $designation = $this->resolveUserDesignation($user);
@@ -165,8 +172,8 @@ class IpcrExportService
             ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // ── Rows 10-11 – Noted by / Approved by (top header) ────────
-        $notedBy   = $document->noted_by ?? '';
-        $approvedBy = $document->approved_by ?? '';
+        $notedBy = $notedBy ?? '';
+        $approvedBy = $approvedBy ?? '';
 
         if ($notedBy) {
             $sheet->setCellValue('A10', $notedBy);
@@ -618,6 +625,45 @@ class IpcrExportService
         }
 
         return implode(', ', $parts);
+    }
+
+    /**
+     * Resolve export signatories so output always uses department dean + current director.
+     */
+    private function resolveSignatories($user, Model $document): array
+    {
+        $deanName = '';
+        $directorName = '';
+
+        if ($user && !empty($user->department_id)) {
+            $dean = User::query()
+                ->where('is_active', true)
+                ->where('department_id', $user->department_id)
+                ->whereHas('userRoles', function ($query) {
+                    $query->where('role', 'dean');
+                })
+                ->orderByDesc('updated_at')
+                ->orderByDesc('id')
+                ->first();
+
+            $deanName = $dean?->name ?? '';
+        }
+
+        $director = User::query()
+            ->where('is_active', true)
+            ->whereHas('userRoles', function ($query) {
+                $query->where('role', 'director');
+            })
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->first();
+
+        $directorName = $director?->name ?? '';
+
+        return [
+            'noted_by' => $deanName !== '' ? $deanName : (string) ($document->noted_by ?? ''),
+            'approved_by' => $directorName !== '' ? $directorName : (string) ($document->approved_by ?? ''),
+        ];
     }
 
     /**

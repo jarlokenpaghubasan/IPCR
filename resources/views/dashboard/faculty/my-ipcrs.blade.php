@@ -3419,12 +3419,8 @@
                     showAlertModal('success', 'Success', `Template has been copied to ${docLabel} drafts`, function() {
                         // Close preview modal
                         closeTemplatePreview();
-                        // Refresh saved copies list
-                        if (docTypeToUse === 'opcr') {
-                            renderOpcrSavedCopies();
-                        } else {
-                            renderSavedCopies();
-                        }
+                        // Reload page so all dashboard data reflects the new draft
+                        location.reload();
                     });
                 } else {
                     showAlertModal('error', 'Error', data.message || 'Failed to use template as draft');

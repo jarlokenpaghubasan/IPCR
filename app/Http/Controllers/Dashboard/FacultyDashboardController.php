@@ -317,7 +317,7 @@ class FacultyDashboardController extends Controller
                 if ($activeSubmission && !empty($soPerformanceData)) {
                     $calibration = DeanCalibration::where('ipcr_submission_id', $activeSubmission->id)
                         ->where('status', 'calibrated')
-                        ->latest()
+                        ->orderByDesc('updated_at')
                         ->first();
 
                     if ($calibration && $calibration->calibration_data) {
@@ -419,7 +419,7 @@ class FacultyDashboardController extends Controller
             $returnedCalibration = DeanCalibration::where('ipcr_submission_id', $activeSubmission->id)
                 ->where('status', 'calibrated')
                 ->with('dean:id,name')
-                ->latest()
+                ->orderByDesc('updated_at')
                 ->first();
         }
 

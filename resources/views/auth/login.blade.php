@@ -32,8 +32,19 @@
 
                 <h1>Welcome</h1>
 
-                @if (session('success'))
-                    <div class="success-message">{{ session('success') }}</div>
+                @php
+                    $successMessage = session('success');
+                    $isLogoutSuccess = is_string($successMessage)
+                        && strcasecmp(trim($successMessage), 'Logged out successfully') === 0;
+                @endphp
+
+                @if ($successMessage)
+                    <div
+                        class="success-message{{ $isLogoutSuccess ? ' temporary-success-message' : '' }}"
+                        data-autohide="{{ $isLogoutSuccess ? 'true' : 'false' }}"
+                    >
+                        {{ $successMessage }}
+                    </div>
                 @endif
 
                 @if ($errors->any())
@@ -89,5 +100,25 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const temporarySuccess = document.querySelector('.temporary-success-message[data-autohide="true"]');
+
+            if (!temporarySuccess) {
+                return;
+            }
+
+            window.setTimeout(function () {
+                temporarySuccess.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+                temporarySuccess.style.opacity = '0';
+                temporarySuccess.style.transform = 'translateY(-4px)';
+
+                window.setTimeout(function () {
+                    temporarySuccess.remove();
+                }, 350);
+            }, 2500);
+        });
+    </script>
 </body>
 </html>
