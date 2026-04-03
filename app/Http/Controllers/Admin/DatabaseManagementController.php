@@ -154,7 +154,7 @@ class DatabaseManagementController extends Controller
             return redirect()->route('admin.database.index')
                 ->with('success', $message);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return redirect()->route('admin.database.index')
                 ->with('error', 'Restore failed: ' . $e->getMessage());
         }
@@ -226,7 +226,7 @@ class DatabaseManagementController extends Controller
     {
         $escaped = preg_quote($table, '/');
 
-        $pattern = '/\b(?:from|into|update|join|table|truncate|alter\s+table|create\s+table|drop\s+table|delete\s+from|replace\s+into|lock\s+tables)\s+`?(?:[a-zA-Z0-9_]+`?\.)?`?' . $escaped . '`?\b/i';
+        $pattern = '/\b(?:from|into|update|join|table|truncate(?:\s+table)?|alter\s+table|create\s+table|drop\s+table|delete\s+from|replace\s+into|lock\s+tables)\s+(?:if\s+(?:not\s+)?exists\s+)?`?(?:[a-zA-Z0-9_]+`?\.)?`?' . $escaped . '`?(?=\s|,|;|\(|$)/i';
 
         if (preg_match($pattern, $statement)) {
             return true;
