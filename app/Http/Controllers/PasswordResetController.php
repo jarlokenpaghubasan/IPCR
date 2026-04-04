@@ -7,6 +7,7 @@ use App\Notifications\PasswordResetNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -48,7 +49,7 @@ class PasswordResetController extends Controller
         $user = User::where('email', $request->email)->first();
 
         try {
-            $user->notify(new PasswordResetNotification($code));
+            $this->sendResetCodeNotification($user, $code);
         } catch (\Throwable $e) {
             // Remove the token if email sending fails so stale codes are not left behind.
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
@@ -68,6 +69,48 @@ class PasswordResetController extends Controller
         return redirect()->route('password.verify.form')
             ->with('email', $request->email)
             ->with('success', 'A verification code has been sent to your email.');
+    }
+
+    /**
+     * Send reset code via Brevo API when configured, otherwise fallback to SMTP notification.
+     */
+    private function sendResetCodeNotification(User $user, string $code): void
+    {
+        $brevoApiKey = trim((string) config('services.brevo.key', ''));
+
+        if ($brevoApiKey !== '') {
+            $fromAddress = (string) config('mail.from.address');
+            $fromName = (string) config('mail.from.name');
+
+            $response = Http::timeout((int) config('mail.mailers.smtp.timeout', 15))
+                ->acceptJson()
+                ->withHeaders([
+                    'api-key' => $brevoApiKey,
+                ])
+                ->post('https://api.brevo.com/v3/smtp/email', [
+                    'sender' => [
+                        'email' => $fromAddress,
+                        'name' => $fromName,
+                    ],
+                    'to' => [[
+                        'email' => $user->email,
+                        'name' => $user->name,
+                    ]],
+                    'subject' => 'Password Reset Code - URS Binangonan',
+                    'textContent' => "Hello {$user->name}!\n\nWe received a request to reset your password for your IPCR System account.\n\nYour verification code is: {$code}\n\nThis code will expire in 15 minutes.\n\nIf you did not request a password reset, please ignore this email.",
+                ]);
+
+            if ($response->successful()) {
+                return;
+            }
+
+            $errorBody = trim((string) $response->body());
+            throw new \RuntimeException(
+                'Brevo API request failed with status ' . $response->status() . ($errorBody !== '' ? (': ' . $errorBody) : '')
+            );
+        }
+
+        $user->notify(new PasswordResetNotification($code));
     }
 
     /**
