@@ -7,6 +7,7 @@ use App\Notifications\PasswordResetNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Services\ActivityLogService;
@@ -45,7 +46,24 @@ class PasswordResetController extends Controller
 
         // Get user and send notification
         $user = User::where('email', $request->email)->first();
-        $user->notify(new PasswordResetNotification($code));
+
+        try {
+            $user->notify(new PasswordResetNotification($code));
+        } catch (\Throwable $e) {
+            // Remove the token if email sending fails so stale codes are not left behind.
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+            Log::error('Password reset email send failed.', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Unable to send the verification code right now. Please try again in a few minutes.',
+                ]);
+        }
 
         return redirect()->route('password.verify.form')
             ->with('email', $request->email)
