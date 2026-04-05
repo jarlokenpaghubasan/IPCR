@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 
 class DatabaseBackupService
@@ -21,13 +22,9 @@ class DatabaseBackupService
             $dbHost = config('database.connections.mysql.host');
             $dbPort = config('database.connections.mysql.port');
 
-            $backupDir = storage_path('app/backups');
-            if (!is_dir($backupDir)) {
-                mkdir($backupDir, 0755, true);
-            }
-
             $filename = $dbName . '_' . date('Y-m-d_His') . '.sql';
-            $filePath = $backupDir . '/' . $filename;
+            $backupPath = $this->backupPath($filename);
+            $backupDisk = Storage::disk('s3');
 
             $dumpOutput = null;
 
@@ -82,12 +79,21 @@ class DatabaseBackupService
                 ];
             }
 
-            file_put_contents($filePath, $dumpOutput);
+            $stored = $backupDisk->put($backupPath, $dumpOutput, [
+                'ContentType' => 'application/sql',
+            ]);
 
-            if (!file_exists($filePath) || filesize($filePath) === 0) {
-                if (file_exists($filePath)) {
-                    unlink($filePath);
-                }
+            if (!$stored || !$backupDisk->exists($backupPath)) {
+                return [
+                    'success' => false,
+                    'message' => 'Backup failed. Unable to upload SQL file to cloud storage.'
+                ];
+            }
+
+            $fileSize = (int) $backupDisk->size($backupPath);
+
+            if ($fileSize <= 0) {
+                $backupDisk->delete($backupPath);
                 return [
                     'success' => false,
                     'message' => 'Backup failed. Output file is empty.'
@@ -98,7 +104,7 @@ class DatabaseBackupService
                 'success' => true,
                 'message' => "Backup created successfully: {$filename}",
                 'filename' => $filename,
-                'size' => $this->formatBytes(filesize($filePath))
+                'size' => $this->formatBytes($fileSize)
             ];
 
         } catch (\Exception $e) {
@@ -107,6 +113,17 @@ class DatabaseBackupService
                 'message' => 'Backup failed: ' . $e->getMessage()
             ];
         }
+    }
+
+    /**
+     * Build a backup object key within the configured backup folder.
+     */
+    private function backupPath(string $filename): string
+    {
+        $prefix = trim((string) config('filesystems.backup_prefix', 'backups'), '/');
+        $safeFilename = basename($filename);
+
+        return $prefix === '' ? $safeFilename : $prefix . '/' . $safeFilename;
     }
 
     /**

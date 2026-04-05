@@ -185,7 +185,7 @@
     <!-- DB Info Footer -->
     <div class="mt-4 text-xs text-gray-400 dark:text-gray-500 flex items-center gap-2">
         <i class="fas fa-circle-info"></i>
-        <span>Database: <strong class="text-gray-600 dark:text-gray-400">{{ $dbName }}</strong> • Backups stored in <code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-[10px]">storage/app/backups/</code></span>
+        <span>Database: <strong class="text-gray-600 dark:text-gray-400">{{ $dbName }}</strong> • Backups stored in <code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-[10px]">Cloudflare R2</code></span>
     </div>
 @endsection
 

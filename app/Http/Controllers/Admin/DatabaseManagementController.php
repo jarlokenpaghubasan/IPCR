@@ -37,24 +37,32 @@ class DatabaseManagementController extends Controller
         // Get table count
         $tableCount = count(DB::select("SHOW TABLES"));
 
-        // Get backups from storage
-        $backupDir = storage_path('app/backups');
-        if (!is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
+        // Get backups from cloud storage (R2 via s3 disk)
+        $backupDisk = Storage::disk('s3');
+        $backupPrefix = $this->backupPrefix();
 
-        $allBackups = collect(glob($backupDir . '/*.sql'))
-            ->map(function ($path) {
-                return [
-                    'filename' => basename($path),
-                    'size' => filesize($path),
-                    'size_formatted' => $this->formatBytes(filesize($path)),
-                    'created_at' => date('M d, Y H:i', filemtime($path)),
-                    'timestamp' => filemtime($path),
-                ];
-            })
-            ->sortByDesc('timestamp')
-            ->values();
+        try {
+            $allBackups = collect($backupDisk->files($backupPrefix))
+                ->filter(function ($path) {
+                    return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'sql';
+                })
+                ->map(function ($path) use ($backupDisk) {
+                    $size = (int) $backupDisk->size($path);
+                    $timestamp = (int) $backupDisk->lastModified($path);
+
+                    return [
+                        'filename' => basename($path),
+                        'size' => $size,
+                        'size_formatted' => $this->formatBytes($size),
+                        'created_at' => date('M d, Y H:i', $timestamp),
+                        'timestamp' => $timestamp,
+                    ];
+                })
+                ->sortByDesc('timestamp')
+                ->values();
+        } catch (\Throwable $e) {
+            $allBackups = collect();
+        }
 
         // Manual Pagination
         $page = request()->get('page', 1);
@@ -104,14 +112,30 @@ class DatabaseManagementController extends Controller
      */
     public function download($filename)
     {
-        $filePath = storage_path('app/backups/' . basename($filename));
+        $safeFilename = basename($filename);
+        $backupPath = $this->backupPath($safeFilename);
+        $backupDisk = Storage::disk('s3');
 
-        if (!file_exists($filePath)) {
+        if (!$backupDisk->exists($backupPath)) {
             return redirect()->route('admin.database.index')
                 ->with('error', 'Backup file not found.');
         }
 
-        return response()->download($filePath);
+        $stream = $backupDisk->readStream($backupPath);
+
+        if ($stream === false) {
+            return redirect()->route('admin.database.index')
+                ->with('error', 'Unable to open backup file for download.');
+        }
+
+        return response()->streamDownload(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, $safeFilename, [
+            'Content-Type' => 'application/sql',
+        ]);
     }
 
     /**
@@ -120,15 +144,18 @@ class DatabaseManagementController extends Controller
     public function restore($filename)
     {
         try {
-            $filePath = storage_path('app/backups/' . basename($filename));
+            $safeFilename = basename($filename);
+            $backupPath = $this->backupPath($safeFilename);
+            $backupDisk = Storage::disk('s3');
 
-            if (!file_exists($filePath)) {
+            if (!$backupDisk->exists($backupPath)) {
                 return redirect()->route('admin.database.index')
                     ->with('error', 'Backup file not found.');
             }
 
-            $sql = file_get_contents($filePath);
-            if ($sql === false) {
+            $sql = $backupDisk->get($backupPath);
+
+            if (!is_string($sql) || $sql === '') {
                 return redirect()->route('admin.database.index')
                     ->with('error', 'Restore failed: Unable to read SQL backup file.');
             }
@@ -378,19 +405,21 @@ class DatabaseManagementController extends Controller
      */
     public function delete($filename)
     {
-        $filePath = storage_path('app/backups/' . basename($filename));
+        $safeFilename = basename($filename);
+        $backupPath = $this->backupPath($safeFilename);
+        $backupDisk = Storage::disk('s3');
 
-        if (!file_exists($filePath)) {
+        if (!$backupDisk->exists($backupPath)) {
             return redirect()->route('admin.database.index')
                 ->with('error', 'Backup file not found.');
         }
 
-        unlink($filePath);
+        $backupDisk->delete($backupPath);
 
-        ActivityLogService::log('backup_deleted', 'Deleted backup file: ' . $filename);
+        ActivityLogService::log('backup_deleted', 'Deleted backup file: ' . $safeFilename);
 
         return redirect()->route('admin.database.index')
-            ->with('success', "Backup deleted: {$filename}");
+            ->with('success', "Backup deleted: {$safeFilename}");
     }
 
     /**
@@ -435,14 +464,19 @@ class DatabaseManagementController extends Controller
         // Sanitize filename to prevent path traversal
         $safeName = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', pathinfo($originalName, PATHINFO_FILENAME));
 
-        $backupDir = storage_path('app/backups');
-        if (!is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
-
         // Avoid filename collision (using sanitized name)
         $filename = $safeName . '_uploaded_' . date('His') . '.sql';
-        $file->move($backupDir, $filename);
+        $storedPath = Storage::disk('s3')->putFileAs(
+            $this->backupPrefix(),
+            $file,
+            $filename,
+            ['ContentType' => 'application/sql']
+        );
+
+        if ($storedPath === false) {
+            return redirect()->route('admin.database.index')
+                ->with('error', 'Upload failed: Unable to upload SQL file to cloud storage.');
+        }
 
         ActivityLogService::log('backup_uploaded', 'Uploaded backup file: ' . $filename);
 
@@ -555,5 +589,24 @@ class DatabaseManagementController extends Controller
         $pow = min($pow, count($units) - 1);
         $bytes /= (1 << (10 * $pow));
         return round($bytes, $precision) . ' ' . $units[$pow];
+    }
+
+    /**
+     * Resolve backup folder prefix in object storage.
+     */
+    private function backupPrefix(): string
+    {
+        return trim((string) config('filesystems.backup_prefix', 'backups'), '/');
+    }
+
+    /**
+     * Resolve full backup object key from a filename.
+     */
+    private function backupPath(string $filename): string
+    {
+        $safeFilename = basename($filename);
+        $prefix = $this->backupPrefix();
+
+        return $prefix === '' ? $safeFilename : $prefix . '/' . $safeFilename;
     }
 }
