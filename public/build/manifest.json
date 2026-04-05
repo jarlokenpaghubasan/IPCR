@@ -26,17 +26,8 @@
       "admin_users_show.css"
     ]
   },
-  "resources/css/auth_login-selection.css": {
-    "file": "assets/auth_login-selection-B0NuElEP.css",
-    "src": "resources/css/auth_login-selection.css",
-    "isEntry": true,
-    "name": "auth_login-selection",
-    "names": [
-      "auth_login-selection.css"
-    ]
-  },
   "resources/css/auth_login.css": {
-    "file": "assets/auth_login-C81hRXzn.css",
+    "file": "assets/auth_login-COBklFwo.css",
     "src": "resources/css/auth_login.css",
     "isEntry": true,
     "name": "auth_login",

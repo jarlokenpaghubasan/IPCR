@@ -8,7 +8,6 @@ export default defineConfig({
             input: [
                 // Auth pages
                 'resources/css/auth_login.css',
-                'resources/css/auth_login-selection.css',
                 'resources/css/auth_verify-code.css',
                 'resources/css/auth_reset-password.css',
                 'resources/js/auth_login.js',

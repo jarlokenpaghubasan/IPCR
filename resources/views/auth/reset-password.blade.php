@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/auth_login.css', 'resources/css/auth_reset-password.css', 'resources/js/auth_login.js', 'resources/js/auth_reset-password.js'])
 </head>
-<body>
+<body class="auth-page--login">
     <div class="auth-card">
         <div class="auth-card__image">
             <img

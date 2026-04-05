@@ -34,7 +34,6 @@ Route::get('/', [LoginController::class, 'showLoginForm'])
     ->middleware('guest');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])
-    ->name('login.form')
     ->middleware('guest');
 
 Route::post('/login', [LoginController::class, 'login'])
@@ -45,7 +44,12 @@ Route::post('/logout', [LoginController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
-// Password Reset Routes
+/*
+|--------------------------------------------------------------------------
+| Password Reset Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm'])
     ->name('password.request')
     ->middleware('guest');
@@ -70,7 +74,12 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
     ->name('password.update')
     ->middleware('guest');
 
-// Email Verification Routes
+/*
+|--------------------------------------------------------------------------
+| Email Verification Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/email/verification/send', [EmailVerificationController::class, 'sendVerificationCode'])
     ->name('verification.send')
     ->middleware('auth');
@@ -85,6 +94,7 @@ Route::post('/email/verification/verify', [EmailVerificationController::class, '
 |--------------------------------------------------------------------------
 */
 
+// Core Faculty Dashboard
 Route::get('/faculty/dashboard', [FacultyDashboardController::class, 'index'])
     ->name('faculty.dashboard')
     ->middleware(['auth', 'role:faculty,director', 'permission:faculty.dashboard,director.dashboard']);
@@ -101,35 +111,60 @@ Route::get('/faculty/profile', [FacultyDashboardController::class, 'profile'])
     ->name('faculty.profile')
     ->middleware(['auth', 'role:faculty,director', 'permission:faculty.profile.manage,director.dashboard']);
 
-Route::get('/faculty/summary-reports', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'index'])
+// Summary Reports (HR)
+Route::get(
+    '/faculty/summary-reports',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'index']
+)
     ->name('faculty.summary-reports')
     ->middleware(['auth', 'role:hr']);
 
-Route::get('/faculty/summary-reports/faculty/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportFacultyXlsx'])
+Route::get(
+    '/faculty/summary-reports/faculty/export',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportFacultyXlsx']
+)
     ->name('faculty.summary-reports.faculty.export')
     ->middleware(['auth', 'role:hr']);
 
-Route::get('/faculty/summary-reports/staff/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportStaffXlsx'])
+Route::get(
+    '/faculty/summary-reports/staff/export',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportStaffXlsx']
+)
     ->name('faculty.summary-reports.staff.export')
     ->middleware(['auth', 'role:hr']);
 
-Route::get('/faculty/summary-reports/export-all', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportAllXlsx'])
+Route::get(
+    '/faculty/summary-reports/export-all',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportAllXlsx']
+)
     ->name('faculty.summary-reports.export-all')
     ->middleware(['auth', 'role:hr']);
 
-Route::put('/faculty/summary-reports/dean-director/{user}/scores', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'updateDeanDirectorScores'])
+Route::put(
+    '/faculty/summary-reports/dean-director/{user}/scores',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'updateDeanDirectorScores']
+)
     ->name('faculty.summary-reports.dean-director.update')
     ->middleware(['auth', 'role:hr']);
 
-Route::get('/faculty/summary-reports/dean-director/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportDeanDirectorXlsx'])
+Route::get(
+    '/faculty/summary-reports/dean-director/export',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportDeanDirectorXlsx']
+)
     ->name('faculty.summary-reports.dean-director.export')
     ->middleware(['auth', 'role:hr']);
 
-Route::get('/faculty/summary-reports/dean-ipcrs/{submission}', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'showDeanIpcrSubmission'])
+Route::get(
+    '/faculty/summary-reports/dean-ipcrs/{submission}',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'showDeanIpcrSubmission']
+)
     ->name('faculty.summary-reports.dean-ipcrs.show')
     ->middleware(['auth', 'role:hr']);
 
-Route::get('/faculty/summary-reports/dean-ipcrs/{submission}/export', [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportDeanIpcrSubmission'])
+Route::get(
+    '/faculty/summary-reports/dean-ipcrs/{submission}/export',
+    [\App\Http\Controllers\Faculty\SummaryReportController::class, 'exportDeanIpcrSubmission']
+)
     ->name('faculty.summary-reports.dean-ipcrs.export')
     ->middleware(['auth', 'role:hr']);
 
@@ -334,23 +369,38 @@ Route::delete('/faculty/opcr/saved-copies/{id}', [OpcrSavedCopyController::class
     ->middleware(['auth', 'role:faculty,director', 'permission:dean.opcr.saved-copies,director.dashboard']);
 
 // Supporting Document Routes
-Route::get('/faculty/supporting-documents', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'index'])
+Route::get(
+    '/faculty/supporting-documents',
+    [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'index']
+)
     ->name('faculty.supporting-documents.index')
     ->middleware(['auth', 'role:faculty', 'permission:faculty.supporting-documents']);
 
-Route::post('/faculty/supporting-documents', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'store'])
+Route::post(
+    '/faculty/supporting-documents',
+    [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'store']
+)
     ->name('faculty.supporting-documents.store')
     ->middleware(['auth', 'role:faculty', 'permission:faculty.supporting-documents']);
 
-Route::delete('/faculty/supporting-documents/{id}', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'destroy'])
+Route::delete(
+    '/faculty/supporting-documents/{id}',
+    [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'destroy']
+)
     ->name('faculty.supporting-documents.destroy')
     ->middleware(['auth', 'role:faculty', 'permission:faculty.supporting-documents']);
 
-Route::put('/faculty/supporting-documents/{id}/rename', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'rename'])
+Route::put(
+    '/faculty/supporting-documents/{id}/rename',
+    [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'rename']
+)
     ->name('faculty.supporting-documents.rename')
     ->middleware(['auth', 'role:faculty', 'permission:faculty.supporting-documents']);
 
-Route::get('/faculty/supporting-documents/{id}/download', [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'download'])
+Route::get(
+    '/faculty/supporting-documents/{id}/download',
+    [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'download']
+)
     ->name('faculty.supporting-documents.download')
     ->middleware(['auth', 'role:faculty', 'permission:faculty.supporting-documents']);
 
@@ -427,69 +477,128 @@ Route::middleware(['auth', 'role:admin,hr', 'permission:admin.users.manage'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin'])->prefix('admin/panel')->name('admin.')->group(function () {
-    // Photo Management
-    Route::middleware(['permission:admin.photos.manage'])->group(function () {
-        Route::post('users/{user}/photo/upload', [PhotoController::class, 'upload'])
-            ->name('users.photo.upload');
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin/panel')
+    ->name('admin.')
+    ->group(function () {
+        // Photo Management
+        Route::middleware(['permission:admin.photos.manage'])->group(function () {
+            Route::post('users/{user}/photo/upload', [PhotoController::class, 'upload'])
+                ->name('users.photo.upload');
 
-        Route::delete('users/{user}/photos/{photo}', [PhotoController::class, 'delete'])
-            ->name('users.photo.delete');
+            Route::delete('users/{user}/photos/{photo}', [PhotoController::class, 'delete'])
+                ->name('users.photo.delete');
 
-        Route::patch('users/{user}/photos/{photo}/set-profile', [PhotoController::class, 'setAsProfile'])
-            ->name('users.photo.setProfile');
+            Route::patch('users/{user}/photos/{photo}/set-profile', [PhotoController::class, 'setAsProfile'])
+                ->name('users.photo.setProfile');
 
-        Route::get('users/{user}/photos', [PhotoController::class, 'getUserPhotos'])
-            ->name('users.photos.get');
+            Route::get('users/{user}/photos', [PhotoController::class, 'getUserPhotos'])
+                ->name('users.photos.get');
+        });
+
+        // Database Management
+        Route::middleware(['permission:admin.database.manage'])->group(function () {
+            Route::get('database', [DatabaseManagementController::class, 'index'])
+                ->name('database.index');
+
+            Route::post('database/backup', [DatabaseManagementController::class, 'backup'])
+                ->name('database.backup');
+
+            Route::get('database/download/{filename}', [DatabaseManagementController::class, 'download'])
+                ->name('database.download');
+
+            Route::post('database/restore/{filename}', [DatabaseManagementController::class, 'restore'])
+                ->name('database.restore');
+
+            Route::delete('database/{filename}', [DatabaseManagementController::class, 'delete'])
+                ->name('database.delete');
+
+            Route::post('database/upload', [DatabaseManagementController::class, 'upload'])
+                ->name('database.upload');
+
+            Route::post('database/settings', [DatabaseManagementController::class, 'updateSettings'])
+                ->name('database.settings');
+        });
+
+        // Activity Logs
+        Route::middleware(['permission:admin.activity-logs.view'])->group(function () {
+            Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])
+                ->name('activity-logs.index');
+
+            Route::get('activity-logs/export', [\App\Http\Controllers\Admin\ActivityLogController::class, 'export'])
+                ->name('activity-logs.export');
+        });
+
+        // Role & Department Management
+        Route::middleware(['permission:admin.role-management.manage'])->group(function () {
+            Route::get('role-management', [RoleDesignationController::class, 'index'])
+                ->name('role-management.index');
+
+            // Roles
+            Route::post('role-management/roles', [RoleDesignationController::class, 'storeRole'])
+                ->name('role-management.roles.store');
+
+            Route::put('role-management/roles/{role}', [RoleDesignationController::class, 'updateRole'])
+                ->name('role-management.roles.update');
+
+            Route::delete('role-management/roles/{role}', [RoleDesignationController::class, 'destroyRole'])
+                ->name('role-management.roles.destroy');
+
+            // Departments
+            Route::post('role-management/departments', [RoleDesignationController::class, 'storeDepartment'])
+                ->name('role-management.departments.store');
+
+            Route::put('role-management/departments/{department}', [RoleDesignationController::class, 'updateDepartment'])
+                ->name('role-management.departments.update');
+
+            Route::delete('role-management/departments/{department}', [RoleDesignationController::class, 'destroyDepartment'])
+                ->name('role-management.departments.destroy');
+
+            // Designations
+            Route::post('role-management/designations', [RoleDesignationController::class, 'storeDesignation'])
+                ->name('role-management.designations.store');
+
+            Route::put('role-management/designations/{designation}', [RoleDesignationController::class, 'updateDesignation'])
+                ->name('role-management.designations.update');
+
+            Route::delete('role-management/designations/{designation}', [RoleDesignationController::class, 'destroyDesignation'])
+                ->name('role-management.designations.destroy');
+        });
+
+        // Notifications & Deadlines Management
+        Route::get('notifications', [NotificationDeadlineController::class, 'index'])
+            ->name('notifications.index');
+
+        // Notification CRUD
+        Route::post('notifications', [NotificationDeadlineController::class, 'storeNotification'])
+            ->name('notifications.store');
+
+        Route::put('notifications/{notification}', [NotificationDeadlineController::class, 'updateNotification'])
+            ->name('notifications.update');
+
+        Route::patch('notifications/{notification}/toggle', [NotificationDeadlineController::class, 'toggleNotification'])
+            ->name('notifications.toggle');
+
+        Route::delete('notifications/{notification}', [NotificationDeadlineController::class, 'destroyNotification'])
+            ->name('notifications.destroy');
+
+        // Deadline CRUD
+        Route::post('deadlines', [NotificationDeadlineController::class, 'storeDeadline'])
+            ->name('deadlines.store');
+
+        Route::put('deadlines/{deadline}', [NotificationDeadlineController::class, 'updateDeadline'])
+            ->name('deadlines.update');
+
+        Route::patch('deadlines/{deadline}/toggle', [NotificationDeadlineController::class, 'toggleDeadline'])
+            ->name('deadlines.toggle');
+
+        Route::delete('deadlines/{deadline}', [NotificationDeadlineController::class, 'destroyDeadline'])
+            ->name('deadlines.destroy');
+
+        // API endpoints for dashboard widgets
+        Route::get('api/notifications', [NotificationDeadlineController::class, 'apiNotifications'])
+            ->name('api.notifications');
+
+        Route::get('api/deadlines', [NotificationDeadlineController::class, 'apiDeadlines'])
+            ->name('api.deadlines');
     });
-
-    // Database Management
-    Route::middleware(['permission:admin.database.manage'])->group(function () {
-        Route::get('database', [DatabaseManagementController::class, 'index'])->name('database.index');
-        Route::post('database/backup', [DatabaseManagementController::class, 'backup'])->name('database.backup');
-        Route::get('database/download/{filename}', [DatabaseManagementController::class, 'download'])->name('database.download');
-        Route::post('database/restore/{filename}', [DatabaseManagementController::class, 'restore'])->name('database.restore');
-        Route::delete('database/{filename}', [DatabaseManagementController::class, 'delete'])->name('database.delete');
-        Route::post('database/upload', [DatabaseManagementController::class, 'upload'])->name('database.upload');
-        Route::post('database/settings', [DatabaseManagementController::class, 'updateSettings'])->name('database.settings');
-    });
-
-    // Activity Logs
-    Route::middleware(['permission:admin.activity-logs.view'])->group(function () {
-        Route::get('activity-logs', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
-        Route::get('activity-logs/export', [\App\Http\Controllers\Admin\ActivityLogController::class, 'export'])->name('activity-logs.export');
-    });
-
-    // Role & Department Management
-    Route::middleware(['permission:admin.role-management.manage'])->group(function () {
-        Route::get('role-management', [RoleDesignationController::class, 'index'])->name('role-management.index');
-        // Roles
-        Route::post('role-management/roles', [RoleDesignationController::class, 'storeRole'])->name('role-management.roles.store');
-        Route::put('role-management/roles/{role}', [RoleDesignationController::class, 'updateRole'])->name('role-management.roles.update');
-        Route::delete('role-management/roles/{role}', [RoleDesignationController::class, 'destroyRole'])->name('role-management.roles.destroy');
-        // Departments
-        Route::post('role-management/departments', [RoleDesignationController::class, 'storeDepartment'])->name('role-management.departments.store');
-        Route::put('role-management/departments/{department}', [RoleDesignationController::class, 'updateDepartment'])->name('role-management.departments.update');
-        Route::delete('role-management/departments/{department}', [RoleDesignationController::class, 'destroyDepartment'])->name('role-management.departments.destroy');
-        // Designations
-        Route::post('role-management/designations', [RoleDesignationController::class, 'storeDesignation'])->name('role-management.designations.store');
-        Route::put('role-management/designations/{designation}', [RoleDesignationController::class, 'updateDesignation'])->name('role-management.designations.update');
-        Route::delete('role-management/designations/{designation}', [RoleDesignationController::class, 'destroyDesignation'])->name('role-management.designations.destroy');
-    });
-
-    // Notifications & Deadlines Management
-    Route::get('notifications', [NotificationDeadlineController::class, 'index'])->name('notifications.index');
-    // Notification CRUD
-    Route::post('notifications', [NotificationDeadlineController::class, 'storeNotification'])->name('notifications.store');
-    Route::put('notifications/{notification}', [NotificationDeadlineController::class, 'updateNotification'])->name('notifications.update');
-    Route::patch('notifications/{notification}/toggle', [NotificationDeadlineController::class, 'toggleNotification'])->name('notifications.toggle');
-    Route::delete('notifications/{notification}', [NotificationDeadlineController::class, 'destroyNotification'])->name('notifications.destroy');
-    // Deadline CRUD
-    Route::post('deadlines', [NotificationDeadlineController::class, 'storeDeadline'])->name('deadlines.store');
-    Route::put('deadlines/{deadline}', [NotificationDeadlineController::class, 'updateDeadline'])->name('deadlines.update');
-    Route::patch('deadlines/{deadline}/toggle', [NotificationDeadlineController::class, 'toggleDeadline'])->name('deadlines.toggle');
-    Route::delete('deadlines/{deadline}', [NotificationDeadlineController::class, 'destroyDeadline'])->name('deadlines.destroy');
-    // API endpoints for dashboard widgets
-    Route::get('api/notifications', [NotificationDeadlineController::class, 'apiNotifications'])->name('api.notifications');
-    Route::get('api/deadlines', [NotificationDeadlineController::class, 'apiDeadlines'])->name('api.deadlines');
-});

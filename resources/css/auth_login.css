@@ -56,6 +56,54 @@ body {
     max-width: 440px;
 }
 
+/* ── Login-only full image + glass panel ───────────────── */
+body.auth-page--login {
+    background: #0b1224;
+    overflow-x: hidden;
+}
+
+body.auth-page--login .auth-card {
+    position: relative;
+    justify-content: flex-end;
+    background: transparent;
+    isolation: isolate;
+}
+
+body.auth-page--login .auth-card__image {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+body.auth-page--login .auth-card__image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(6, 14, 35, 0.22) 0%, rgba(8, 18, 42, 0.58) 72%, rgba(8, 18, 42, 0.74) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+body.auth-page--login .auth-card__image img {
+    transform: scale(1.1);
+    transition: transform 0.4s ease;
+}
+
+body.auth-page--login .auth-card__form {
+    width: min(50vw, 700px);
+    min-height: 100vh;
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-left: 1px solid rgba(255, 255, 255, 0.56);
+    box-shadow: -20px 0 45px rgba(15, 23, 42, 0.18);
+}
+
 /* ── Header Brand (Name & Logo) ───────────────────────── */
 .auth-header-brand {
     position: absolute;
@@ -293,6 +341,47 @@ body {
 
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 900px) {
+    body.auth-page--login .auth-card {
+        flex-direction: column;
+        justify-content: flex-end;
+        min-height: 100vh;
+        height: auto;
+    }
+
+    body.auth-page--login .auth-card__image {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    body.auth-page--login .auth-card__image::after {
+        background: linear-gradient(to bottom, transparent 30%, rgba(0, 0, 0, 0.5) 100%);
+    }
+
+    body.auth-page--login .auth-card__image img {
+        transform: scale(1.07);
+    }
+
+    body.auth-page--login .auth-card__form {
+        width: 100%;
+        min-height: 100vh;
+        margin-top: 30vh;
+        border-left: none;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    body.auth-page--login .auth-card__form.hit-top {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-top-color: transparent;
+        border-left-color: transparent;
+        border-right-color: transparent;
+    }
+
     .auth-card {
         flex-direction: column;
         justify-content: flex-end;
@@ -436,6 +525,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    body.auth-page--login .auth-card__form {
+        padding: 2.5rem 1.5rem 1.5rem;
+    }
+
     .auth-card__form {
         padding: 2.5rem 1.5rem 1.5rem;
     }
@@ -477,6 +570,16 @@ body {
 .dark-mode .auth-card__form {
     background: rgba(15, 23, 42, 0.75);
     border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode.auth-page--login .auth-card__image::after {
+    background: linear-gradient(120deg, rgba(2, 6, 23, 0.38) 0%, rgba(2, 6, 23, 0.72) 70%, rgba(2, 6, 23, 0.86) 100%);
+}
+
+.dark-mode.auth-page--login .auth-card__form {
+    background: rgba(15, 23, 42, 0.62);
+    border-left-color: rgba(148, 163, 184, 0.32);
+    box-shadow: -24px 0 50px rgba(2, 6, 23, 0.45);
 }
 
 .dark-mode .auth-card {
@@ -553,6 +656,17 @@ body {
 
 /* Scroll mobile adjust for glass */
 @media (max-width: 900px) {
+    .dark-mode.auth-page--login .auth-card__form {
+        background: rgba(15, 23, 42, 0.66);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .dark-mode.auth-page--login .auth-card__form.hit-top {
+        border-top-color: transparent;
+        border-left-color: transparent;
+        border-right-color: transparent;
+    }
+
     .dark-mode .auth-card__form {
         background: rgba(15, 23, 42, 0.65);
         border: 1px solid rgba(255, 255, 255, 0.15);
