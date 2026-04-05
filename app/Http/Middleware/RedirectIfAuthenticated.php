@@ -21,20 +21,43 @@ class RedirectIfAuthenticated
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
-                
-                // Redirect based on user's role
-                if ($user->hasRole('admin')) {
-                    return redirect()->route('admin.dashboard');
-                } elseif ($user->hasRole('director')) {
-                    return redirect()->route('director.dashboard');
-                } elseif ($user->hasRole('faculty')) {
-                    return redirect()->route('faculty.dashboard');
-                } elseif ($user->hasRole('dean')) {
-                    return redirect()->route('faculty.dashboard');
+
+                $route = $this->resolveDashboardRoute($user);
+                if ($route !== null) {
+                    return redirect()->route($route);
                 }
             }
         }
 
         return $next($request);
+    }
+
+    private function resolveDashboardRoute($user): ?string
+    {
+        if ($user->hasRole('admin') || $user->hasRole('hr')) {
+            return 'admin.dashboard';
+        }
+
+        if ($user->hasRole('director')) {
+            return 'director.dashboard';
+        }
+
+        if ($user->hasRole('faculty') || $user->hasRole('dean')) {
+            return 'faculty.dashboard';
+        }
+
+        if ($user->hasPermission('admin.dashboard')) {
+            return 'admin.dashboard';
+        }
+
+        if ($user->hasPermission('director.dashboard')) {
+            return 'director.dashboard';
+        }
+
+        if ($user->hasPermission('faculty.dashboard')) {
+            return 'faculty.dashboard';
+        }
+
+        return null;
     }
 }

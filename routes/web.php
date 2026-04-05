@@ -33,6 +33,10 @@ Route::get('/', [LoginController::class, 'showLoginForm'])
     ->name('login')
     ->middleware('guest');
 
+Route::get('/login', [LoginController::class, 'showLoginForm'])
+    ->name('login.form')
+    ->middleware('guest');
+
 Route::post('/login', [LoginController::class, 'login'])
     ->name('login.post')
     ->middleware('guest');
