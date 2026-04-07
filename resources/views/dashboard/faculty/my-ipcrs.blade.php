@@ -4867,49 +4867,39 @@
 
         function getCurrentDocumentableType() {
             const submissionType = document.getElementById('currentSubmissionType')?.value || 'ipcr';
+            const isOpcr = submissionType === 'opcr';
             const submissionId = document.getElementById('currentSubmissionIdToUpdate')?.value;
             const templateId = document.getElementById('currentPreviewTemplateId')?.value;
 
             if (submissionId) {
-                return submissionType === 'opcr' ? 'opcr_submission' : 'ipcr_submission';
+                return isOpcr ? 'opcr_submission' : 'ipcr_submission';
             }
             if (templateId) {
-                return submissionType === 'opcr' ? 'opcr_template' : 'ipcr_template';
+                return isOpcr ? 'opcr_template' : 'ipcr_template';
             }
 
-            if (submissionType === 'opcr' && currentOpcrSavedCopyId) {
+            if (isOpcr && currentOpcrSavedCopyId) {
                 return 'opcr_saved_copy';
             }
-            if (submissionType !== 'opcr' && currentSavedCopyId) {
+            if (!isOpcr && currentSavedCopyId) {
                 return 'ipcr_saved_copy';
             }
 
-            if (currentSavedCopyId) {
-                return 'ipcr_saved_copy';
-            }
-            if (currentOpcrSavedCopyId) {
-                return 'opcr_saved_copy';
-            }
-
-            return submissionType === 'opcr' ? 'opcr_template' : 'ipcr_template';
+            return isOpcr ? 'opcr_template' : 'ipcr_template';
         }
 
         function getCurrentDocumentableId() {
             const submissionType = document.getElementById('currentSubmissionType')?.value || 'ipcr';
+            const isOpcr = submissionType === 'opcr';
             const submissionId = document.getElementById('currentSubmissionIdToUpdate')?.value;
             const templateId = document.getElementById('currentPreviewTemplateId')?.value;
 
             if (submissionId) return submissionId;
             if (templateId) return templateId;
 
-            if (submissionType === 'opcr' && currentOpcrSavedCopyId) {
-                return currentOpcrSavedCopyId;
-            }
-            if (submissionType !== 'opcr' && currentSavedCopyId) {
-                return currentSavedCopyId;
-            }
-
-            return currentSavedCopyId || currentOpcrSavedCopyId || 0;
+            return isOpcr
+                ? (currentOpcrSavedCopyId || 0)
+                : (currentSavedCopyId || 0);
         }
 
         function openSoDocumentsModal(soLabel, soDescription, tableBodyId = 'templatePreviewTableBody') {

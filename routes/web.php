@@ -374,7 +374,7 @@ Route::get(
     [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'index']
 )
     ->name('faculty.supporting-documents.index')
-    ->middleware(['auth', 'role:faculty', 'permission:faculty.supporting-documents']);
+    ->middleware(['auth', 'role:faculty,dean', 'permission:faculty.supporting-documents,dean.review.faculty,dean.review.deans']);
 
 Route::post(
     '/faculty/supporting-documents',
@@ -402,7 +402,7 @@ Route::get(
     [\App\Http\Controllers\Faculty\SupportingDocumentController::class, 'download']
 )
     ->name('faculty.supporting-documents.download')
-    ->middleware(['auth', 'role:faculty', 'permission:faculty.supporting-documents']);
+    ->middleware(['auth', 'role:faculty,dean', 'permission:faculty.supporting-documents,dean.review.faculty,dean.review.deans']);
 
 /*
 |--------------------------------------------------------------------------

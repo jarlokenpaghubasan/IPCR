@@ -13,9 +13,8 @@ use Illuminate\Support\Facades\Storage;
 class SupportingDocumentController extends Controller
 {
     /**
-     * Get all supporting documents for a specific SO.
-     * Queries across both template and submission types for sync.
-     * Supports optional owner_id for dean viewing faculty documents.
+     * Get supporting documents for a specific SO and documentable record.
+     * Supports optional owner_id for dean/admin users viewing faculty documents.
      */
     public function index(Request $request)
     {
@@ -37,22 +36,12 @@ class SupportingDocumentController extends Controller
             // Faculty users: silently ignore owner_id and use their own ID
         }
 
-        // Query across both template and submission types for sync
-        $isIpcr = str_starts_with($request->documentable_type, 'ipcr');
-        $familyTypes = $isIpcr
-            ? ['ipcr_template', 'ipcr_submission', 'ipcr_saved_copy']
-            : ['opcr_template', 'opcr_submission', 'opcr_saved_copy'];
-
         $documents = SupportingDocument::where('user_id', $userId)
-            ->whereIn('documentable_type', $familyTypes)
+            ->where('documentable_type', $request->documentable_type)
+            ->where('documentable_id', (int) $request->documentable_id)
             ->where('so_label', $request->so_label)
             ->orderBy('created_at', 'desc')
             ->get()
-            // Deduplicate same file copied between template/submission.
-            ->unique(function (SupportingDocument $doc) {
-                return $doc->storage_key ?: $doc->path;
-            })
-            ->values()
             ->map(fn (SupportingDocument $doc) => $this->mapDocument($doc));
 
         return response()->json([

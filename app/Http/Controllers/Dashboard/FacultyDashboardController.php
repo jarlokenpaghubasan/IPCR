@@ -323,17 +323,13 @@ class FacultyDashboardController extends Controller
                     }
                 }
 
-                // Attach supporting documents per SO label
-                // Query across both template and submission types (same logic as SupportingDocumentController::index)
-                // so documents uploaded on a draft or template are visible on the active submission dashboard
-                if (! empty($soPerformanceData)) {
+                // Attach supporting documents per SO label from the active submitted IPCR only.
+                if (! empty($soPerformanceData) && $activeSubmission) {
                     $docsByLabel = SupportingDocument::where('user_id', auth()->id())
-                        ->whereIn('documentable_type', ['ipcr_template', 'ipcr_submission'])
+                        ->where('documentable_type', 'ipcr_submission')
+                        ->where('documentable_id', $activeSubmission->id)
                         ->orderBy('created_at', 'desc')
                         ->get(['id', 'so_label', 'original_name', 'path', 'mime_type', 'file_size'])
-                        ->unique(function (SupportingDocument $document) {
-                            return $document->storage_key ?: $document->path;
-                        }) // Deduplicate same file copied between template/submission
                         ->groupBy('so_label');
 
                     foreach ($soPerformanceData as &$soEntry) {
