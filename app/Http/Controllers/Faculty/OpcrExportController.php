@@ -8,6 +8,7 @@ use App\Models\OpcrSubmission;
 use App\Models\OpcrTemplate;
 use App\Services\ActivityLogService;
 use App\Services\OpcrExportService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OpcrExportController extends Controller
@@ -15,11 +16,13 @@ class OpcrExportController extends Controller
     /**
      * Export a submitted OPCR to .xlsx.
      */
-    public function export($id, OpcrExportService $exportService)
+    public function export(Request $request, $id, OpcrExportService $exportService)
     {
         $submission = OpcrSubmission::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
+
+        $this->applyExportPeriodOverrides($submission, $request);
 
         return $this->doExport($exportService, $submission, 'OPCR Submission');
     }
@@ -27,11 +30,13 @@ class OpcrExportController extends Controller
     /**
      * Export an OPCR saved copy to .xlsx.
      */
-    public function exportSavedCopy($id, OpcrExportService $exportService)
+    public function exportSavedCopy(Request $request, $id, OpcrExportService $exportService)
     {
         $savedCopy = OpcrSavedCopy::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
+
+        $this->applyExportPeriodOverrides($savedCopy, $request);
 
         return $this->doExport($exportService, $savedCopy, 'OPCR Draft');
     }
@@ -39,13 +44,28 @@ class OpcrExportController extends Controller
     /**
      * Export an OPCR template to .xlsx.
      */
-    public function exportTemplate($id, OpcrExportService $exportService)
+    public function exportTemplate(Request $request, $id, OpcrExportService $exportService)
     {
         $template = OpcrTemplate::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
+        $this->applyExportPeriodOverrides($template, $request);
+
         return $this->doExport($exportService, $template, 'OPCR Template');
+    }
+
+    private function applyExportPeriodOverrides($document, Request $request): void
+    {
+        $schoolYear = trim((string) $request->query('school_year', ''));
+        if ($schoolYear !== '') {
+            $document->school_year = $schoolYear;
+        }
+
+        $semester = trim((string) $request->query('semester', ''));
+        if ($semester !== '') {
+            $document->semester = $semester;
+        }
     }
 
     /**
@@ -57,7 +77,7 @@ class OpcrExportController extends Controller
             $filePath = $exportService->export($document);
 
             $fileName = 'OPCR_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $document->title)
-                      . '_' . $document->school_year . '.xlsx';
+                      . '_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', (string) $document->school_year) . '.xlsx';
 
             ActivityLogService::log(
                 'opcr_exported',

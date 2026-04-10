@@ -319,9 +319,14 @@ class IpcrTemplateController extends Controller
         }
     }
 
-    public function saveCopy($id)
+    public function saveCopy(Request $request, $id)
     {
         try {
+            $request->validate([
+                'school_year' => 'nullable|string|max:255',
+                'semester' => 'nullable|string|max:255',
+            ]);
+
             // Find the template
             $template = IpcrTemplate::where('id', $id)
                 ->where('user_id', Auth::id())
@@ -331,8 +336,8 @@ class IpcrTemplateController extends Controller
             $savedCopy = \App\Models\IpcrSavedCopy::create([
                 'user_id' => Auth::id(),
                 'title' => $template->title,
-                'school_year' => $template->school_year,
-                'semester' => $template->semester,
+                'school_year' => $request->filled('school_year') ? $request->school_year : $template->school_year,
+                'semester' => $request->filled('semester') ? $request->semester : $template->semester,
                 'table_body_html' => $template->table_body_html,
                 'noted_by' => $template->noted_by,
                 'approved_by' => $template->approved_by,

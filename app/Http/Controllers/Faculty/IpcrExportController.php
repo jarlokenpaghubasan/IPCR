@@ -8,6 +8,7 @@ use App\Models\IpcrSubmission;
 use App\Models\IpcrTemplate;
 use App\Services\ActivityLogService;
 use App\Services\IpcrExportService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class IpcrExportController extends Controller
@@ -15,11 +16,13 @@ class IpcrExportController extends Controller
     /**
      * Export a submitted IPCR to .xlsx using the IPCR Sample template.
      */
-    public function export($id, IpcrExportService $exportService)
+    public function export(Request $request, $id, IpcrExportService $exportService)
     {
         $submission = IpcrSubmission::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
+
+        $this->applyExportPeriodOverrides($submission, $request);
 
         return $this->doExport($exportService, $submission, 'IPCR Submission');
     }
@@ -27,11 +30,13 @@ class IpcrExportController extends Controller
     /**
      * Export an IPCR saved copy to .xlsx.
      */
-    public function exportSavedCopy($id, IpcrExportService $exportService)
+    public function exportSavedCopy(Request $request, $id, IpcrExportService $exportService)
     {
         $savedCopy = IpcrSavedCopy::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
+
+        $this->applyExportPeriodOverrides($savedCopy, $request);
 
         return $this->doExport($exportService, $savedCopy, 'IPCR Draft');
     }
@@ -39,13 +44,28 @@ class IpcrExportController extends Controller
     /**
      * Export an IPCR template to .xlsx.
      */
-    public function exportTemplate($id, IpcrExportService $exportService)
+    public function exportTemplate(Request $request, $id, IpcrExportService $exportService)
     {
         $template = IpcrTemplate::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
+        $this->applyExportPeriodOverrides($template, $request);
+
         return $this->doExport($exportService, $template, 'IPCR Template');
+    }
+
+    private function applyExportPeriodOverrides($document, Request $request): void
+    {
+        $schoolYear = trim((string) $request->query('school_year', ''));
+        if ($schoolYear !== '') {
+            $document->school_year = $schoolYear;
+        }
+
+        $semester = trim((string) $request->query('semester', ''));
+        if ($semester !== '') {
+            $document->semester = $semester;
+        }
     }
 
     /**
@@ -57,7 +77,7 @@ class IpcrExportController extends Controller
             $filePath = $exportService->export($document);
 
             $fileName = 'IPCR_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $document->title)
-                      . '_' . $document->school_year . '.xlsx';
+                      . '_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', (string) $document->school_year) . '.xlsx';
 
             ActivityLogService::log(
                 'ipcr_exported',

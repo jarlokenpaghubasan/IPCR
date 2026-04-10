@@ -7,6 +7,7 @@ use App\Models\IpcrSubmission;
 use App\Models\SupportingDocument;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class IpcrSubmissionController extends Controller
@@ -31,48 +32,98 @@ class IpcrSubmissionController extends Controller
             $soCountJson = json_decode($soCountJson, true);
         }
 
-        IpcrSubmission::where('user_id', $request->user()->id)
-            ->update(['is_active' => false]);
+        $userId = $request->user()->id;
+        $submissionLock = Cache::lock("ipcr:submit:user:{$userId}", 10);
 
-        $submission = IpcrSubmission::create([
-            'user_id' => $request->user()->id,
-            'title' => $validated['title'],
-            'school_year' => $validated['school_year'],
-            'semester' => $validated['semester'],
-            'table_body_html' => $validated['table_body_html'],
-            'noted_by' => $validated['noted_by'] ?? null,
-            'approved_by' => $validated['approved_by'] ?? null,
-            'so_count_json' => $soCountJson,
-            'status' => 'submitted',
-            'is_active' => true,
-            'submitted_at' => now(),
-        ]);
-
-        // Copy supporting documents from template/draft to submission
-        if (!empty($validated['template_id'])) {
-            $this->copySupportingDocuments(
-                'ipcr_template',
-                $validated['template_id'],
-                'ipcr_submission',
-                $submission->id,
-                $request->user()->id
-            );
-        } elseif (!empty($validated['saved_copy_id'])) {
-            $this->copySupportingDocuments(
-                'ipcr_saved_copy',
-                $validated['saved_copy_id'],
-                'ipcr_submission',
-                $submission->id,
-                $request->user()->id
-            );
+        if (!$submissionLock->get()) {
+            return response()->json([
+                'message' => 'A submission is already being processed. Please wait and try again.',
+            ], 429);
         }
 
-        ActivityLogService::log('ipcr_submitted', 'Submitted IPCR: ' . $submission->title, $submission);
+        try {
+            $existingSubmitted = IpcrSubmission::where('user_id', $userId)
+                ->where('status', 'submitted')
+                ->whereNotNull('submitted_at')
+                ->latest('id')
+                ->first();
 
-        return response()->json([
-            'message' => 'IPCR submitted successfully',
-            'id' => $submission->id,
-        ]);
+            if ($existingSubmitted) {
+                return response()->json([
+                    'message' => 'You already have a submitted IPCR. Please unsubmit it first before submitting a new one.',
+                    'id' => $existingSubmitted->id,
+                    'submission_cancelled' => true,
+                ], 409);
+            }
+
+            $recentWindow = now()->subSeconds(15);
+            $normalizedIncomingHtml = trim((string) ($validated['table_body_html'] ?? ''));
+
+            $duplicateSubmission = IpcrSubmission::where('user_id', $userId)
+                ->where('status', 'submitted')
+                ->where('title', $validated['title'])
+                ->where('school_year', $validated['school_year'])
+                ->where('semester', $validated['semester'])
+                ->where('created_at', '>=', $recentWindow)
+                ->latest('id')
+                ->get()
+                ->first(function (IpcrSubmission $candidate) use ($normalizedIncomingHtml) {
+                    return trim((string) ($candidate->table_body_html ?? '')) === $normalizedIncomingHtml;
+                });
+
+            if ($duplicateSubmission) {
+                return response()->json([
+                    'message' => 'IPCR submission already received',
+                    'id' => $duplicateSubmission->id,
+                    'duplicate_prevented' => true,
+                ]);
+            }
+
+            IpcrSubmission::where('user_id', $userId)
+                ->update(['is_active' => false]);
+
+            $submission = IpcrSubmission::create([
+                'user_id' => $userId,
+                'title' => $validated['title'],
+                'school_year' => $validated['school_year'],
+                'semester' => $validated['semester'],
+                'table_body_html' => $validated['table_body_html'],
+                'noted_by' => $validated['noted_by'] ?? null,
+                'approved_by' => $validated['approved_by'] ?? null,
+                'so_count_json' => $soCountJson,
+                'status' => 'submitted',
+                'is_active' => true,
+                'submitted_at' => now(),
+            ]);
+
+            // Copy supporting documents from template/draft to submission
+            if (!empty($validated['template_id'])) {
+                $this->copySupportingDocuments(
+                    'ipcr_template',
+                    $validated['template_id'],
+                    'ipcr_submission',
+                    $submission->id,
+                    $userId
+                );
+            } elseif (!empty($validated['saved_copy_id'])) {
+                $this->copySupportingDocuments(
+                    'ipcr_saved_copy',
+                    $validated['saved_copy_id'],
+                    'ipcr_submission',
+                    $submission->id,
+                    $userId
+                );
+            }
+
+            ActivityLogService::log('ipcr_submitted', 'Submitted IPCR: ' . $submission->title, $submission);
+
+            return response()->json([
+                'message' => 'IPCR submitted successfully',
+                'id' => $submission->id,
+            ]);
+        } finally {
+            optional($submissionLock)->release();
+        }
     }
 
     /**

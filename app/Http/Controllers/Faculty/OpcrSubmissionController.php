@@ -7,6 +7,7 @@ use App\Models\OpcrSubmission;
 use App\Models\SupportingDocument;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class OpcrSubmissionController extends Controller
@@ -30,48 +31,98 @@ class OpcrSubmissionController extends Controller
             $soCountJson = json_decode($soCountJson, true);
         }
 
-        OpcrSubmission::where('user_id', $request->user()->id)
-            ->update(['is_active' => false]);
+        $userId = $request->user()->id;
+        $submissionLock = Cache::lock("opcr:submit:user:{$userId}", 10);
 
-        $submission = OpcrSubmission::create([
-            'user_id' => $request->user()->id,
-            'title' => $validated['title'],
-            'school_year' => $validated['school_year'],
-            'semester' => $validated['semester'],
-            'table_body_html' => $validated['table_body_html'],
-            'noted_by' => $validated['noted_by'] ?? null,
-            'approved_by' => $validated['approved_by'] ?? null,
-            'so_count_json' => $soCountJson,
-            'status' => 'submitted',
-            'is_active' => true,
-            'submitted_at' => now(),
-        ]);
-
-        // Copy supporting documents from template/draft to submission
-        if (!empty($validated['template_id'])) {
-            $this->copySupportingDocuments(
-                'opcr_template',
-                $validated['template_id'],
-                'opcr_submission',
-                $submission->id,
-                $request->user()->id
-            );
-        } elseif (!empty($validated['saved_copy_id'])) {
-            $this->copySupportingDocuments(
-                'opcr_saved_copy',
-                $validated['saved_copy_id'],
-                'opcr_submission',
-                $submission->id,
-                $request->user()->id
-            );
+        if (!$submissionLock->get()) {
+            return response()->json([
+                'message' => 'A submission is already being processed. Please wait and try again.',
+            ], 429);
         }
 
-        ActivityLogService::log('opcr_submitted', 'Submitted OPCR: ' . $submission->title, $submission);
+        try {
+            $existingSubmitted = OpcrSubmission::where('user_id', $userId)
+                ->where('status', 'submitted')
+                ->whereNotNull('submitted_at')
+                ->latest('id')
+                ->first();
 
-        return response()->json([
-            'message' => 'OPCR submitted successfully',
-            'id' => $submission->id,
-        ]);
+            if ($existingSubmitted) {
+                return response()->json([
+                    'message' => 'You already have a submitted OPCR. Please unsubmit it first before submitting a new one.',
+                    'id' => $existingSubmitted->id,
+                    'submission_cancelled' => true,
+                ], 409);
+            }
+
+            $recentWindow = now()->subSeconds(15);
+            $normalizedIncomingHtml = trim((string) ($validated['table_body_html'] ?? ''));
+
+            $duplicateSubmission = OpcrSubmission::where('user_id', $userId)
+                ->where('status', 'submitted')
+                ->where('title', $validated['title'])
+                ->where('school_year', $validated['school_year'])
+                ->where('semester', $validated['semester'])
+                ->where('created_at', '>=', $recentWindow)
+                ->latest('id')
+                ->get()
+                ->first(function (OpcrSubmission $candidate) use ($normalizedIncomingHtml) {
+                    return trim((string) ($candidate->table_body_html ?? '')) === $normalizedIncomingHtml;
+                });
+
+            if ($duplicateSubmission) {
+                return response()->json([
+                    'message' => 'OPCR submission already received',
+                    'id' => $duplicateSubmission->id,
+                    'duplicate_prevented' => true,
+                ]);
+            }
+
+            OpcrSubmission::where('user_id', $userId)
+                ->update(['is_active' => false]);
+
+            $submission = OpcrSubmission::create([
+                'user_id' => $userId,
+                'title' => $validated['title'],
+                'school_year' => $validated['school_year'],
+                'semester' => $validated['semester'],
+                'table_body_html' => $validated['table_body_html'],
+                'noted_by' => $validated['noted_by'] ?? null,
+                'approved_by' => $validated['approved_by'] ?? null,
+                'so_count_json' => $soCountJson,
+                'status' => 'submitted',
+                'is_active' => true,
+                'submitted_at' => now(),
+            ]);
+
+            // Copy supporting documents from template/draft to submission
+            if (!empty($validated['template_id'])) {
+                $this->copySupportingDocuments(
+                    'opcr_template',
+                    $validated['template_id'],
+                    'opcr_submission',
+                    $submission->id,
+                    $userId
+                );
+            } elseif (!empty($validated['saved_copy_id'])) {
+                $this->copySupportingDocuments(
+                    'opcr_saved_copy',
+                    $validated['saved_copy_id'],
+                    'opcr_submission',
+                    $submission->id,
+                    $userId
+                );
+            }
+
+            ActivityLogService::log('opcr_submitted', 'Submitted OPCR: ' . $submission->title, $submission);
+
+            return response()->json([
+                'message' => 'OPCR submitted successfully',
+                'id' => $submission->id,
+            ]);
+        } finally {
+            optional($submissionLock)->release();
+        }
     }
 
     /**
